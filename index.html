@@ -108,8 +108,44 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
 kbd{font-family:var(--body);border:1px solid rgba(28,26,23,.3);border-radius:3px;padding:0 5px;font-size:11px}
 
 .hero-head{display:flex;gap:18px;align-items:center;margin-bottom:10px}
-#pwclogo{position:absolute;top:24px;right:26px;width:52px;height:28px}
-#heroimg{width:100px;height:100px;flex:none;filter:drop-shadow(0 6px 0 rgba(0,0,0,.18))}
+/* 진입 화면 A: 센터 미니멀 — 데모 전투를 배경으로, 카드 없이 가운데 한 줄 */
+#title{background:radial-gradient(ellipse at 50% 45%,rgba(6,9,18,.2) 0%,rgba(6,9,18,.75) 70%,rgba(6,9,18,.92) 100%);overflow:hidden}
+.title-a{display:flex;flex-direction:column;align-items:center;gap:16px;text-align:center;margin:auto}
+#heroimg{width:clamp(110px,18vh,160px);height:clamp(110px,18vh,160px);filter:drop-shadow(0 10px 0 rgba(0,0,0,.35));animation:heroBob 1.6s ease-in-out infinite}
+@keyframes heroBob{50%{transform:translateY(-4px)}}
+.title-name{margin:0;font-family:"Pretendard Variable",Pretendard,"Noto Sans KR",sans-serif;font-weight:900;font-size:clamp(52px,11vw,96px);line-height:1;letter-spacing:-.03em;color:#fff;text-shadow:0 6px 0 rgba(0,0,0,.4)}
+.title-name em{font-style:normal;color:#ff7a2e}
+.title-time{margin:0;display:flex;gap:10px;align-items:center;justify-content:center;font-family:"Pretendard Variable",Pretendard,"Noto Sans KR",sans-serif;font-weight:600;font-size:15px;color:rgba(255,255,255,.7)}
+.title-time b{font-family:var(--pixel);font-weight:400;font-size:12px;color:var(--gold)}
+.title-start{margin-top:4px;width:min(260px,80vw);padding:16px 0;border:0;border-radius:999px;background:var(--pwc);color:#fff;font-family:"Pretendard Variable",Pretendard,"Noto Sans KR",sans-serif;font-weight:800;font-size:20px;box-shadow:0 6px 0 #8a3101,0 0 40px rgba(208,74,2,.45);cursor:pointer}
+.title-start:hover{background:#e0560a}
+.title-start:active{transform:translateY(3px);box-shadow:0 3px 0 #8a3101,0 0 40px rgba(208,74,2,.45)}
+.title-press{margin:0;font-family:var(--pixel);font-size:10px;letter-spacing:.08em;color:rgba(255,255,255,.75);animation:blink 1.1s steps(2,start) infinite}
+@keyframes blink{to{visibility:hidden}}
+@media (hover:none){.title-press{display:none}}
+.title-links{display:flex;gap:10px}
+.title-ghost{background:rgba(255,255,255,.08);color:rgba(255,255,255,.88);border:1px solid rgba(255,255,255,.2);border-radius:999px;font-family:"Pretendard Variable",Pretendard,"Noto Sans KR",sans-serif;font-weight:600;font-size:14px;padding:9px 18px;cursor:pointer}
+.title-ghost:hover{background:rgba(255,255,255,.16)}
+.title-credit{position:absolute;right:20px;bottom:calc(16px + env(safe-area-inset-bottom,0px));display:flex;align-items:center;gap:10px;font-size:12px;color:rgba(255,255,255,.55)}
+#pwclogo{height:22px;width:auto;background:#fff;border-radius:6px;padding:3px 6px;box-sizing:content-box}
+/* 도감: 무기 + 짝 도구 = 진화 */
+.recipe2{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;align-items:start;gap:4px;padding:10px 8px;background:var(--paper-2);border-radius:12px}
+.recipe2 .op{align-self:center;margin-top:-18px;font-weight:800;font-size:18px;color:var(--ink-2)}
+.ci{position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;outline:none;cursor:help}
+.ci img{width:40px;height:40px;background:var(--night);border-radius:10px;padding:5px;box-sizing:content-box}
+.ci small{font-size:12px;font-weight:600;line-height:1.25;text-align:center;color:var(--ink)}
+.ci.evo img{box-shadow:0 0 0 2px var(--gold)}
+.ci.evo small{color:var(--pwc-ink)}
+.ci::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);width:max-content;max-width:200px;padding:7px 10px;border-radius:8px;background:#221f1f;color:#fff;font-size:12px;line-height:1.4;font-weight:500;text-align:left;opacity:0;pointer-events:none;transition:opacity .12s;z-index:5}
+.ci:hover::after,.ci:focus::after{opacity:1}
+/* 게임 설명 */
+.help-list{display:grid;gap:12px;margin:14px 0 18px}
+.help-row{display:grid;grid-template-columns:82px 1fr;gap:12px;font-size:14px;line-height:1.55}
+.help-k{font-weight:700;color:var(--pwc-ink)}
+.help-enemies{display:grid;gap:6px}
+.help-enemies span{display:flex;align-items:center;gap:8px}
+.help-enemies img{width:30px;height:30px;object-fit:contain;background:var(--night);border-radius:8px;padding:3px;flex:none}
+@media (max-width:520px){.help-row{grid-template-columns:1fr;gap:2px}}
 .codex{display:grid;gap:6px;margin:14px 0 18px}
 .codex h3{font-family:var(--display);font-weight:700;font-size:15px;margin:0 0 2px}
 .recipe{display:grid;grid-template-columns:auto auto auto auto 1fr;align-items:center;gap:6px;font-size:13px;padding:7px 12px;background:var(--paper-2);border-radius:12px}
@@ -219,18 +255,42 @@ kbd{font-family:var(--body);border:1px solid rgba(28,26,23,.3);border-radius:3px
   <div id="toast"></div>
 
   <div class="overlay" id="title">
-    <div class="sheet">
-      <img id="pwclogo" alt="PwC">
-      <p class="eyebrow">D-3조 · 회계 생존 학습게임 · PM 11:47 야근 중</p>
-      <div class="hero-head">
-        <img id="heroimg" alt="정장 차림의 신입 회계사 도트 캐릭터">
-        <div><h1>시즌의 <em>밤</em></h1><p style="margin:6px 0 0"><b>정답이 곧 무기가 된다.</b></p></div>
+    <div class="title-a">
+      <img id="heroimg" alt="PwC 캡모자를 쓴 신입 회계사 도트 캐릭터">
+      <h1 class="title-name">시즌의 <em>밤</em></h1>
+      <p class="title-time"><b>PM 11:47</b><span>결산 시즌</span></p>
+      <button class="title-start" id="start" type="button">감사 시작</button>
+      <p class="title-press" aria-hidden="true">PRESS ENTER</p>
+      <div class="title-links">
+        <button class="title-ghost" id="openCodex" type="button">도구 도감</button>
+        <button class="title-ghost" id="openHelp" type="button">게임 설명</button>
       </div>
-      <p>결산 시즌의 밤, 신입 회계사가 업무 도구로 미결 전표 떼를 버텨낸다. 레벨업으로 가진 도구를 강화하고, <b>새 도구는 전리품 상자의 문제를 맞혀야 얻는다.</b> 틀리면 상자는 반려된다.</p>
-      <div class="codex" id="codex"><h3>업무 도구 진화표 · 무기 Lv5 + 짝 도구 보유 후 상자 정답</h3></div>
-      <button class="primary" id="start" type="button">결산 시작</button>
-      <div class="keys"><span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> / 방향키 이동</span><span>모바일: 화면 드래그</span><span>선택지 숫자키 <kbd>1</kbd>~<kbd>5</kbd></span></div>
-      <p class="muted" style="margin:12px 0 0">문항 52개 · 삼일 · 감사본부 · 택스본부 · 딜본부. 보기 순서는 매번 섞입니다.</p>
+    </div>
+    <div class="title-credit"><span>D-3조</span><img id="pwclogo" alt="PwC"></div>
+  </div>
+
+  <div class="overlay" id="codexModal" hidden>
+    <div class="sheet">
+      <p class="eyebrow">업무 도구 도감</p>
+      <h2>무기 + 짝 도구 = 진화</h2>
+      <p class="muted">무기를 Lv5까지 올리고 짝 도구를 가진 채 전리품 상자 문제를 맞히면 진화합니다. 아이콘에 마우스를 올리거나 누르면 설명이 보여요.</p>
+      <div class="codex" id="codex"></div>
+      <button class="primary" type="button" data-close>닫기</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="helpModal" hidden>
+    <div class="sheet">
+      <p class="eyebrow">게임 설명</p>
+      <h2>미결 전표를 피해 4스테이지를 버티세요</h2>
+      <div class="help-list">
+        <div class="help-row"><span class="help-k">이동</span><span>PC는 <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 또는 방향키, 모바일은 화면을 누른 채 드래그합니다. 공격은 자동이에요.</span></div>
+        <div class="help-row"><span class="help-k">적</span><span class="help-enemies" id="helpEnemies"></span></div>
+        <div class="help-row"><span class="help-k">레벨업</span><span>적이 떨어뜨린 노란 증빙을 모으면 레벨업합니다. 가진 도구 중 하나를 골라 강화해요.</span></div>
+        <div class="help-row"><span class="help-k">전리품 상자</span><span>화면 가장자리 화살표가 위치를 알려줍니다. 열면 회계 문제가 나오고, 맞히면 새 도구나 진화를 얻고 틀리면 반려됩니다. 보기는 숫자키로도 고를 수 있어요.</span></div>
+        <div class="help-row"><span class="help-k">보스</span><span>2·4스테이지에 등장합니다. 바닥에 붉은 예고선이 보이면 돌진이 오니 옆으로 피하세요.</span></div>
+      </div>
+      <button class="primary" type="button" data-close>닫기</button>
     </div>
   </div>
 
@@ -724,7 +784,7 @@ class Battle extends Phaser.Scene{
     this.input.on('pointerup',up);this.input.on('pointerupoutside',up);
 
     $('hud').hidden=this.demo;$('vig').className='';$('boss').hidden=true;
-    if(this.demo){for(let i=0;i<30;i++)this.spawnMob(true)}
+    if(this.demo){for(let i=0;i<30;i++)this.spawnMob(true);this.player.setVisible(false);this.shadow.setVisible(false)}
     else{setText('stagetag','STAGE 1 / 4');renderSlots(this.S);toast('STAGE 1');$('portrait').src=PORTRAIT_URL}
   }
   viewMax(){const c=this.cameras.main;return Math.max(c.worldView.width,c.worldView.height,this.scale.width/c.zoom,this.scale.height/c.zoom)}
@@ -1074,13 +1134,23 @@ function showResult(S,won){
 (function title(){
   $('pwclogo').src=pixCanvas(PWC_LOGO,4).toDataURL();
   let f=0;const img=$('heroimg');img.src=HERO_URLS[1];setInterval(()=>{f=(f+1)%4;img.src=HERO_URLS[f]},160);
+  // 도감: [무기] + [짝 도구] = [진화]
   const cx=$('codex');
-  WEAPONS.forEach(k=>{const r=el('div','recipe');const a=el('img');a.src=iconURL(k);a.alt='';const b=el('img');b.src=iconURL(ITEMS[k].pair);b.alt='';const c=el('img');c.src=iconURL(k,true);c.alt='';
-    const t=el('span');t.append(el('b','',EVOS[k].name),document.createTextNode(` ← ${ITEMS[k].name} + ${ITEMS[ITEMS[k].pair].name}`));
-    r.append(a,el('span','op','+'),b,c,t);cx.appendChild(r)});
+  const cell=(icon,name,tip,evo)=>{const c=el('span','ci'+(evo?' evo':''));c.tabIndex=0;c.dataset.tip=tip;const i=el('img');i.src=icon;i.alt='';c.append(i,el('small','',name));return c};
+  WEAPONS.forEach(k=>{const it=ITEMS[k],pr=ITEMS[it.pair],r=el('div','recipe2');
+    r.append(cell(iconURL(k),it.name,`${it.name} · ${it.lv[0]}`),el('span','op','+'),cell(iconURL(it.pair),pr.name,`${pr.name} · ${pr.desc}`),el('span','op','='),cell(iconURL(k,true),EVOS[k].name,`${EVOS[k].name} · ${EVOS[k].desc}`,true));
+    cx.appendChild(r)});
+  // 게임 설명: 적 종류
+  const en=$('helpEnemies');
+  [[MOB0,'미결 전표','기본 적'],[RECEIPT,'영수증','작고 빠름 (2스테이지부터)'],[ELITE,'반려 서류철','튼튼함, 전리품 상자를 떨어뜨리기도 함']].forEach(([m,n,d])=>{
+    const row=el('span');const i=el('img');i.src=pixCanvas(m,3).toDataURL();i.alt='';const t=el('span');t.append(el('b','',n),document.createTextNode(' · '+d));row.append(i,t);en.appendChild(row)});
+  // 모달 열고 닫기
+  const open=id=>{$(id).hidden=false;$(id).querySelector('[data-close]').focus()};
+  $('openCodex').onclick=()=>open('codexModal');$('openHelp').onclick=()=>open('helpModal');
+  document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>{b.closest('.overlay').hidden=true;$('start').focus()});
 })();
 let game;
-function startRun(){SFX.init();['title','result','levelup','chest'].forEach(id=>$(id).hidden=true);game.scene.getScene('Battle').scene.restart({demo:false})}
+function startRun(){SFX.init();['title','result','levelup','chest','codexModal','helpModal'].forEach(id=>$(id).hidden=true);game.scene.getScene('Battle').scene.restart({demo:false})}
 if(window.Phaser){
   game=new Phaser.Game({type:Phaser.AUTO,parent:'game',backgroundColor:'#0b1020',scale:{mode:Phaser.Scale.RESIZE,width:'100%',height:'100%'},
     physics:{default:'arcade',arcade:{debug:false}},audio:{noAudio:true},banner:false,scene:[Battle]});
@@ -1091,6 +1161,8 @@ $('resume').onclick=()=>window.BATTLE.closeModal();
 $('mute').onclick=()=>{SFX.muted=!SFX.muted;$('mute').textContent=SFX.muted?'소리 끔':'소리 켬'};
 addEventListener('keydown',e=>{
   const n=parseInt(e.key,10);
+  if(e.key==='Escape'){['codexModal','helpModal'].forEach(id=>$(id).hidden=true)}
+  if(e.key==='Enter'&&!$('title').hidden&&$('codexModal').hidden&&$('helpModal').hidden&&document.activeElement===document.body){e.preventDefault();startRun();return}
   if(!$('levelup').hidden&&n>=1&&n<=3){const c=$('lvcards').children[n-1];if(c)c.click()}
   else if(!$('chest').hidden){if(n>=1&&$('verdict').hidden){const c=$('choices').children[n-1];if(c)c.click()}}
 });
