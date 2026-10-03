@@ -128,6 +128,38 @@ kbd{font-family:var(--body);border:1px solid rgba(28,26,23,.3);border-radius:3px
 .title-ghost:hover{background:rgba(255,255,255,.16)}
 .title-credit{position:absolute;right:20px;bottom:calc(16px + env(safe-area-inset-bottom,0px));display:flex;align-items:center;gap:10px;font-size:12px;color:rgba(255,255,255,.55)}
 #pwclogo{height:22px;width:auto;background:#fff;border-radius:6px;padding:3px 6px;box-sizing:content-box}
+/* 캐릭터 선택 */
+#select{background:radial-gradient(ellipse at 50% 40%,rgba(6,9,18,.55) 0%,rgba(6,9,18,.9) 75%)}
+.sel{width:min(860px,100%);margin:auto;display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center;font-family:"Pretendard Variable",Pretendard,"Noto Sans KR",sans-serif}
+.sel-eyebrow{margin:0;font-size:13px;font-weight:700;color:#ff7a2e;letter-spacing:.04em}
+.sel-title{margin:0;font-size:clamp(24px,4vw,34px);font-weight:800;color:#fff;letter-spacing:-.02em}
+.sel-gender{display:inline-flex;padding:4px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16)}
+.sel-gender button{border:0;border-radius:999px;background:transparent;color:rgba(255,255,255,.7);font:700 15px "Pretendard Variable",Pretendard,"Noto Sans KR",sans-serif;padding:8px 26px;cursor:pointer}
+.sel-gender button[aria-checked="true"]{background:var(--pwc);color:#fff}
+.sel-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;width:100%;margin-top:4px}
+.sel-card{position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;padding:16px 10px 14px;border-radius:18px;background:rgba(255,255,255,.06);border:2px solid rgba(255,255,255,.12);color:#fff;cursor:pointer;font-family:inherit;min-width:0}
+.sel-card:hover{background:rgba(255,255,255,.1)}
+.sel-card[aria-pressed="true"]{border-color:var(--pwc);background:rgba(208,74,2,.16);box-shadow:0 0 0 4px rgba(208,74,2,.18)}
+.sel-card img{width:96px;height:96px;margin-bottom:4px}
+.sel-card b{font-size:20px;font-weight:800}
+.sel-card .full{font-size:12px;color:rgba(255,255,255,.6)}
+.sel-card .qs{margin-top:6px;font-size:11.5px;color:#ffb600;font-weight:600}
+.sel-card.locked{cursor:not-allowed}
+.sel-card.locked img{filter:brightness(0) opacity(.55)}
+.sel-card.locked b,.sel-card.locked .full{color:rgba(255,255,255,.4)}
+.sel-card .lock{position:absolute;top:10px;right:10px;font-size:11px;font-weight:700;color:rgba(255,255,255,.7);background:rgba(0,0,0,.45);border-radius:999px;padding:3px 8px}
+.sel-card .hint{margin-top:6px;font-size:11.5px;line-height:1.35;color:rgba(255,255,255,.55)}
+.sel-note{margin:0;min-height:20px;font-size:14px;color:rgba(255,255,255,.75)}
+.sel-actions{display:flex;gap:12px;align-items:center}
+.sel-actions .title-start{width:220px;margin:0}
+.sel-actions .title-start:disabled{background:#4a4a4a;box-shadow:none;cursor:not-allowed}
+.sel-help{margin:0;font-size:12px;color:rgba(255,255,255,.45)}
+@media (hover:none){.sel-help{display:none}}
+@media (max-width:640px){.sel-cards{grid-template-columns:repeat(2,1fr)}.sel-card img{width:72px;height:72px}.sel-actions .title-start{width:180px}}
+.unlock-note{margin:0 0 14px;padding:12px 14px;border-radius:14px;background:var(--pwc-soft);color:var(--pwc-ink);font-weight:700;font-size:15px;display:flex;gap:10px;align-items:center}
+.unlock-note img{width:40px;height:40px;background:var(--night);border-radius:10px;padding:2px}
+.result-actions{display:grid;grid-template-columns:1fr auto;gap:10px}
+.result-change{border:1px solid var(--hair);background:#fff;color:var(--ink);border-radius:999px;font-weight:700;font-size:15px;padding:0 20px;cursor:pointer}
 /* 도감: 무기 + 짝 도구 = 진화 */
 .recipe2{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;align-items:start;gap:4px;padding:10px 8px;background:var(--paper-2);border-radius:12px}
 .recipe2 .op{align-self:center;margin-top:-18px;font-weight:800;font-size:18px;color:var(--ink-2)}
@@ -269,6 +301,23 @@ kbd{font-family:var(--body);border:1px solid rgba(28,26,23,.3);border-radius:3px
     <div class="title-credit"><span>D-3조</span><img id="pwclogo" alt="PwC"></div>
   </div>
 
+  <div class="overlay" id="select" hidden>
+    <div class="sel">
+      <p class="sel-eyebrow">캐릭터 선택</p>
+      <h2 class="sel-title">어느 본부로 출근할까요?</h2>
+      <div class="sel-gender" role="radiogroup" aria-label="캐릭터 성별">
+        <button type="button" role="radio" data-g="m">남</button><button type="button" role="radio" data-g="f">여</button>
+      </div>
+      <div class="sel-cards" id="selCards"></div>
+      <p class="sel-note" id="selNote"></p>
+      <div class="sel-actions">
+        <button class="title-ghost" id="selBack" type="button">뒤로</button>
+        <button class="title-start" id="selGo" type="button">출근하기</button>
+      </div>
+      <p class="sel-help">←→ 본부 · ↑↓ 남/여 · Enter 출근</p>
+    </div>
+  </div>
+
   <div class="overlay" id="codexModal" hidden>
     <div class="sheet">
       <p class="eyebrow">업무 도구 도감</p>
@@ -337,8 +386,12 @@ kbd{font-family:var(--body);border:1px solid rgba(28,26,23,.3);border-radius:3px
       <div class="build" id="rbuild"></div>
       <p class="eyebrow" id="rvhead">오답 복습</p>
       <div class="review" id="review"></div>
-      <button class="primary" id="retry" type="button">한 판 더</button>
-      <p class="muted" style="margin:12px 0 0">재도전하면 도구와 강화가 초기화되고 문제 순서가 바뀝니다.</p>
+      <div class="unlock-note" id="unlockNote" hidden></div>
+      <div class="result-actions">
+        <button class="primary" id="retry" type="button">한 판 더</button>
+        <button class="result-change" id="changeChar" type="button">캐릭터 변경</button>
+      </div>
+      <p class="muted" style="margin:12px 0 0">한 판 더는 같은 캐릭터로 바로 시작합니다. 도구와 강화는 초기화되고 문제 순서가 바뀝니다.</p>
     </div>
   </div>
   <div id="loading">엔진 불러오는 중…</div>
@@ -451,7 +504,7 @@ const PAL = {K:'#1b1a24',H:'#4a3428',h:'#7a5440',p:'#f49a9a',S:'#f2c6a0',s:'#d9a
   W:'#f3ead8',T:'#d9442f',R:'#8f2a1c',N:'#2c3a66',n:'#1e2848',P:'#232a40',B:'#14141c',L:'#e4b84a',Y:'#fff1c2',
   C:'#3a4060',c:'#5a6488',g:'#9fd8a8',O:'#8a5a3a',o:'#b07a4e',X:'#2a2f45',Z:'#d8f04a',z:'#f2ff7a',U:'#3d6ad6',
   u:'#7aa2ff',V:'#8f6cf0',v:'#c9b6ff',D:'#5b3fb0',J:'#c99a52',j:'#9a7038',A:'#9aa3b8',Q:'#4fb37a',I:'#ff7ab8',
-  F:'#d04a02',f:'#8f3301',y:'#ffb600'}; // F·f: PwC 오렌지 모자(본색·챙), y: 로고 노랑
+  F:'#d04a02',f:'#8f3301',y:'#ffb600',w:'#f3ead8'}; // F·f: PwC 오렌지 모자(본색·챙), y: 로고 노랑
 // 캐릭터는 가로 20칸: 몸은 16칸(양옆 2칸 여백), 캡모자 챙이 오른쪽 여백으로 튀어나옴
 const HERO_TOP = [
 "......KKKKKKKKK.....",
@@ -492,6 +545,66 @@ const setCh=(r,i,c)=>r.slice(0,i)+c+r.slice(i+1);
 const HERO_TOP_L = HERO_TOP.map((r,j)=>j<5?r.slice(1)+'.':j===5?setCh(flipRow(r.replace('W','f')),4,'W'):flipRow(r));
 const mkFrames=(top,fl)=>{const L=k=>fl?LEGS[k].map(flipRow):LEGS[k];return [top.concat(L('a'),[PADROW]),[PADROW].concat(top,L('i')),top.concat(L('b'),[PADROW]),[PADROW].concat(top,L('i'))]};
 const HERO_FRAMES = mkFrames(HERO_TOP,false), HERO_FRAMES_L = mkFrames(HERO_TOP_L,true);
+
+// =====================================================================
+// 캐릭터 선택: 4개 본부 × 남/녀
+// cap = 모자 색 (F 본색, f 챙, w 글자), cats = 이 본부로 플레이할 때 나오는 문제 분류 ('삼일'은 공통, 비어 있으면 전체 문제)
+// =====================================================================
+const PARTS = [
+  {id:'audit',   name:'감사',   full:'감사본부',   role:'재무제표를 검증하는 감사인',       cap:{F:'#d04a02',f:'#8f3301',w:'#f3ead8'}, cats:['감사본부']},
+  {id:'tax',     name:'택스',   full:'택스본부',   role:'세무조정과 신고를 맡는 세무 전문가', cap:{F:'#e0301e',f:'#8f1d12',w:'#f3ead8'}, cats:['택스본부']},
+  {id:'deal',    name:'딜',     full:'딜본부',     role:'M&A와 가치평가를 돕는 딜 전문가',   cap:{F:'#ffb600',f:'#a37400',w:'#2d2a26'}, cats:['딜본부']},
+  {id:'digital', name:'디지털', full:'디지털',     role:'데이터와 IT로 일하는 디지털 전문가', cap:{F:'#2b5ce6',f:'#18338a',w:'#f3ead8'}, cats:[]}
+];
+const GENDERS = [{id:'m',name:'남'},{id:'f',name:'여'}];
+// 해금 조건 (나중에 여기만 바꾸면 됨): after 본부 캐릭터로 plays판 플레이하면 해금
+const UNLOCK_RULES = {
+  tax:     {after:'audit', plays:1},
+  deal:    {after:'tax',   plays:1},
+  digital: {after:'deal',  plays:1}
+};
+const partOf = id => PARTS.find(p=>p.id===id);
+// 모자 줄(0~5행)의 흰 글자는 w로 바꿔 본부별 글자색을 따로 줄 수 있게 함
+const capRows = top => top.map((r,j)=>j<=5?r.replace(/W/g,'w'):r);
+const putAt = (r,i,c) => (i>=0&&i<r.length)?r.slice(0,i)+c+r.slice(i+1):r;
+// 여자 캐릭터: 어깨까지 오는 머리 + 치마
+function femaleTop(top){
+  const t=top.slice();
+  const side=(j,cols,c)=>{for(const i of cols)t[j]=putAt(t[j],i,c)};
+  side(6,[3,17,18],'H');side(6,[2],'K');side(6,[19],'K');
+  for(const j of [7,8,9,10]){side(j,[2,3,17,18],'H');side(j,[1,19],'K')}
+  side(11,[2,3,17,18],'H');side(11,[1,19],'K');
+  side(12,[2,3,17,18],'K');
+  t[16]=t[16].replace(/P/g,'n');
+  return t;
+}
+const femaleLegs = () => {const o={};for(const k in LEGS)o[k]=LEGS[k].map(r=>r.replace(/P/g,'S'));return o};
+const leftTop = top => top.map((r,j)=>j<5?r.slice(1)+'.':j===5?setCh(flipRow(r.replace('w','f')),4,'w'):flipRow(r));
+const mkFramesG=(top,fl,legs)=>{const L=k=>fl?legs[k].map(flipRow):legs[k];return [top.concat(L('a'),[PADROW]),[PADROW].concat(top,L('i')),top.concat(L('b'),[PADROW]),[PADROW].concat(top,L('i'))]};
+const HERO_SET = {};
+for(const pt of PARTS)for(const g of GENDERS){
+  const top0=capRows(HERO_TOP), top=g.id==='f'?femaleTop(top0):top0, legs=g.id==='f'?femaleLegs():LEGS;
+  HERO_SET[pt.id+'_'+g.id]={top, R:mkFramesG(top,false,legs), L:mkFramesG(leftTop(top),true,legs), over:pt.cap};
+}
+const heroURLCache = {};
+function heroURLs(part,g){const k=part+'_'+g;if(!heroURLCache[k]){const h=HERO_SET[k];heroURLCache[k]=h.R.map(f=>pixCanvas(f,6,h.over).toDataURL())}return heroURLCache[k]}
+function portraitURL(part,g){const h=HERO_SET[part+'_'+g];return pixCanvas(h.top.slice(0,12),4,h.over).toDataURL()}
+
+// 진행 상황 (이 브라우저에만 저장): 본부별 플레이 횟수, 마지막 선택
+const PROG_KEY = 'seasonNight.progress.v1';
+const UNLOCK_ALL = /[?&]unlock=all\b/.test(location.search); // 발표·테스트용: 주소 뒤에 ?unlock=all
+let PROG = {plays:{}, part:'audit', g:'m'};
+try{PROG = Object.assign(PROG, JSON.parse(localStorage.getItem(PROG_KEY))||{})}catch(e){}
+const saveProg = () => {try{localStorage.setItem(PROG_KEY, JSON.stringify(PROG))}catch(e){}};
+const isUnlocked = id => {if(UNLOCK_ALL)return true;const r=UNLOCK_RULES[id];return !r||(PROG.plays[r.after]||0)>=r.plays};
+const unlockHint = id => {const r=UNLOCK_RULES[id];return r?`${partOf(r.after).name} 캐릭터로 ${r.plays}판 플레이하면 해금`:''};
+let CHOICE = {part:isUnlocked(PROG.part)?PROG.part:'audit', g:PROG.g==='f'?'f':'m'};
+function questionPool(){
+  const cats=partOf(CHOICE.part).cats;
+  const idx=[...QUESTIONS.keys()].filter(i=>!cats.length||QUESTIONS[i].cat==='삼일'||cats.includes(QUESTIONS[i].cat));
+  return idx.length>=6?idx:[...QUESTIONS.keys()];
+}
+const poolLabel = pt => pt.cats.length?`문제: 삼일 + ${pt.cats.join(' · ')}`:'문제: 전체 본부';
 const RECEIPT = ["KKKKKKKK","KWWWWWWK","KWEWWEWK","KWWWWWWK","KWAAAAWK","KWWWWWWK","KWAAAWWK","KWWWWWWK","KWTTTTWK","KWWWWWWK","KKWKKWKK","..K..K.."];
 const MOB0 = [
 "..KKKKKKK...",
@@ -593,14 +706,12 @@ function pixCanvas(map,px,over={}){
 }
 const URL_ = {};
 function iconURL(key,evo=false){const id=key+(evo?'_e':'');if(!URL_[id])URL_[id]=pixCanvas(ICONS[key],4,evo?EVO_OVER[key]:{}).toDataURL();return URL_[id]}
-const HERO_URLS = HERO_FRAMES.map(f=>pixCanvas(f,6).toDataURL());
-const PORTRAIT_URL = pixCanvas(HERO_TOP.slice(0,12),4).toDataURL();
 const CHEST_URL = pixCanvas(CHEST,4).toDataURL(), CHESTG_URL = pixCanvas(CHEST,4,GOLD_OVER).toDataURL();
 
 function makeTextures(sc){
-  if(sc.textures.exists('hero0'))return;
+  if(sc.textures.exists('hero_audit_m0'))return;
   const add=(k,map,px,over)=>sc.textures.addCanvas(k,pixCanvas(map,px,over));
-  HERO_FRAMES.forEach((f,i)=>add('hero'+i,f,3));HERO_FRAMES_L.forEach((f,i)=>add('heroL'+i,f,3));
+  for(const k in HERO_SET){const h=HERO_SET[k];h.R.forEach((f,i)=>add('hero_'+k+i,f,3,h.over));h.L.forEach((f,i)=>add('heroL_'+k+i,f,3,h.over))}
   add('mob0',MOB0,3);add('receipt',RECEIPT,3);add('mob1',MOB1,3);add('elite',ELITE,3);
   add('boss1a',genBoss1(0),3);add('boss1b',genBoss1(1.6),3);add('boss2',genBoss2(),3);
   add('chest',CHEST,3);add('chestG',CHEST,3,GOLD_OVER);
@@ -683,7 +794,7 @@ function newState(){
   return {t:0,stage:1,stageT:0,hp:100,maxhp:100,speed:170,spdBonus:0,waveT:28,iframe:0,regen:0,might:1,cdm:1,magnet:110,bonus:0,
     lv:1,xp:0,xpNext:5,items:{pen:{lv:1,evo:false}},wOrder:['pen'],pOrder:[],wt:{pen:.3,stamp:1,hl:.8},calcA:0,
     face:{x:1,y:0},kills:0,bossKills:0,bossBuff:{hp:1,dmg:1},asked:0,correct:0,wrong:[],
-    qOrder:shuffle([...QUESTIONS.keys()]),qIdx:0,spawnT:1,chestT:CFG.firstChest,bossSpawnedFor:0,
+    qOrder:shuffle(questionPool()),qIdx:0,spawnT:1,chestT:CFG.firstChest,bossSpawnedFor:0,
     pickStep:0,pickT:0,over:false,postFx:[]};
 }
 function recalc(S){
@@ -693,7 +804,7 @@ function recalc(S){
 }
 function wstat(S,k){const it=S.items[k],t=W_STATS[k];if(it.evo)return Object.assign({},t.evo);const i=it.lv-1,o={};for(const p in t)if(p!=='evo')o[p]=t[p][i];return o}
 function evoReady(S,k){const it=S.items[k];return it&&ITEMS[k].type==='w'&&!it.evo&&it.lv>=5&&!!S.items[ITEMS[k].pair]}
-function nextQuestion(S){if(S.qIdx>=S.qOrder.length){const last=S.qOrder[S.qOrder.length-1];S.qOrder=shuffle([...QUESTIONS.keys()]);if(S.qOrder[0]===last&&S.qOrder.length>1)S.qOrder.push(S.qOrder.shift());S.qIdx=0}return QUESTIONS[S.qOrder[S.qIdx++]]}
+function nextQuestion(S){if(S.qIdx>=S.qOrder.length){const last=S.qOrder[S.qOrder.length-1];S.qOrder=shuffle(questionPool());if(S.qOrder[0]===last&&S.qOrder.length>1)S.qOrder.push(S.qOrder.shift());S.qIdx=0}return QUESTIONS[S.qOrder[S.qIdx++]]}
 function upgradable(S){return Object.keys(S.items).filter(k=>!S.items[k].evo&&S.items[k].lv<ITEMS[k].max)}
 function chestReward(S,gold){
   const evos=WEAPONS.filter(k=>evoReady(S,k));if(evos.length)return{kind:'evo',key:pick(evos)};
@@ -753,7 +864,8 @@ class Battle extends Phaser.Scene{
     this.events.once('shutdown',()=>{this.scale.off('resize',this.applyZoom,this);$('inds').replaceChildren()});
 
     this.shadow=this.add.image(0,0,'shadow').setDepth(1);
-    this.player=this.physics.add.image(0,0,'hero1').setDepth(6);
+    this.heroKey='_'+CHOICE.part+'_'+CHOICE.g;
+    this.player=this.physics.add.image(0,0,'hero'+this.heroKey+'1').setDepth(6);
     this.player.body.setCircle(13,17,28);
     this.enemies=this.physics.add.group();
     this.bullets=this.physics.add.group({maxSize:260});
@@ -785,7 +897,7 @@ class Battle extends Phaser.Scene{
 
     $('hud').hidden=this.demo;$('vig').className='';$('boss').hidden=true;
     if(this.demo){for(let i=0;i<30;i++)this.spawnMob(true);this.player.setVisible(false);this.shadow.setVisible(false)}
-    else{setText('stagetag','STAGE 1 / 4');renderSlots(this.S);toast('STAGE 1');$('portrait').src=PORTRAIT_URL}
+    else{setText('stagetag','STAGE 1 / 4');renderSlots(this.S);toast('STAGE 1');$('portrait').src=portraitURL(CHOICE.part,CHOICE.g)}
   }
   viewMax(){const c=this.cameras.main;return Math.max(c.worldView.width,c.worldView.height,this.scale.width/c.zoom,this.scale.height/c.zoom)}
   applyZoom(){const w=this.scale.width,h=this.scale.height;this.cameras.main.setZoom(Phaser.Math.Clamp(Math.min(w,h)/720,.62,1))}
@@ -979,7 +1091,7 @@ class Battle extends Phaser.Scene{
     const dt=Math.min(delta,50)/1000,S=this.S,p=this.player,cam=this.cameras.main;
     this.syncFloor();this.shadow.setPosition(p.x,p.y+29);
     const moving=this.demo?true:(p.body.velocity.lengthSq()>100);
-    const fr=moving?Math.floor(time/130)%4:1,key=(p.left?'heroL':'hero')+fr;if(p.texture.key!==key)p.setTexture(key)
+    const fr=moving?Math.floor(time/130)%4:1,key=(p.left?'heroL':'hero')+this.heroKey+fr;if(p.texture.key!==key)p.setTexture(key)
     if(this.demo){
       for(const e of this.enemies.getChildren()){this.animMob(e,time);if(Math.hypot(e.x-p.x,e.y-p.y)>700)e.setPosition(p.x+rnd(-300,300),p.y+rnd(-300,300))}
       return;
@@ -1117,6 +1229,7 @@ function answerChest(sc,i){
   setText('vexp',`정답: ${q.choices[q.answer]}`+(q.exp?` — ${q.exp}`:''));v.hidden=false;$('resume').focus();
 }
 function showResult(S,won){
+  recordPlay();
   $('hud').hidden=true;$('vig').className='';$('inds').replaceChildren();
   setText('rtag',won?'결산 마감':'결산 실패');setText('rtitle',won?'시즌의 밤을 넘겼다.':'미결 전표에 묻혔다.');
   setText('rtime',fmt(S.t));setText('rboss',S.bossKills);setText('rkill',S.kills);setText('rq',`${S.correct} / ${S.asked}`);
@@ -1133,7 +1246,7 @@ function showResult(S,won){
 // =====================================================================
 (function title(){
   $('pwclogo').src=pixCanvas(PWC_LOGO,4).toDataURL();
-  let f=0;const img=$('heroimg');img.src=HERO_URLS[1];setInterval(()=>{f=(f+1)%4;img.src=HERO_URLS[f]},160);
+  let f=0;const img=$('heroimg');setInterval(()=>{f=(f+1)%4;img.src=heroURLs(CHOICE.part,CHOICE.g)[f];document.querySelectorAll('.sel-card img').forEach(i=>{i.src=heroURLs(i.dataset.part,SEL.g)[f]})},160);img.src=heroURLs(CHOICE.part,CHOICE.g)[1];
   // 도감: [무기] + [짝 도구] = [진화]
   const cx=$('codex');
   const cell=(icon,name,tip,evo)=>{const c=el('span','ci'+(evo?' evo':''));c.tabIndex=0;c.dataset.tip=tip;const i=el('img');i.src=icon;i.alt='';c.append(i,el('small','',name));return c};
@@ -1149,20 +1262,62 @@ function showResult(S,won){
   $('openCodex').onclick=()=>open('codexModal');$('openHelp').onclick=()=>open('helpModal');
   document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>{b.closest('.overlay').hidden=true;$('start').focus()});
 })();
+// =====================================================================
+// 캐릭터 선택 화면
+// =====================================================================
+const SEL = {part:CHOICE.part, g:CHOICE.g};
+function renderSelect(){
+  const box=$('selCards');box.replaceChildren();
+  PARTS.forEach(pt=>{
+    const open=isUnlocked(pt.id), b=el('button','sel-card'+(open?'':' locked'));b.type='button';b.dataset.part=pt.id;
+    b.setAttribute('aria-pressed',String(SEL.part===pt.id));
+    const im=el('img');im.dataset.part=pt.id;im.src=heroURLs(pt.id,SEL.g)[1];im.alt=open?`${pt.full} ${SEL.g==='f'?'여자':'남자'} 캐릭터`:'잠긴 캐릭터';
+    b.append(im,el('b','',pt.name),el('span','full',pt.full));
+    if(open)b.appendChild(el('span','qs',poolLabel(pt)));else{b.appendChild(el('span','lock','잠김'));b.appendChild(el('span','hint',unlockHint(pt.id)))}
+    b.onclick=()=>{SEL.part=pt.id;renderSelect()};
+    box.appendChild(b);
+  });
+  document.querySelectorAll('.sel-gender button').forEach(x=>x.setAttribute('aria-checked',String(x.dataset.g===SEL.g)));
+  const pt=partOf(SEL.part),open=isUnlocked(SEL.part);
+  setText('selNote',open?`${pt.full} · ${pt.role}`:unlockHint(SEL.part));
+  $('selGo').disabled=!open;
+}
+function openSelect(){SFX.init();['title','result','codexModal','helpModal'].forEach(id=>$(id).hidden=true);SEL.part=CHOICE.part;SEL.g=CHOICE.g;renderSelect();$('select').hidden=false;$('selGo').focus()}
+function confirmSelect(){if(!isUnlocked(SEL.part))return;CHOICE.part=SEL.part;CHOICE.g=SEL.g;PROG.part=CHOICE.part;PROG.g=CHOICE.g;saveProg();startRun()}
+document.querySelectorAll('.sel-gender button').forEach(x=>x.onclick=()=>{SEL.g=x.dataset.g;renderSelect()});
+$('selBack').onclick=()=>{$('select').hidden=true;$('title').hidden=false;$('start').focus()};
+$('selGo').onclick=confirmSelect;
+$('changeChar').onclick=openSelect;
+// 한 판이 끝나면 플레이 횟수를 세고, 새로 해금된 캐릭터를 결과 화면에 알림
+function recordPlay(){
+  const before=PARTS.filter(p=>isUnlocked(p.id)).map(p=>p.id);
+  PROG.plays[CHOICE.part]=(PROG.plays[CHOICE.part]||0)+1;saveProg();
+  const fresh=PARTS.filter(p=>isUnlocked(p.id)&&!before.includes(p.id));
+  const n=$('unlockNote');n.replaceChildren();n.hidden=!fresh.length;
+  fresh.forEach(p=>{const im=el('img');im.src=heroURLs(p.id,CHOICE.g)[1];im.alt='';n.append(im,el('span','',`새 캐릭터 해금: ${p.full}! 캐릭터 변경에서 고를 수 있어요.`))});
+}
+
 let game;
-function startRun(){SFX.init();['title','result','levelup','chest','codexModal','helpModal'].forEach(id=>$(id).hidden=true);game.scene.getScene('Battle').scene.restart({demo:false})}
+function startRun(){SFX.init();['title','select','result','levelup','chest','codexModal','helpModal'].forEach(id=>$(id).hidden=true);game.scene.getScene('Battle').scene.restart({demo:false})}
 if(window.Phaser){
   game=new Phaser.Game({type:Phaser.AUTO,parent:'game',backgroundColor:'#0b1020',scale:{mode:Phaser.Scale.RESIZE,width:'100%',height:'100%'},
     physics:{default:'arcade',arcade:{debug:false}},audio:{noAudio:true},banner:false,scene:[Battle]});
   $('loading').remove();
 }else $('loading').textContent='게임 엔진을 불러오지 못했습니다. 네트워크를 확인하고 새로고침해 주세요.';
-$('start').onclick=startRun;$('retry').onclick=startRun;
+$('start').onclick=openSelect;$('retry').onclick=startRun;
 $('resume').onclick=()=>window.BATTLE.closeModal();
 $('mute').onclick=()=>{SFX.muted=!SFX.muted;$('mute').textContent=SFX.muted?'소리 끔':'소리 켬'};
 addEventListener('keydown',e=>{
   const n=parseInt(e.key,10);
   if(e.key==='Escape'){['codexModal','helpModal'].forEach(id=>$(id).hidden=true)}
-  if(e.key==='Enter'&&!$('title').hidden&&$('codexModal').hidden&&$('helpModal').hidden&&document.activeElement===document.body){e.preventDefault();startRun();return}
+  if(e.key==='Enter'&&!$('title').hidden&&$('codexModal').hidden&&$('helpModal').hidden&&document.activeElement===document.body){e.preventDefault();openSelect();return}
+  if(!$('select').hidden){
+    const i=PARTS.findIndex(p=>p.id===SEL.part);
+    if(e.key==='ArrowRight'||e.key==='ArrowLeft'){e.preventDefault();SEL.part=PARTS[(i+(e.key==='ArrowRight'?1:PARTS.length-1))%PARTS.length].id;renderSelect();return}
+    if(e.key==='ArrowUp'||e.key==='ArrowDown'){e.preventDefault();SEL.g=SEL.g==='m'?'f':'m';renderSelect();return}
+    if(e.key==='Enter'&&(document.activeElement===document.body||document.activeElement===$('selGo')||document.activeElement.classList.contains('sel-card'))){e.preventDefault();confirmSelect();return}
+    if(e.key==='Escape'){$('selBack').click();return}
+  }
   if(!$('levelup').hidden&&n>=1&&n<=3){const c=$('lvcards').children[n-1];if(c)c.click()}
   else if(!$('chest').hidden){if(n>=1&&$('verdict').hidden){const c=$('choices').children[n-1];if(c)c.click()}}
 });
