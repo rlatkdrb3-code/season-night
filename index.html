@@ -139,7 +139,16 @@ kbd{font-family:var(--body);border:1px solid rgba(28,26,23,.3);border-radius:3px
 .sel-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;width:100%;margin-top:4px}
 .sel-card{position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;padding:16px 10px 14px;border-radius:18px;background:rgba(255,255,255,.06);border:2px solid rgba(255,255,255,.12);color:#fff;cursor:pointer;font-family:inherit;min-width:0}
 .sel-card:hover{background:rgba(255,255,255,.1)}
-.sel-card[aria-pressed="true"]{border-color:var(--pwc);background:rgba(208,74,2,.16);box-shadow:0 0 0 4px rgba(208,74,2,.18)}
+/* 본부 테마색: 감사 PwC 주황 · 택스 화이트 · 딜 블랙(+금) · 디지털 블루 */
+.sel-card{--acc:208,74,2;background:linear-gradient(180deg,rgba(var(--acc),.16),rgba(255,255,255,.04) 60%);overflow:hidden}
+.sel-card::before{content:"";position:absolute;left:0;right:0;top:0;height:4px;background:rgb(var(--acc));opacity:.85}
+.sel-card[data-part="tax"]{--acc:243,240,232}
+.sel-card[data-part="deal"]{--acc:228,184,74;background:linear-gradient(180deg,#050508,#121218 70%);border-color:rgba(228,184,74,.28)}
+.sel-card[data-part="digital"]{--acc:61,106,214}
+.sel-card:hover{filter:brightness(1.12)}
+.sel-card[aria-pressed="true"]{border-color:rgb(var(--acc));background:linear-gradient(180deg,rgba(var(--acc),.3),rgba(var(--acc),.08) 70%);box-shadow:0 0 0 4px rgba(var(--acc),.2),0 10px 30px rgba(var(--acc),.18)}
+.sel-card[data-part="deal"][aria-pressed="true"]{background:linear-gradient(180deg,#000,#16140e 70%)}
+.sel-card.locked::before{opacity:.25}
 .sel-card img{width:96px;height:96px;margin-bottom:4px}
 .sel-card b{font-size:20px;font-weight:800}
 .sel-card .full{font-size:12px;color:rgba(255,255,255,.6)}
@@ -495,13 +504,13 @@ const ITEMS = {
           lv:['바라보는 방향으로 형광펜을 그어 베기','길이·피해 증가','뒤쪽도 함께 긋기','길이·피해 증가','피해 증가, 쿨타임 감소']},
   // 본부별 기본 무기 (starter): 해당 본부로 시작할 때만 지급, 상자에서는 나오지 않음
   zap:   {type:'w', name:'데이터 스파크', max:5, starter:true,
-          lv:['가까운 적에게 번개가 튀어 주변 적 3명까지 연쇄','피해 +2','연쇄 +1 (4명)','피해 +3','연쇄 +1 (5명), 연사 증가']},
+          lv:['가까운 적에게 번개가 튀어 주변 적 3명까지 연쇄','피해 증가','연쇄 +1 (4명)','피해 증가','연쇄 +1 (5명), 연사 증가']},
   laser: {type:'w', name:'샘플링 레이저', max:5, starter:true,
-          lv:['적 2명을 표본으로 찍어 조준 → 레이저로 일직선 관통','표본 +1 (3명)','피해 +4, 빔 굵기 증가','표본 +1 (4명)','표본 +1 (5명), 연사 증가']},
+          lv:['적 1명을 표본으로 찍어 조준 → 레이저로 일직선 관통','표본 +1 (2명)','피해·빔 굵기 증가','표본 +1 (3명)','피해·빔 굵기 증가, 연사 증가']},
   hole:  {type:'w', name:'누진세 블랙홀', max:5, starter:true,
           lv:['소용돌이를 던져 적을 빨아들이고, 많이 빨아들일수록 세율이 올라 크게 폭발','범위 증가','지속시간·피해 증가','범위 증가','범위·피해 증가, 주기 단축']},
   comp:  {type:'w', name:'복리 동전', max:5, starter:true,
-          lv:['동전이 적 사이를 튕겨 다니며 맞힐 때마다 커지고 강해짐 (복리)','튕김 +1','동전 +1 (2개)','튕김 +1, 복리율 증가','동전 +1 (3개), 복리율 증가']},
+          lv:['동전이 적 사이를 튕겨 다니며 맞힐 때마다 커지고 강해짐 (복리)','튕김 +1','동전 +1 (2개)','튕김 +1, 복리율 증가','피해·복리율 증가, 연사 증가']},
   book:  {type:'p', name:'회계기준서', max:5, desc:'공격력 +10%'},
   coffee:{type:'p', name:'아메리카노', max:5, desc:'공격 속도 +8% (모든 쿨타임 -8%)'},
   card:  {type:'p', name:'법인카드',   max:5, desc:'증빙 흡수 범위 +35%'},
@@ -520,10 +529,10 @@ const W_STATS = {
   calc: {n:[2,3,4,5,6], dmg:[8,10,12,14,16], r:[70,72,76,80,88], spd:[2.6,2.8,3,3.2,3.4], evo:{n:8,dmg:26,r:108,spd:4.2}},
   stamp:{cd:[3.2,3,3,2.8,2.5], n:[1,1,2,2,3], rad:[60,70,75,85,95], dmg:[24,30,36,42,50], evo:{cd:2.3,n:3,rad:125,dmg:85}},
   hl:   {cd:[1.5,1.4,1.4,1.3,1.1], len:[110,125,130,145,155], dmg:[16,20,24,28,34], back:[0,0,1,1,1], evo:{cd:1,len:195,dmg:46,back:1}},
-  zap:  {cd:[1.05,1,.95,.92,.82], dmg:[13,15,17,20,23], jumps:[3,3,4,4,5], range:[320,320,330,340,350], hop:[150,155,160,165,175]},
-  laser:{cd:[1.25,1.2,1.2,1.12,.98], n:[2,3,3,4,5], dmg:[17,19,23,25,28], w:[16,16,22,22,26], len:[560,560,600,620,660], aim:[.45,.42,.4,.38,.34]},
-  hole: {cd:[3.4,3.3,3.1,3.0,2.6], rad:[110,122,130,145,160], dur:[2.2,2.3,2.7,2.8,3.1], tick:[4,4,6,6,8], boom:[22,24,30,32,40], pull:[150,160,170,180,200]},
-  comp: {cd:[1.1,1.05,1.0,.95,.88], n:[1,1,2,2,3], dmg:[12,13,13,14,15], bounce:[4,5,5,6,6], rate:[1.25,1.25,1.25,1.32,1.38]}
+  zap:  {cd:[1.15,1.1,1.05,1,.9], dmg:[10,12,14,17,20], jumps:[3,3,4,4,5], range:[320,320,330,340,350], hop:[150,155,160,165,175]},
+  laser:{cd:[1.5,1.45,1.4,1.3,1.2], n:[1,2,2,3,3], dmg:[11,11,13,14,16], w:[12,12,15,15,18], len:[560,560,600,620,660], aim:[.45,.42,.4,.38,.34]},
+  hole: {cd:[5.5,5,4.6,4.2,3.8], rad:[85,95,105,115,125], dur:[2.0,2.1,2.4,2.5,2.8], tick:[1,1,2,2,2], boom:[4,5,7,8,9], pull:[150,160,170,180,200]},
+  comp: {cd:[2.0,1.9,1.8,1.7,1.6], n:[1,1,2,2,2], dmg:[5,6,5,5,5], bounce:[3,4,4,5,5], rate:[1.15,1.15,1.15,1.18,1.2]}
 };
 const WEAPONS = Object.keys(ITEMS).filter(k=>ITEMS[k].type==='w'&&!ITEMS[k].starter); // 진화가 있는 일반 무기
 const STARTERS = Object.keys(ITEMS).filter(k=>ITEMS[k].starter);
@@ -535,7 +544,7 @@ const PAL = {K:'#1b1a24',H:'#4a3428',h:'#7a5440',p:'#f49a9a',S:'#f2c6a0',s:'#d9a
   W:'#f3ead8',T:'#d9442f',R:'#8f2a1c',N:'#2c3a66',n:'#1e2848',P:'#232a40',B:'#14141c',L:'#e4b84a',Y:'#fff1c2',
   C:'#3a4060',c:'#5a6488',g:'#9fd8a8',O:'#8a5a3a',o:'#b07a4e',X:'#2a2f45',Z:'#d8f04a',z:'#f2ff7a',U:'#3d6ad6',
   u:'#7aa2ff',V:'#8f6cf0',v:'#c9b6ff',D:'#5b3fb0',J:'#c99a52',j:'#9a7038',A:'#9aa3b8',Q:'#4fb37a',I:'#ff7ab8',
-  F:'#d04a02',f:'#8f3301',y:'#ffb600',w:'#f3ead8',q:'#2f7a4f'}; // F·f: PwC 오렌지 모자(본색·챙), y: 로고 노랑
+  F:'#d04a02',f:'#8f3301',y:'#ffb600',w:'#f3ead8',q:'#2f7a4f',e:'#c9ccd6',x:'#3a3f52'}; // F·f: PwC 오렌지 모자(본색·챙), y: 로고 노랑
 // 캐릭터는 가로 20칸: 몸은 16칸(양옆 2칸 여백), 캡모자 챙이 오른쪽 여백으로 튀어나옴
 const HERO_TOP = [
 "......KKKKKKKKK.....",
@@ -582,10 +591,10 @@ const HERO_FRAMES = mkFrames(HERO_TOP,false), HERO_FRAMES_L = mkFrames(HERO_TOP_
 // cats = 이 본부로 플레이할 때 나오는 문제 분류 ('삼일'은 공통, 비어 있으면 전체 문제)
 // =====================================================================
 const PARTS = [
-  {id:'audit',   starter:'laser',  name:'감사',   full:'감사본부',   role:'재무제표를 검증하는 감사인', cats:['감사본부']},
-  {id:'tax',     starter:'hole',  name:'택스',   full:'택스본부',   role:'세무조정과 신고를 맡는 세무 전문가', cats:['택스본부']},
-  {id:'deal',    starter:'comp',  name:'딜',     full:'딜본부',     role:'M&A와 가치평가를 돕는 딜 전문가', cats:['딜본부']},
-  {id:'digital', starter:'zap',  name:'디지털', full:'디지털',     role:'데이터와 IT로 일하는 디지털 전문가', cats:['디지털']}
+  {id:'audit',   color:'#d04a02', starter:'laser',  name:'감사',   full:'감사본부',   role:'재무제표를 검증하는 감사인', cats:['감사본부']},
+  {id:'tax',     color:'#f3f0e8', starter:'hole',  name:'택스',   full:'택스본부',   role:'세무조정과 신고를 맡는 세무 전문가', cats:['택스본부']},
+  {id:'deal',    color:'#e4b84a', starter:'comp',  name:'딜',     full:'딜본부',     role:'M&A와 가치평가를 돕는 딜 전문가', cats:['딜본부']},
+  {id:'digital', color:'#3d6ad6', starter:'zap',  name:'디지털', full:'디지털',     role:'데이터와 IT로 일하는 디지털 전문가', cats:['디지털']}
 ];
 const GENDERS = [{id:'m',name:'남'},{id:'f',name:'여'}];
 // 해금 조건 (나중에 여기만 바꾸면 됨): after 본부 캐릭터로 plays판 플레이하면 해금
@@ -596,7 +605,7 @@ const UNLOCK_RULES = {
 };
 const partOf = id => PARTS.find(p=>p.id===id);
 // 본부별 캐릭터 도트 (가로 20칸 × 17줄: 0~6 머리·모자, 7~11 얼굴, 12~16 몸)
-// 감사: PwC 캡·남색 정장 / 택스: 초록 회계 바이저·동그란 안경·조끼 / 딜: 올백·선글라스·검은 정장·금색 넥타이 / 디지털: 헤드셋·후드티
+// 감사: PwC 주황 캡·주황 넥타이 / 택스: 화이트 바이저·금테 안경·화이트 정장 / 딜: 블랙 페도라·선글라스·블랙 정장·금색 넥타이 / 디지털: 블루 헤드셋·블루 후드티
 const HERO_MAPS = {
   audit_m:[
     "......KKKKKKKKK.....",
@@ -611,10 +620,10 @@ const HERO_MAPS = {
     "...KSppSSSmSSSppSK..",
     "....KSSSSSSSSSSSK...",
     ".....KKKSSSSKKK.....",
-    "......KNWWTWWNK.....",
-    ".....KNNWWTWWNNK....",
-    "....KSNNNNTNNNNSK...",
-    "....KKNNNLNNNNNKK...",
+    "......KNWWFWWNK.....",
+    ".....KNNWWFWWNNK....",
+    "....KSNNNNFNNNNSK...",
+    "....KKNNNyNNNNNKK...",
     ".....KPPPPPPPPPK...."],
   audit_f:[
     "......KKKKKKKKK.....",
@@ -630,70 +639,70 @@ const HERO_MAPS = {
     ".KHHKSSSSSSSSSSSK...",
     "..KK.KKKSSSSKKK.....",
     "......KNWWWWWNK.....",
-    ".....KNNTTRTTNNK....",
-    "....KSNNNTNTNNNSK...",
-    "....KKNNNLNNNNNKK...",
-    "....KnnnnnnnnnnnK..."],
+    ".....KNNFFfFFNNK....",
+    "....KSNNNFNFNNNSK...",
+    "....KKNNNyNNNNNKK...",
+    "....KFfFfFfFfFfFK..."],
   tax_m:[
     "....................",
     "......KKKKKKKK......",
     ".....KHHHHHHHHKK....",
     "....KHHHhhHHHHHHK...",
-    "...KQQQQQQQQQQQQQK..",
-    "...KgggggggggggggQQK",
+    "...KWWWWWWWWWWWWWK..",
+    "...KeeeeeeeeeeeeeWWK",
     "...KHSSSSSSSSSSSHKKK",
     "...KSjEWjjjjjEWjSK..",
     "...KSjEEjSSSjEEjSK..",
     "...KSpjjSSmSSjjpSK..",
     "....KSSSSSSSSSSSK...",
     ".....KKKSSSSKKK.....",
-    "......KCWWQWWCK.....",
-    ".....KWCCWQWCCWK....",
-    "....KSWCCCQCCCWSK...",
-    "....KKTCCLCCCCTKK...",
-    ".....KPPPPPPPPPK...."],
+    "......KWeWTWeWK.....",
+    ".....KWWeWTWeWWK....",
+    "....KSWWWWTWWWWSK...",
+    "....KKeWWLWWWWeKK...",
+    ".....KeeeeeeeeeK...."],
   tax_f:[
     "....................",
     "......KKKKKKKK......",
     ".....KHHHHHHHHKK....",
     "....KHHHhhHHHHHHK...",
-    "...KQQQQQQQQQQQQQK..",
-    "...KggggggggggggIQQK",
+    "...KWWWWWWWWWWWWWK..",
+    "...KeeeeeeeeeeeeIWWK",
     ".KHHHSSSSSSSSSSIIKHK",
     ".KHHSjEWjjjjjEWjSHHK",
     ".KHHSjEEjSSSjEEjSHHK",
     ".KHHppjjSSmSSjjppHHK",
     "..KKKSSSSSSSSSSSKKK.",
     ".....KKKSSSSKKK.....",
-    "......KCWWWWWCK.....",
-    ".....KCCQQqQQCCK....",
-    "....KSCCCWQWCCCSK...",
-    "....KKCCCLCLCCCKK...",
-    "....KCcCcCcCcCcCK..."],
+    "......KWeeeeeWK.....",
+    ".....KWWTTRTTWWK....",
+    "....KSWWWeWeWWWSK...",
+    "....KKWWWLWLWWWKK...",
+    "....KWeWeWeWeWeWK..."],
   deal_m:[
     "....................",
-    "......KKKKKKKK......",
-    ".....KHHhhhhHHK.....",
-    "....KHHHHHhhHHHHK...",
-    "...KHHHHHHHHHHHHHK..",
-    "...KHHHHHHHHHHHHHK..",
+    ".......KKKKKK.......",
+    "......KxBBBBxK......",
+    ".....KxBBBBBBxK.....",
+    "...KKLLLLLLLLLLKK...",
+    "..KBBBBBBBBBBBBBBK..",
     "...KHSSSSSSSSSSSHK..",
     "...KSBBBBKKKBBBBSK..",
     "...KSBWBBSSSBWBBSK..",
     "...KSpSSSSmSSSSpSK..",
     "....KSSSSSSSSSSSK...",
     ".....KKKSSSSKKK.....",
-    "......KXWWLWWXK.....",
-    ".....KXXWWLWWXXK....",
-    "....KSXXXXLXXXXSK...",
-    "....KKXXXYXXXXXKK...",
+    "......KBWWLWWBK.....",
+    ".....KBBWWLWWBBK....",
+    "....KSBBxBLBxBBSK...",
+    "....KKBBBYBBBBBKK...",
     ".....KBBBBBBBBBK...."],
   deal_f:[
     "....................",
     "......KKKKKKKK......",
     ".....KHHhhhhHHK.....",
     "....KHHHHHhhHHHHK...",
-    "...KHHBBBKKBBBHHHK..",
+    "...KHHAAALLAAAHHHK..",
     "...KHHHHHHHHHHHHHK..",
     ".KHHHSSSSSSSSSSSHKH.",
     ".KHHSKEWSSSSSEWKSHHK",
@@ -701,17 +710,17 @@ const HERO_MAPS = {
     ".KHHppEESSmSSEEppHHK",
     ".KHLKSSSSSSSSSSSKLHK",
     ".KHH.KKKSSSSKKK..HHK",
-    ".KHH..KXWWWWWXK..HHK",
-    "..KK.KXXWWLWWXXK.KK.",
-    "....KSXXXXWXXXXSK...",
-    "....KKXXXYXXXXXKK...",
+    ".KHH..KBWWWWWBK..HHK",
+    "..KK.KBBWWLWWBBK.KK.",
+    "....KSBBxBBBxBBSK...",
+    "....KKBBBYBBBBBKK...",
     ".....KBBBBBBBBBK...."],
   digital_m:[
     "......KKKKKKKK......",
-    ".....KAAAAAAAAK.....",
-    "....KAHHHHHHHHAK....",
-    "...KAHHhHHHHhHHHAK..",
-    "..KAHHHHHHHHHHHHHAK.",
+    ".....KuuuuuuuuK.....",
+    "....KuHHHHHHHHuK....",
+    "...KuHHhHHHHhHHHuK..",
+    "..KuHHHHHHHHHHHHHuK.",
     ".KUUUHHHHHHHHHHHUUUK",
     ".KUuUHSSSSSSSSSHUuUK",
     ".KUKSSEWSSSSSEWSSKUK",
@@ -723,16 +732,16 @@ const HERO_MAPS = {
     ".....KUUuUUUuUUK....",
     "....KSUUUUUUUUUSK...",
     "....KKUUUuuuUUUKK...",
-    ".....KPPPPPPPPPK...."],
+    ".....KNNNNNNNNNK...."],
   digital_f:[
     "..KKK.KKKKKKKK.KKK..",
-    ".KHhHKAAAAAAAAKHhHK.",
-    ".KHHKAHHHHHHHHAKHHK.",
-    "...KAHHhHHHHhHHHAK..",
-    "..KAHHHHHHHHHHHHHAK.",
-    ".KUUUHHHHHHHHHHHUUUK",
-    ".KUuUHSSSSSSSSSHUuUK",
-    ".KUKSKEWSSSSSEWKSKUK",
+    ".KHhHKuuuuuuuuKHhHK.",
+    ".KHHKuHHHHHHHHuKHHK.",
+    "...KuHHhHHHHhHHHuK..",
+    "..KuHHHHHHHHHHHHHuK.",
+    ".KNNNHHHHHHHHHHHNNNK",
+    ".KNuNHSSSSSSSSSHNuNK",
+    ".KNKSKEWSSSSSEWKSKNK",
     ".KHKSSEESSSSSEESSKHK",
     ".KHKppEESSmSSEEppKHK",
     ".KH.KSSSSSSSSSSSK.HK",
@@ -741,21 +750,22 @@ const HERO_MAPS = {
     ".....KUUuUUUuUUK....",
     "....KSUUUUUUUUUSK...",
     "....KKUUUuuuUUUKK...",
-    "....KDDDDDDDDDDDK..."],
+    "....KNnNnNnNnNnNK..."],
 };
 // 머리색 (본부·성별별)
-const HERO_HAIR = {audit_m:{H:'#4a3428',h:'#7a5440'}, audit_f:{H:'#6a3a22',h:'#a0603c'}, tax_m:{H:'#3b3046',h:'#5e4e6e'}, tax_f:{H:'#5a2e3a',h:'#8a4a5a'}, deal_m:{H:'#2a1f1a',h:'#6b4a38'}, deal_f:{H:'#3a2418',h:'#8a5a3a'}, digital_m:{H:'#7a4a2e',h:'#b07a4e'}, digital_f:{H:'#f08a5a',h:'#ffb08a'}};
-// 신발색 (팔레트 글자)
-const HERO_SHOE = {audit_m:'B', audit_f:'B', tax_m:'B', tax_f:'O', deal_m:'B', deal_f:'T', digital_m:'W', digital_f:'W'};
+const HERO_HAIR = {audit_m:{H:'#4a3428',h:'#7a5440'}, audit_f:{H:'#6a3a22',h:'#a0603c'}, tax_m:{H:'#3b3046',h:'#5e4e6e'}, tax_f:{H:'#5a2e3a',h:'#8a4a5a'}, deal_m:{H:'#1c1a20',h:'#3e3a46'}, deal_f:{H:'#1c1a20',h:'#4a4452'}, digital_m:{H:'#22306a',h:'#3f58b0'}, digital_f:{H:'#4f86e8',h:'#9cc4ff'}};
+// 신발색·바지색 (팔레트 글자)
+const HERO_SHOE = {audit_m:'B', audit_f:'F', tax_m:'B', tax_f:'B', deal_m:'B', deal_f:'T', digital_m:'W', digital_f:'W'};
+const HERO_PANTS = {audit:'P', tax:'e', deal:'B', digital:'N'};
 const putAt = (r,i,c) => (i>=0&&i<r.length)?r.slice(0,i)+c+r.slice(i+1):r;
 // 다리: 남자는 바지, 여자는 맨다리. 신발색은 HERO_SHOE
-const legsFor = (g,shoe) => {const o={};for(const k in LEGS)o[k]=LEGS[k].map((r,j)=>{if(g==='f')r=r.replace(/P/g,'S');return j===1?r.replace(/B/g,shoe):r});return o};
+const legsFor = (g,shoe,pants) => {const o={};for(const k in LEGS)o[k]=LEGS[k].map((r,j)=>{r=r.replace(/P/g,g==='f'?'S':pants);return j===1?r.replace(/B/g,shoe):r});return o};
 // 왼쪽 보기: 전체 좌우반전. 감사는 모자 글자(0~4행)가 거울상이 되지 않게 반전 없이 한 칸 당기고, 챙(5행)만 반전
 const leftTop = (top,part) => part!=='audit'?top.map(flipRow):top.map((r,j)=>j<5?r.slice(1)+'.':j===5?setCh(flipRow(r.replace('w','f')),4,'w'):flipRow(r));
 const mkFramesG=(top,fl,legs)=>{const L=k=>fl?legs[k].map(flipRow):legs[k];return [top.concat(L('a'),[PADROW]),[PADROW].concat(top,L('i')),top.concat(L('b'),[PADROW]),[PADROW].concat(top,L('i'))]};
 const HERO_SET = {};
 for(const pt of PARTS)for(const g of GENDERS){
-  const k=pt.id+'_'+g.id, top=HERO_MAPS[k], legs=legsFor(g.id,HERO_SHOE[k]);
+  const k=pt.id+'_'+g.id, top=HERO_MAPS[k], legs=legsFor(g.id,HERO_SHOE[k],HERO_PANTS[pt.id]);
   HERO_SET[k]={top, R:mkFramesG(top,false,legs), L:mkFramesG(leftTop(top,pt.id),true,legs), over:HERO_HAIR[k]};
 }
 const heroURLCache = {};
@@ -892,7 +902,7 @@ function makeTextures(sc){
   add('mob0',MOB0,3);add('receipt',RECEIPT,3);add('mob1',MOB1,3);add('elite',ELITE,3);
   add('boss1a',genBoss1(0),3);add('boss1b',genBoss1(1.6),3);add('boss2',genBoss2(),3);
   add('chest',CHEST,3);add('chestG',CHEST,3,GOLD_OVER);
-  add('coin',['..KKK..','.KYYLK.','KYLLLLK','KLLLLLK','KLLLLjK','.KLLjK.','..KKK..'],3);add('ink',INK,3);add('inkE',INK,3,{U:'#e4b84a',L:'#d9442f'});
+  add('coin',['..KKKKK..','.KYYYLLK.','KYYLLLLjK','KYLLYLLjK','KLLYYYLjK','KLLLYLjjK','KLLLLjjjK','.KLjjjjK.','..KKKKK..'],3);add('ink',INK,3);add('inkE',INK,3,{U:'#e4b84a',L:'#d9442f'});
   add('key',KEY,3);add('keyE',KEY,3,{W:'#9fd8a8',E:'#2a2f45'});
   add('stampfx',ICONS.stamp,5);add('stampE',ICONS.stamp,6,EVO_OVER.stamp);
   add('gem',["..K..",".KLK.","KLYLK",".KLK.","..K.."],3);
@@ -936,6 +946,8 @@ const SFX = {
   laser(){if(this.gate('laser',120)){this.tone(2400,.16,{type:'sawtooth',vol:.04,slide:.25});this.noise(.08,{vol:.05,freq:4200})}},
   hole(){this.tone(220,.5,{type:'sine',vol:.08,slide:.35});this.noise(.4,{vol:.05,freq:300})},
   boom(big){this.noise(big?.45:.28,{vol:big?.24:.16,freq:140});this.tone(big?70:100,.3,{type:'sine',vol:.22,slide:.5})},
+  coinHit(n){if(this.gate('ch',40)){const k=Math.pow(1.09,Math.min(n,8));this.noise(.05,{vol:.09,freq:3800});this.tone(988*k,.07,{type:'square',vol:.045});this.tone(1480*k,.1,{type:'square',vol:.035,delay:.045})}},
+  coinBoom(n){this.noise(.3,{vol:.2,freq:180});this.tone(90,.25,{type:'sine',vol:.22,slide:.5});[1319,1568,2093].forEach((f,i)=>this.tone(f,.12,{type:'triangle',vol:.06,delay:.05+i*.06}))},
   coin(){if(this.gate('coin',110)){this.tone(1320,.05,{type:'square',vol:.03});this.tone(1760,.06,{type:'square',vol:.025,delay:.04})}},
   hit(){if(this.gate('hit',45))this.noise(.04,{vol:.06,freq:2600})},
   tick(){if(this.gate('tick',60))this.tone(1400,.03,{vol:.04})},
@@ -986,7 +998,7 @@ function recalc(S){
   const mh=100+20*L('badge'); if(mh>S.maxhp)S.hp+=mh-S.maxhp; S.maxhp=mh; S.hp=Math.min(S.hp,S.maxhp); S.regen=.5*L('badge');
 }
 // 누진세율: 블랙홀이 빨아들인 적 수 → 세율 구간과 폭발 배수
-const TAX_BRACKETS=[[0,'6%',1],[3,'15%',1.5],[6,'24%',2.1],[10,'35%',2.9],[15,'45%',3.8]];
+const TAX_BRACKETS=[[0,'6%',1],[3,'15%',1.25],[6,'24%',1.5],[10,'35%',1.8],[15,'45%',2.2]];
 function taxRate(n){let i=0;for(let j=0;j<TAX_BRACKETS.length;j++)if(n>=TAX_BRACKETS[j][0])i=j;return{i,label:TAX_BRACKETS[i][1],mult:TAX_BRACKETS[i][2]}}
 function wstat(S,k){const it=S.items[k],t=W_STATS[k];if(it.evo)return Object.assign({},t.evo);const i=it.lv-1,o={};for(const p in t)if(p!=='evo')o[p]=t[p][i];return o}
 function evoReady(S,k){const it=S.items[k];return it&&ITEMS[k].type==='w'&&!!ITEMS[k].pair&&!it.evo&&it.lv>=5&&!!S.items[ITEMS[k].pair]}
@@ -1086,7 +1098,7 @@ class Battle extends Phaser.Scene{
 
     $('hud').hidden=this.demo;$('vig').className='';$('boss').hidden=true;
     if(this.demo){for(let i=0;i<30;i++)this.spawnMob(true);this.player.setVisible(false);this.shadow.setVisible(false)}
-    else{setText('stagetag','STAGE 1 / 4');renderSlots(this.S);toast('STAGE 1');$('portrait').src=portraitURL(CHOICE.part,CHOICE.g)}
+    else{setText('stagetag','STAGE 1 / 4');renderSlots(this.S);toast('STAGE 1');$('portrait').src=portraitURL(CHOICE.part,CHOICE.g);$('portrait').style.borderColor=partOf(CHOICE.part).color}
   }
   viewMax(){const c=this.cameras.main;return Math.max(c.worldView.width,c.worldView.height,this.scale.width/c.zoom,this.scale.height/c.zoom)}
   applyZoom(){const w=this.scale.width,h=this.scale.height;this.cameras.main.setZoom(Phaser.Math.Clamp(Math.min(w,h)/720,.62,1))}
@@ -1232,24 +1244,24 @@ class Battle extends Phaser.Scene{
     for(const h of this.holes){
       const s=h.s;
       if(h.fly<1){h.fly=Math.min(1,h.fly+dt/.28);const k=h.fly,x=h.x+(h.tx-h.x)*k,y=h.y+(h.ty-h.y)*k-Math.sin(k*Math.PI)*60;
-        g.fillStyle(0x14060a,1);g.fillCircle(x,y,9);g.lineStyle(2,0xff6a52,1);g.strokeCircle(x,y,9);
-        if(h.fly>=1){h.x=h.tx;h.y=h.ty;this.fxRed.explode(10,h.x,h.y)}continue}
+        g.fillStyle(0x0b0b10,1);g.fillCircle(x,y,9);g.lineStyle(2,0xffffff,1);g.strokeCircle(x,y,9);
+        if(h.fly>=1){h.x=h.tx;h.y=h.ty;this.fxSpark.explode(12,h.x,h.y)}continue}
       h.t+=dt;h.spin+=dt*(5+h.got.size*.35);h.scale=Math.min(1,h.scale+dt*5);
       const R=s.rad*h.scale;
       // 흡입 + 지속 피해
-      h.tickT-=dt;const tick=h.tickT<=0;if(tick)h.tickT=.3;
+      h.tickT-=dt;const tick=h.tickT<=0;if(tick)h.tickT=.5;
       for(const e of this.targets()){const dx=h.x-e.x,dy=h.y-e.y,d=Math.hypot(dx,dy);if(d>R+e.hitR)continue;
         h.got.add(e);
         if(!e.isBoss&&d>8){e.kb=Math.max(e.kb||0,.05);const v=s.pull*(.55+.45*(1-d/R))+40;e.setVelocity(dx/d*v,dy/d*v)}
-        if(tick)this.dmg(e,Math.max(1,Math.round(s.tick*this.S.might)),0,0,'#ff8a76')}
+        if(tick)this.dmg(e,Math.max(1,Math.round(s.tick*this.S.might)),0,0,'#e6e8f0',8)}
       // 그리기: 어두운 중심 + 회전하는 나선팔
       const rate=taxRate(h.got.size),hot=rate.i/4;
-      g.fillStyle(0xe0301e,.08+.06*hot);g.fillCircle(h.x,h.y,R);
-      g.lineStyle(1.5,0xff6a52,.35);g.strokeCircle(h.x,h.y,R);
-      for(let arm=0;arm<4;arm++){g.lineStyle(3,arm%2?0xff8a76:0xe0301e,.75);g.beginPath();
+      g.fillStyle(0xf3ead8,.06+.05*hot);g.fillCircle(h.x,h.y,R);
+      g.lineStyle(1.5,0xffffff,.4);g.strokeCircle(h.x,h.y,R);
+      for(let arm=0;arm<4;arm++){g.lineStyle(arm%2?2:3.5,arm%2?0xc9ccd6:0xffffff,arm%2?.55:.85);g.beginPath();
         for(let i=0;i<=14;i++){const t=i/14,r=R*(1-t)+6,a=h.spin+arm*Math.PI/2+t*3.2;const X=h.x+Math.cos(a)*r,Y=h.y+Math.sin(a)*r*.82;i?g.lineTo(X,Y):g.moveTo(X,Y)}g.strokePath()}
-      g.fillStyle(0x0b0306,1);g.fillCircle(h.x,h.y,10+4*hot);g.lineStyle(2,0xffb600,.5+.5*hot);g.strokeCircle(h.x,h.y,10+4*hot);
-      if(Math.random()<.5){const a=rnd(0,TAU);this.fxRed.emitParticleAt(h.x+Math.cos(a)*R*.9,h.y+Math.sin(a)*R*.75,1)}
+      g.fillStyle(0x0b0b10,1);g.fillCircle(h.x,h.y,10+4*hot);g.lineStyle(2,0xe0301e,.5+.5*hot);g.strokeCircle(h.x,h.y,10+4*hot);
+      if(Math.random()<.6){const a=rnd(0,TAU);this.fxSpark.emitParticleAt(h.x+Math.cos(a)*R*.9,h.y+Math.sin(a)*R*.75,1)}
       if(h.t>=s.dur)this.holeBoom(h);
     }
     this.holes=this.holes.filter(h=>!h.dead);
@@ -1258,35 +1270,46 @@ class Battle extends Phaser.Scene{
     h.dead=true;const s=h.s,rate=taxRate(h.got.size),R=s.rad*1.05;
     const dmg=Math.round(s.boom*rate.mult*this.S.might);
     for(const e of this.targets()){const d=Math.hypot(e.x-h.x,e.y-h.y);if(d<R+e.hitR)this.dmg(e,dmg,Math.atan2(e.y-h.y,e.x-h.x),320,'#ffd86b')}
-    this.ring(h.x,h.y,0xff6a52,R,false);this.ring(h.x,h.y,0xffb600,R*.6,false);
-    this.fxRed.explode(16+rate.i*6,h.x,h.y);this.fxGold.explode(6+rate.i*4,h.x,h.y);
-    this.float(h.x,h.y-64,'세율 '+rate.label,rate.i>=3?'#ffd86b':'#ff8a76',12+rate.i*3,'"Do Hyeon",sans-serif');
+    this.ring(h.x,h.y,0xffffff,R,false);this.ring(h.x,h.y,0xe0301e,R*.6,false);
+    this.fxSpark.explode(20+rate.i*8,h.x,h.y);this.fxRed.explode(4+rate.i*4,h.x,h.y);
+    this.float(h.x,h.y-64,'세율 '+rate.label,rate.i>=3?'#ff6a52':'#ffffff',12+rate.i*3,'"Do Hyeon",sans-serif');
     this.cameras.main.shake(120+rate.i*40,.004+rate.i*.002);SFX.boom(rate.i>=3);
   }
   // 딜: 동전이 적 사이를 튕기며 맞힐 때마다 피해·크기가 복리로 불어남. 튕김을 다 쓰면 금빛 폭발
   fireComp(){
     const S=this.S,p=this.player,s=wstat(S,'comp'),tg=this.nearest(360);if(!tg.length)return false;
     for(let i=0;i<s.n;i++){const t=tg[Math.min(i,tg.length-1)].e,a=Math.atan2(t.y-p.y,t.x-p.x)+(i?(i%2?1:-1)*.25:0);
-      const b=this.fireB(this.bullets,'coin',p.x,p.y-4,a,520);if(!b)continue;
-      b.body.setCircle(9,1.5,1.5);b.life=.75;b.dmg=Math.round(s.dmg*S.might);b.pierce=0;b.hits=new Set();b.evo=false;b.coin=true;b.bounce=s.bounce;b.rate=s.rate;b.n=0}
-    SFX.coin();return true;
+      const b=this.fireB(this.bullets,'coin',p.x,p.y-4,a,560);if(!b)continue;
+      b.body.setCircle(11,2.5,2.5);b.life=.75;b.dmg=Math.round(s.dmg*S.might);b.pierce=0;b.hits=new Set();b.evo=false;b.coin=true;b.bounce=s.bounce;b.rate=s.rate;b.n=0;b.base=1}
+    this.fxGold.explode(5,p.x,p.y-4);SFX.coin();return true;
   }
   coinHit(b,e){
     if(b.hits.has(e))return;b.hits.add(e);b.n++;
-    this.dmg(e,b.dmg,Math.atan2(b.body.velocity.y,b.body.velocity.x),160,'#ffd86b');this.fxGold.explode(3+b.n,b.x,b.y);SFX.coin();
-    if(b.n>1)this.float(b.x+14,b.y-30,'×'+b.rate.toFixed(2).replace(/0$/,''),'#9fd8a8',9);
-    b.dmg=Math.round(b.dmg*b.rate);b.setScale(1+b.n*.16);
+    const n=b.n,x=b.x,y=b.y;
+    this.dmg(e,b.dmg,Math.atan2(b.body.velocity.y,b.body.velocity.x),260,n>=4?'#fff1c2':'#ffd86b',11+Math.min(n,6)*1.5);
+    // 타격감: 금화 파편 + 빛 고리 + 화면 흔들림 + 짧은 멈춤 + 점점 높아지는 효과음
+    this.fxGold.explode(6+n*3,x,y);this.fxSpark.explode(5,x,y);
+    this.ring(x,y,0xffe6a0,20+n*5,false);
+    this.cameras.main.shake(60+n*10,.002+n*.0007);
+    if(n>=3)this.hitstop(16+n*4);
+    SFX.coinHit(n);
+    if(n>1)this.float(x+18,y-34,'×'+b.rate.toFixed(2).replace(/0$/,''),'#9fd8a8',9+Math.min(n,6));
+    b.dmg=Math.round(b.dmg*b.rate);b.base=1+n*.2;
+    this.tweens.killTweensOf(b);b.setScale(b.base*1.6);this.tweens.add({targets:b,scale:b.base,duration:140,ease:'Back.easeOut'});
     if(b.bounce<=0){this.coinBoom(b);return}
     b.bounce--;
-    let best=null,bd=280*280;for(const o of this.targets()){if(!o.active||b.hits.has(o))continue;const d=(o.x-b.x)**2+(o.y-b.y)**2;if(d<bd){bd=d;best=o}}
+    let best=null,bd=280*280;for(const o of this.targets()){if(!o.active||b.hits.has(o))continue;const d=(o.x-x)**2+(o.y-y)**2;if(d<bd){bd=d;best=o}}
     if(!best){this.coinBoom(b);return}
-    const a=Math.atan2(best.y-b.y,best.x-b.x),v=560+b.n*40;b.setVelocity(Math.cos(a)*v,Math.sin(a)*v);b.life=.7;b.dir=a;
+    const a=Math.atan2(best.y-y,best.x-x),v=600+n*50;b.setVelocity(Math.cos(a)*v,Math.sin(a)*v);b.life=.7;
   }
   coinBoom(b){
-    const x=b.x,y=b.y,R=46+b.n*9,dmg=Math.round(b.dmg*.7);
-    for(const e of this.targets()){if(Math.hypot(e.x-x,e.y-y)<R+e.hitR)this.dmg(e,dmg,Math.atan2(e.y-y,e.x-x),240,'#ffd86b')}
-    this.ring(x,y,0xffd86b,R,false);this.fxGold.explode(10+b.n*4,x,y);if(b.n>=4)this.cameras.main.shake(80,.004);SFX.boom(false);
-    this.killB(this.bullets,b);
+    const x=b.x,y=b.y,n=b.n,R=30+n*7,dmg=Math.max(1,Math.round(b.dmg*.35));
+    for(const e of this.targets()){if(Math.hypot(e.x-x,e.y-y)<R+e.hitR)this.dmg(e,dmg,Math.atan2(e.y-y,e.x-x),300,'#ffd86b')}
+    this.ring(x,y,0xffd86b,R+10,false);this.ring(x,y,0xffffff,R*.55,false);
+    this.fxGold.explode(14+n*5,x,y);this.fxSpark.explode(10,x,y);
+    this.cameras.main.shake(110+n*15,.004+n*.001);this.hitstop(30+n*5);SFX.coinBoom(n);
+    if(n>=3)this.float(x,y-48,'복리 '+n+'회!','#ffd86b',13+Math.min(n,6)*1.5,'"Do Hyeon",sans-serif');
+    this.tweens.killTweensOf(b);this.killB(this.bullets,b);
   }
   onInk(b,e){
     if(!b.active||!e.active)return;
@@ -1341,11 +1364,11 @@ class Battle extends Phaser.Scene{
   }
 
   // ----- 피해 / 처치 -----
-  dmg(e,dmg,ang,force,col){
+  dmg(e,dmg,ang,force,col,size=10){
     if(!e.active)return;
     if(e.isBoss){if(e.hp<=0)return;e.hp-=dmg;e.setTintFill(0xffffff);e.flashT=.05;this.float(e.x+rnd(-24,24),e.y-24,dmg,'#c9b6ff',12);SFX.hit();if(e.hp<=0)this.bossDie(e);return}
     e.hp-=dmg;e.setTintFill(0xffffff);e.flashT=.06;if(force){e.kb=.09;e.setVelocity(Math.cos(ang)*force,Math.sin(ang)*force)}
-    this.float(e.x,e.y-18,dmg,col,10);SFX.hit();
+    this.float(e.x,e.y-18,dmg,col,size);SFX.hit();
     if(e.hp<=0)this.killEnemy(e);
   }
   killEnemy(e){
@@ -1431,7 +1454,7 @@ class Battle extends Phaser.Scene{
     cd('zap',()=>this.fireZap());cd('laser',()=>this.fireLaser());cd('hole',()=>this.fireHole());cd('comp',()=>this.fireComp());
     this.updLaser(dt);this.updHoles(dt);
     this.updCalc(dt);
-    for(const b of this.bullets.getChildren()){if(!b.active)continue;b.life-=dt;if(b.life<=0){if(b.coin&&b.n>0)this.coinBoom(b);else this.killB(this.bullets,b)}else if(!b.coin&&(b.evo||Math.random()<.3))this.fxInk.emitParticleAt(b.x,b.y,1);else if(b.coin){b.rotation+=dt*14;if(Math.random()<.5)this.fxSpark.emitParticleAt(b.x,b.y,1)}}
+    for(const b of this.bullets.getChildren()){if(!b.active)continue;b.life-=dt;if(b.life<=0){if(b.coin&&b.n>0)this.coinBoom(b);else this.killB(this.bullets,b)}else if(!b.coin&&(b.evo||Math.random()<.3))this.fxInk.emitParticleAt(b.x,b.y,1);else if(b.coin){b.rotation+=dt*14;this.fxSpark.emitParticleAt(b.x,b.y,1);if(Math.random()<.35)this.fxGold.emitParticleAt(b.x,b.y,1)}}
     for(const b of this.ebullets.getChildren()){if(!b.active)continue;b.life-=dt;if(b.life<=0)this.killB(this.ebullets,b)}
     // 적
     const V=this.viewMax(),far=V*1.25;
