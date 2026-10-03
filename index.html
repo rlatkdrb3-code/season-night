@@ -456,7 +456,23 @@ const QUESTIONS = [{"cat": "삼일","q": "2026년 채용 공고상 신입 공인
 {"cat": "감사본부","q": "실증절차 중 하나인 ‘외부조회’를 통해 얻기 가장 적합한 경영진 주장(Assertion)은?","choices": ["완전성 (Completeness)","실재성 (Existence)","분류 (Classification)","이해가능성 (Understandability)"],"answer": 1,"exp": "제3자가 잔액의 존재를 직접 확인해 주므로 실재성 증거로 가장 적합하다."},
 {"cat": "감사본부","q": "ITGC 테스트 결과 부적합하다는 결론이 도출될 때 가장 적합한 대응은?","choices": ["즉시 ‘의견거절’ 표명","IT 관련 자동화된 통제에 대한 의존을 줄이고 실증절차 확대","실증절차를 생략하고 내부통제 테스트만 추가 수행","재무제표 전체 중요성 금액을 상향 조정"],"answer": 1,"exp": "ITGC가 미흡하면 그에 기반한 자동화 통제를 신뢰하기 어려우므로 실증절차로 보완한다."},
 {"cat": "감사본부","q": "매출채권에 대한 외부조회 회신이 오지 않는 경우 대체적 절차로 적합한 것은?","choices": ["매출처의 사업자등록증 복사본 확인","기말 이후 실제 대금 회수 내역 확인","내부 영업담당자의 매출 발생 진술 입수","해당 매출처와의 거래계약서 열람"],"answer": 1,"exp": "기말 이후 실제 입금은 채권이 존재했다는 외부 증거가 된다."},
-{"cat": "감사본부","q": "피감사기업의 ‘계속기업 관련 중요한 불확실성’이 존재하고 주석 공시가 잘 이행되었을 때 감사보고서에 반영할 형태는?","choices": ["한정의견 표명","의견거절 표명","적정의견 및 ‘계속기업 관련 중요한 불확실성’ 단락 기재","적정의견 및 핵심감사사항(KAM) 기술"],"answer": 2,"exp": "공시가 적절하면 의견은 적정으로 두고 별도 단락으로 이용자의 주의를 환기한다."}];
+{"cat": "감사본부","q": "피감사기업의 ‘계속기업 관련 중요한 불확실성’이 존재하고 주석 공시가 잘 이행되었을 때 감사보고서에 반영할 형태는?","choices": ["한정의견 표명","의견거절 표명","적정의견 및 ‘계속기업 관련 중요한 불확실성’ 단락 기재","적정의견 및 핵심감사사항(KAM) 기술"],"answer": 2,"exp": "공시가 적절하면 의견은 적정으로 두고 별도 단락으로 이용자의 주의를 환기한다."},
+{"cat": "디지털","q": "그래프 데이터베이스(Graph DB)에서 ‘고객’, ‘거래처’ 같은 개체를 표현하는 기본 단위는?","choices": ["노드(Node)","테이블(Table)","셀(Cell)"], "answer": 0, "exp": "그래프 DB는 개체를 노드로, 개체 사이의 관계를 엣지(관계)로 저장한다."},
+{"cat": "디지털","q": "그래프 DB에서 ‘A사가 B사의 지분 30%를 보유한다’처럼 두 개체 사이의 연결을 표현하는 것은?","choices": ["인덱스(Index)","엣지(Edge·관계)","스키마(Schema)"], "answer": 1, "exp": "엣지는 두 노드를 잇는 관계이며, 지분율 같은 속성(property)을 함께 가질 수 있다."},
+{"cat": "디지털","q": "관계형 DB보다 그래프 DB가 특히 유리한 분석은?","choices": ["월별 매출 합계 집계","단일 테이블 정렬","여러 단계로 얽힌 특수관계자·지배구조 추적"], "answer": 2, "exp": "관계를 여러 단계(multi-hop) 따라가는 탐색은 JOIN을 반복하는 관계형 DB보다 그래프 DB가 빠르고 직관적이다."},
+{"cat": "디지털","q": "대표적인 그래프 DB인 Neo4j에서 주로 쓰는 질의 언어는?","choices": ["Cypher","VBA","HTML"], "answer": 0, "exp": "Cypher는 (노드)-[관계]->(노드) 패턴으로 그래프를 조회하는 언어다."},
+{"cat": "디지털","q": "온톨로지(Ontology)를 가장 잘 설명한 것은?","choices": ["데이터를 암호화하는 보안 기술","특정 분야의 개념과 개념 사이의 관계를 정의한 체계","데이터를 빠르게 정렬하는 알고리즘"], "answer": 1, "exp": "예: ‘자산’ 아래에 ‘유동자산’이 있고, ‘매출채권은 유동자산의 하위 개념’처럼 개념과 관계를 정의한다."},
+{"cat": "디지털","q": "지식그래프에서 ‘삼일회계법인 – 소속 – PwC 네트워크’처럼 정보를 표현하는 기본 형태는?","choices": ["주어–술어–목적어 트리플(Triple)","행–열–값 피벗","키–값–버전 로그"], "answer": 0, "exp": "RDF 기반 지식그래프는 정보를 (주어, 술어, 목적어) 트리플로 저장한다."},
+{"cat": "디지털","q": "관계형 DB에서 각 행(레코드)을 고유하게 식별하는 열은?","choices": ["외래키(Foreign Key)","기본키(Primary Key)","정렬키(Sort Key)"], "answer": 1, "exp": "기본키는 중복과 빈 값이 허용되지 않으며, 외래키는 다른 테이블의 기본키를 참조한다."},
+{"cat": "디지털","q": "SQL에서 ‘전표 테이블’과 ‘거래처 테이블’을 거래처코드 기준으로 합쳐 조회할 때 쓰는 구문은?","choices": ["GROUP BY","ORDER BY","JOIN"], "answer": 2, "exp": "JOIN은 공통 키로 두 테이블을 연결한다. 엑셀의 VLOOKUP·XLOOKUP과 비슷한 역할이다."},
+{"cat": "디지털","q": "여러 시스템의 데이터를 추출하고 정제·변환해 분석용 저장소에 적재하는 과정은?","choices": ["ETL","OCR","VPN"], "answer": 0, "exp": "Extract(추출) – Transform(변환) – Load(적재)의 약자다."},
+{"cat": "디지털","q": "반복적인 규칙 기반 업무(예: 증빙 내려받기, 시스템 입력)를 소프트웨어 봇이 대신 수행하게 하는 기술은?","choices": ["블록체인","RPA(로보틱 프로세스 자동화)","VR"], "answer": 1, "exp": "RPA는 사람이 화면에서 하던 클릭·입력 작업을 정해진 규칙대로 자동화한다."},
+{"cat": "디지털","q": "감사 데이터 분석에서 표본이 아닌 모집단 전체 전표를 검토할 때의 주된 장점은?","choices": ["감사 수수료가 항상 낮아진다","경영진의 확인이 필요 없어진다","이상 거래를 빠짐없이 찾아낼 가능성이 높아진다"], "answer": 2, "exp": "전수 분석은 표본 위험을 줄이고 주말 전기, 승인권자 없는 전표 같은 예외를 모두 걸러낼 수 있다."},
+{"cat": "디지털","q": "자연적으로 생긴 숫자 데이터의 첫 자리 분포(1이 약 30%)를 이용해 조작 가능성을 탐지하는 기법은?","choices": ["벤포드 법칙(Benford’s Law)","파레토 법칙","무어의 법칙"], "answer": 0, "exp": "분포가 벤포드 법칙과 크게 다르면 인위적 숫자 입력을 의심해 추가 검토한다."},
+{"cat": "디지털","q": "생성형 AI가 사내 규정·기준서 같은 외부 문서를 검색해 근거로 삼아 답변하게 하는 방식은?","choices": ["파인튜닝(Fine-tuning)","RAG(검색 증강 생성)","데이터 마스킹"], "answer": 1, "exp": "RAG는 질문과 관련된 문서를 먼저 찾아 프롬프트에 넣어, 근거 있는 답변을 만들고 환각을 줄인다."},
+{"cat": "디지털","q": "생성형 AI가 사실이 아닌 내용을 그럴듯하게 만들어내는 현상은?","choices": ["오버클로킹","캐싱","환각(Hallucination)"], "answer": 2, "exp": "업무에 쓸 때는 출처를 확인하고, 숫자와 기준서 인용은 원문과 대조해야 한다."},
+{"cat": "디지털","q": "머신러닝 모델이 학습 데이터에만 지나치게 맞춰져 새로운 데이터에서 성능이 떨어지는 현상은?","choices": ["과적합(Overfitting)","정규화(Normalization)","증강(Augmentation)"], "answer": 0, "exp": "검증용 데이터를 따로 두고 성능을 확인해 과적합을 막는다."},
+{"cat": "디지털","q": "API를 가장 잘 설명한 것은?","choices": ["데이터를 사람이 직접 복사해 붙여넣는 방식","프로그램끼리 데이터와 기능을 주고받도록 정한 약속(인터페이스)","PC 바이러스를 막는 프로그램"], "answer": 1, "exp": "예: ERP의 API로 전표 데이터를 받아오면 수작업 다운로드 없이 분석 도구에 연결할 수 있다."}];
 
 // =====================================================================
 // 밸런스
@@ -516,7 +532,7 @@ const PAL = {K:'#1b1a24',H:'#4a3428',h:'#7a5440',p:'#f49a9a',S:'#f2c6a0',s:'#d9a
   W:'#f3ead8',T:'#d9442f',R:'#8f2a1c',N:'#2c3a66',n:'#1e2848',P:'#232a40',B:'#14141c',L:'#e4b84a',Y:'#fff1c2',
   C:'#3a4060',c:'#5a6488',g:'#9fd8a8',O:'#8a5a3a',o:'#b07a4e',X:'#2a2f45',Z:'#d8f04a',z:'#f2ff7a',U:'#3d6ad6',
   u:'#7aa2ff',V:'#8f6cf0',v:'#c9b6ff',D:'#5b3fb0',J:'#c99a52',j:'#9a7038',A:'#9aa3b8',Q:'#4fb37a',I:'#ff7ab8',
-  F:'#d04a02',f:'#8f3301',y:'#ffb600',w:'#f3ead8'}; // F·f: PwC 오렌지 모자(본색·챙), y: 로고 노랑
+  F:'#d04a02',f:'#8f3301',y:'#ffb600',w:'#f3ead8',q:'#2f7a4f'}; // F·f: PwC 오렌지 모자(본색·챙), y: 로고 노랑
 // 캐릭터는 가로 20칸: 몸은 16칸(양옆 2칸 여백), 캡모자 챙이 오른쪽 여백으로 튀어나옴
 const HERO_TOP = [
 "......KKKKKKKKK.....",
@@ -560,13 +576,13 @@ const HERO_FRAMES = mkFrames(HERO_TOP,false), HERO_FRAMES_L = mkFrames(HERO_TOP_
 
 // =====================================================================
 // 캐릭터 선택: 4개 본부 × 남/녀
-// cap = 모자 색 (F 본색, f 챙, w 글자), cats = 이 본부로 플레이할 때 나오는 문제 분류 ('삼일'은 공통, 비어 있으면 전체 문제)
+// cats = 이 본부로 플레이할 때 나오는 문제 분류 ('삼일'은 공통, 비어 있으면 전체 문제)
 // =====================================================================
 const PARTS = [
-  {id:'audit',   starter:'pen',  name:'감사',   full:'감사본부',   role:'재무제표를 검증하는 감사인',       cap:{F:'#d04a02',f:'#8f3301',w:'#f3ead8'}, cats:['감사본부']},
-  {id:'tax',     starter:'levy', name:'택스',   full:'택스본부',   role:'세무조정과 신고를 맡는 세무 전문가', cap:{F:'#e0301e',f:'#8f1d12',w:'#f3ead8'}, cats:['택스본부']},
-  {id:'deal',    starter:'lev',  name:'딜',     full:'딜본부',     role:'M&A와 가치평가를 돕는 딜 전문가',   cap:{F:'#ffb600',f:'#a37400',w:'#2d2a26'}, cats:['딜본부']},
-  {id:'digital', starter:'zap',  name:'디지털', full:'디지털',     role:'데이터와 IT로 일하는 디지털 전문가', cap:{F:'#2b5ce6',f:'#18338a',w:'#f3ead8'}, cats:[]}
+  {id:'audit',   starter:'pen',  name:'감사',   full:'감사본부',   role:'재무제표를 검증하는 감사인', cats:['감사본부']},
+  {id:'tax',     starter:'levy', name:'택스',   full:'택스본부',   role:'세무조정과 신고를 맡는 세무 전문가', cats:['택스본부']},
+  {id:'deal',    starter:'lev',  name:'딜',     full:'딜본부',     role:'M&A와 가치평가를 돕는 딜 전문가', cats:['딜본부']},
+  {id:'digital', starter:'zap',  name:'디지털', full:'디지털',     role:'데이터와 IT로 일하는 디지털 전문가', cats:['디지털']}
 ];
 const GENDERS = [{id:'m',name:'남'},{id:'f',name:'여'}];
 // 해금 조건 (나중에 여기만 바꾸면 됨): after 본부 캐릭터로 plays판 플레이하면 해금
@@ -576,27 +592,168 @@ const UNLOCK_RULES = {
   digital: {after:'deal',  plays:1}
 };
 const partOf = id => PARTS.find(p=>p.id===id);
-// 모자 줄(0~5행)의 흰 글자는 w로 바꿔 본부별 글자색을 따로 줄 수 있게 함
-const capRows = top => top.map((r,j)=>j<=5?r.replace(/W/g,'w'):r);
+// 본부별 캐릭터 도트 (가로 20칸 × 17줄: 0~6 머리·모자, 7~11 얼굴, 12~16 몸)
+// 감사: PwC 캡·남색 정장 / 택스: 초록 회계 바이저·동그란 안경·조끼 / 딜: 올백·선글라스·검은 정장·금색 넥타이 / 디지털: 헤드셋·후드티
+const HERO_MAPS = {
+  audit_m:[
+    "......KKKKKKKKK.....",
+    "....KKFFFFFFFFFKK...",
+    "...KFwwwFwFFFwFwwK..",
+    "...KFwFwFwFwFwFwFK..",
+    "...KFwwwFFwFwFFwwK..",
+    "...KfwfffffffffffFFK",
+    "...KHSSSSSSSSSSSHKKK",
+    "...KSSEWSSSSSEWSSK..",
+    "...KSSEESSSSSEESSK..",
+    "...KSppSSSmSSSppSK..",
+    "....KSSSSSSSSSSSK...",
+    ".....KKKSSSSKKK.....",
+    "......KNWWTWWNK.....",
+    ".....KNNWWTWWNNK....",
+    "....KSNNNNTNNNNSK...",
+    "....KKNNNLNNNNNKK...",
+    ".....KPPPPPPPPPK...."],
+  audit_f:[
+    "......KKKKKKKKK.....",
+    "....KKFFFFFFFFFKK...",
+    "...KFwwwFwFFFwFwwK..",
+    "...KFwFwFwFwFwFwFK..",
+    "...KFwwwFFwFwFFwwK..",
+    "...KfwfffffffffffFFK",
+    ".KHHHSSSSSSSSSSSHKKK",
+    "KFHHSKEWSSSSSEWKSKH.",
+    "KFHHSSEESSSSSEESSKH.",
+    ".KHHppEESSmSSEEppKH.",
+    ".KHHKSSSSSSSSSSSK...",
+    "..KK.KKKSSSSKKK.....",
+    "......KNWWWWWNK.....",
+    ".....KNNTTRTTNNK....",
+    "....KSNNNTNTNNNSK...",
+    "....KKNNNLNNNNNKK...",
+    "....KnnnnnnnnnnnK..."],
+  tax_m:[
+    "....................",
+    "......KKKKKKKK......",
+    ".....KHHHHHHHHKK....",
+    "....KHHHhhHHHHHHK...",
+    "...KQQQQQQQQQQQQQK..",
+    "...KgggggggggggggQQK",
+    "...KHSSSSSSSSSSSHKKK",
+    "...KSjEWjjjjjEWjSK..",
+    "...KSjEEjSSSjEEjSK..",
+    "...KSpjjSSmSSjjpSK..",
+    "....KSSSSSSSSSSSK...",
+    ".....KKKSSSSKKK.....",
+    "......KCWWQWWCK.....",
+    ".....KWCCWQWCCWK....",
+    "....KSWCCCQCCCWSK...",
+    "....KKTCCLCCCCTKK...",
+    ".....KPPPPPPPPPK...."],
+  tax_f:[
+    "....................",
+    "......KKKKKKKK......",
+    ".....KHHHHHHHHKK....",
+    "....KHHHhhHHHHHHK...",
+    "...KQQQQQQQQQQQQQK..",
+    "...KggggggggggggIQQK",
+    ".KHHHSSSSSSSSSSIIKHK",
+    ".KHHSjEWjjjjjEWjSHHK",
+    ".KHHSjEEjSSSjEEjSHHK",
+    ".KHHppjjSSmSSjjppHHK",
+    "..KKKSSSSSSSSSSSKKK.",
+    ".....KKKSSSSKKK.....",
+    "......KCWWWWWCK.....",
+    ".....KCCQQqQQCCK....",
+    "....KSCCCWQWCCCSK...",
+    "....KKCCCLCLCCCKK...",
+    "....KCcCcCcCcCcCK..."],
+  deal_m:[
+    "....................",
+    "......KKKKKKKK......",
+    ".....KHHhhhhHHK.....",
+    "....KHHHHHhhHHHHK...",
+    "...KHHHHHHHHHHHHHK..",
+    "...KHHHHHHHHHHHHHK..",
+    "...KHSSSSSSSSSSSHK..",
+    "...KSBBBBKKKBBBBSK..",
+    "...KSBWBBSSSBWBBSK..",
+    "...KSpSSSSmSSSSpSK..",
+    "....KSSSSSSSSSSSK...",
+    ".....KKKSSSSKKK.....",
+    "......KXWWLWWXK.....",
+    ".....KXXWWLWWXXK....",
+    "....KSXXXXLXXXXSK...",
+    "....KKXXXYXXXXXKK...",
+    ".....KBBBBBBBBBK...."],
+  deal_f:[
+    "....................",
+    "......KKKKKKKK......",
+    ".....KHHhhhhHHK.....",
+    "....KHHHHHhhHHHHK...",
+    "...KHHBBBKKBBBHHHK..",
+    "...KHHHHHHHHHHHHHK..",
+    ".KHHHSSSSSSSSSSSHKH.",
+    ".KHHSKEWSSSSSEWKSHHK",
+    ".KHHSSEESSSSSEESSHHK",
+    ".KHHppEESSmSSEEppHHK",
+    ".KHLKSSSSSSSSSSSKLHK",
+    ".KHH.KKKSSSSKKK..HHK",
+    ".KHH..KXWWWWWXK..HHK",
+    "..KK.KXXWWLWWXXK.KK.",
+    "....KSXXXXWXXXXSK...",
+    "....KKXXXYXXXXXKK...",
+    ".....KBBBBBBBBBK...."],
+  digital_m:[
+    "......KKKKKKKK......",
+    ".....KAAAAAAAAK.....",
+    "....KAHHHHHHHHAK....",
+    "...KAHHhHHHHhHHHAK..",
+    "..KAHHHHHHHHHHHHHAK.",
+    ".KUUUHHHHHHHHHHHUUUK",
+    ".KUuUHSSSSSSSSSHUuUK",
+    ".KUKSSEWSSSSSEWSSKUK",
+    "..KKSSEESSSSSEESSKK.",
+    "...KSppSSSmSSSppSK..",
+    "....KSSSSSSSSSSSK...",
+    ".....KKKSSSSKKK.....",
+    "......KUuWWWuUK.....",
+    ".....KUUuUUUuUUK....",
+    "....KSUUUUUUUUUSK...",
+    "....KKUUUuuuUUUKK...",
+    ".....KPPPPPPPPPK...."],
+  digital_f:[
+    "..KKK.KKKKKKKK.KKK..",
+    ".KHhHKAAAAAAAAKHhHK.",
+    ".KHHKAHHHHHHHHAKHHK.",
+    "...KAHHhHHHHhHHHAK..",
+    "..KAHHHHHHHHHHHHHAK.",
+    ".KUUUHHHHHHHHHHHUUUK",
+    ".KUuUHSSSSSSSSSHUuUK",
+    ".KUKSKEWSSSSSEWKSKUK",
+    ".KHKSSEESSSSSEESSKHK",
+    ".KHKppEESSmSSEEppKHK",
+    ".KH.KSSSSSSSSSSSK.HK",
+    "..K..KKKSSSSKKK...K.",
+    "......KUuWWWuUK.....",
+    ".....KUUuUUUuUUK....",
+    "....KSUUUUUUUUUSK...",
+    "....KKUUUuuuUUUKK...",
+    "....KDDDDDDDDDDDK..."],
+};
+// 머리색 (본부·성별별)
+const HERO_HAIR = {audit_m:{H:'#4a3428',h:'#7a5440'}, audit_f:{H:'#6a3a22',h:'#a0603c'}, tax_m:{H:'#3b3046',h:'#5e4e6e'}, tax_f:{H:'#5a2e3a',h:'#8a4a5a'}, deal_m:{H:'#2a1f1a',h:'#6b4a38'}, deal_f:{H:'#3a2418',h:'#8a5a3a'}, digital_m:{H:'#7a4a2e',h:'#b07a4e'}, digital_f:{H:'#f08a5a',h:'#ffb08a'}};
+// 신발색 (팔레트 글자)
+const HERO_SHOE = {audit_m:'B', audit_f:'B', tax_m:'B', tax_f:'O', deal_m:'B', deal_f:'T', digital_m:'W', digital_f:'W'};
 const putAt = (r,i,c) => (i>=0&&i<r.length)?r.slice(0,i)+c+r.slice(i+1):r;
-// 여자 캐릭터: 어깨까지 오는 머리 + 치마
-function femaleTop(top){
-  const t=top.slice();
-  const side=(j,cols,c)=>{for(const i of cols)t[j]=putAt(t[j],i,c)};
-  side(6,[3,17,18],'H');side(6,[2],'K');side(6,[19],'K');
-  for(const j of [7,8,9,10]){side(j,[2,3,17,18],'H');side(j,[1,19],'K')}
-  side(11,[2,3,17,18],'H');side(11,[1,19],'K');
-  side(12,[2,3,17,18],'K');
-  t[16]=t[16].replace(/P/g,'n');
-  return t;
-}
-const femaleLegs = () => {const o={};for(const k in LEGS)o[k]=LEGS[k].map(r=>r.replace(/P/g,'S'));return o};
-const leftTop = top => top.map((r,j)=>j<5?r.slice(1)+'.':j===5?setCh(flipRow(r.replace('w','f')),4,'w'):flipRow(r));
+// 다리: 남자는 바지, 여자는 맨다리. 신발색은 HERO_SHOE
+const legsFor = (g,shoe) => {const o={};for(const k in LEGS)o[k]=LEGS[k].map((r,j)=>{if(g==='f')r=r.replace(/P/g,'S');return j===1?r.replace(/B/g,shoe):r});return o};
+// 왼쪽 보기: 전체 좌우반전. 감사는 모자 글자(0~4행)가 거울상이 되지 않게 반전 없이 한 칸 당기고, 챙(5행)만 반전
+const leftTop = (top,part) => part!=='audit'?top.map(flipRow):top.map((r,j)=>j<5?r.slice(1)+'.':j===5?setCh(flipRow(r.replace('w','f')),4,'w'):flipRow(r));
 const mkFramesG=(top,fl,legs)=>{const L=k=>fl?legs[k].map(flipRow):legs[k];return [top.concat(L('a'),[PADROW]),[PADROW].concat(top,L('i')),top.concat(L('b'),[PADROW]),[PADROW].concat(top,L('i'))]};
 const HERO_SET = {};
 for(const pt of PARTS)for(const g of GENDERS){
-  const top0=capRows(HERO_TOP), top=g.id==='f'?femaleTop(top0):top0, legs=g.id==='f'?femaleLegs():LEGS;
-  HERO_SET[pt.id+'_'+g.id]={top, R:mkFramesG(top,false,legs), L:mkFramesG(leftTop(top),true,legs), over:pt.cap};
+  const k=pt.id+'_'+g.id, top=HERO_MAPS[k], legs=legsFor(g.id,HERO_SHOE[k]);
+  HERO_SET[k]={top, R:mkFramesG(top,false,legs), L:mkFramesG(leftTop(top,pt.id),true,legs), over:HERO_HAIR[k]};
 }
 const heroURLCache = {};
 function heroURLs(part,g){const k=part+'_'+g;if(!heroURLCache[k]){const h=HERO_SET[k];heroURLCache[k]=h.R.map(f=>pixCanvas(f,6,h.over).toDataURL())}return heroURLCache[k]}
