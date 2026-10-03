@@ -9,14 +9,16 @@
 <meta property="og:description" content="D-3조 회계 생존 학습게임 · 정답이 곧 무기가 된다">
 <meta name="theme-color" content="#0b1020">
 
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&family=Press+Start+2P&display=swap">
 <style>
 /* Layout: full-bleed Phaser arena with pixel sprites; DOM HUD (XP rail, portrait+HP, clock, item slots, boss bar); ledger-paper sheets for title / level-up / loot quiz / result. Single committed night theme. */
 :root{
   --night:#0b1020; --night-2:#141b33; --line:rgba(233,228,214,.14);
-  --paper:#f3ead8; --paper-2:#e8dcc4; --ink:#1c1a17; --ink-2:#6b655b;
+  --paper:#fff; --paper-2:#f6f6f6; --ink:#221f1f; --ink-2:#6b6b6b; --hair:#e7e5e4;
+  --pwc:#d04a02; --pwc-ink:#b23f02; --pwc-soft:#fdf0e7; --pwc-line:rgba(208,74,2,.3); /* PwC 오렌지 톤 */
   --fg:#e9e4d6; --fg-2:#9aa3b8;
-  --gold:#e4b84a; --gold-2:#fff1c2; --red:#d9442f; --green:#4fb37a; --violet:#8f6cf0;
+  --gold:#ffb600; --gold-2:#fff1c2; --red:#e0301e; --green:#4fb37a; --violet:#8f6cf0;
   --display:"Do Hyeon","Noto Sans KR",system-ui,sans-serif;
   --body:"Noto Sans KR",system-ui,-apple-system,sans-serif;
   --pixel:"Press Start 2P",ui-monospace,monospace;
@@ -87,39 +89,42 @@ img{image-rendering:pixelated}
 
 /* Sheets */
 .overlay[hidden]{display:none}
-.overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(6,9,18,.72);overflow:auto}
-.sheet{background:var(--paper);color:var(--ink);width:min(560px,100%);border-radius:4px;padding:26px 24px;box-shadow:0 8px 0 #000,0 30px 80px rgba(0,0,0,.6);position:relative;box-sizing:border-box;animation:drop .26s cubic-bezier(.2,.9,.3,1.2);margin:auto}
+/* 야근 배경: 밤 사무실 빌딩 창문 불빛 (몇 칸만 켜짐) */
+.overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:16px;background:linear-gradient(rgba(6,9,18,.72),rgba(6,9,18,.86)),url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='168' height='96'%3E%3Cg fill='%23233050'%3E%3Crect x='8' y='8' width='16' height='24'/%3E%3Crect x='36' y='8' width='16' height='24'/%3E%3Crect x='92' y='8' width='16' height='24'/%3E%3Crect x='148' y='8' width='16' height='24'/%3E%3Crect x='8' y='56' width='16' height='24'/%3E%3Crect x='64' y='56' width='16' height='24'/%3E%3Crect x='92' y='56' width='16' height='24'/%3E%3Crect x='120' y='56' width='16' height='24'/%3E%3C/g%3E%3Cg fill='%23ffb600' fill-opacity='.55'%3E%3Crect x='64' y='8' width='16' height='24'/%3E%3Crect x='120' y='8' width='16' height='24'/%3E%3Crect x='36' y='56' width='16' height='24'/%3E%3Crect x='148' y='56' width='16' height='24'/%3E%3C/g%3E%3C/svg%3E") var(--night);overflow:auto}
+.sheet{background:var(--paper);color:var(--ink);width:min(560px,100%);--display:"Pretendard Variable",Pretendard,"Noto Sans KR",system-ui,sans-serif;font-family:var(--display);border-radius:20px;padding:28px 26px;box-shadow:0 30px 80px rgba(0,0,0,.55),0 0 90px rgba(122,162,255,.18);position:relative;box-sizing:border-box;animation:drop .26s cubic-bezier(.2,.9,.3,1.2);margin:auto}
 .sheet.wide{width:min(720px,100%)}
 @keyframes drop{from{transform:translateY(-14px) rotate(-.6deg);opacity:0}}
-.sheet h1{font-family:var(--display);font-size:clamp(42px,10vw,66px);line-height:1;margin:0;letter-spacing:.02em}
-.sheet h2{font-family:var(--display);font-size:28px;margin:0 0 4px;letter-spacing:.02em;text-wrap:balance}
-.eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-2);margin:0 0 8px}
+.sheet h1{font-family:var(--display);font-weight:800;font-size:clamp(40px,9vw,60px);line-height:1.05;margin:0;letter-spacing:-.02em}
+.sheet h1 em{font-style:normal;color:var(--pwc)}
+.sheet h2{font-family:var(--display);font-weight:700;font-size:26px;margin:0 0 4px;letter-spacing:-.01em;text-wrap:balance}
+.eyebrow{font-size:13px;letter-spacing:0;color:var(--pwc-ink);font-weight:600;margin:0 0 8px}
 .sheet p{line-height:1.6;margin:0 0 12px;max-width:62ch}
 .muted{color:var(--ink-2);font-size:13px}
 button{font:inherit;cursor:pointer;border:0;border-radius:4px}
-.primary{background:var(--ink);color:var(--paper);font-family:var(--display);font-size:22px;letter-spacing:.06em;padding:14px 28px;width:100%;box-shadow:0 4px 0 #000}
-.primary:hover{background:#000}
-.primary:active{transform:translateY(2px);box-shadow:0 2px 0 #000}
+.primary{background:var(--pwc);color:#fff;font-family:var(--display);font-weight:700;font-size:19px;padding:15px 28px;width:100%;border-radius:999px}
+.primary:hover{background:#b84102}
+.primary:active{transform:translateY(1px)}
 button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
 kbd{font-family:var(--body);border:1px solid rgba(28,26,23,.3);border-radius:3px;padding:0 5px;font-size:11px}
 
 .hero-head{display:flex;gap:18px;align-items:center;margin-bottom:10px}
-#heroimg{width:80px;height:100px;flex:none;filter:drop-shadow(0 6px 0 rgba(0,0,0,.18))}
+#pwclogo{position:absolute;top:24px;right:26px;width:52px;height:28px}
+#heroimg{width:100px;height:100px;flex:none;filter:drop-shadow(0 6px 0 rgba(0,0,0,.18))}
 .codex{display:grid;gap:6px;margin:14px 0 18px}
-.codex h3{font-family:var(--display);font-size:16px;margin:0;letter-spacing:.03em}
-.recipe{display:grid;grid-template-columns:auto auto auto auto 1fr;align-items:center;gap:6px;font-size:13px;padding:5px 8px;background:rgba(28,26,23,.05);border-radius:3px}
+.codex h3{font-family:var(--display);font-weight:700;font-size:15px;margin:0 0 2px}
+.recipe{display:grid;grid-template-columns:auto auto auto auto 1fr;align-items:center;gap:6px;font-size:13px;padding:7px 12px;background:var(--paper-2);border-radius:12px}
 .recipe img{width:24px;height:24px}
 .recipe .op{color:var(--ink-2);font-family:var(--display)}
-.recipe b{font-family:var(--display);font-size:15px;font-weight:400;color:#8a5a12}
+.recipe b{font-family:var(--display);font-size:14px;font-weight:700;color:var(--pwc-ink)}
 .recipe span{min-width:0}
 .keys{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12px;color:var(--ink-2);margin-top:12px}
 
 .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0}
 @media (max-width:620px){.cards{grid-template-columns:1fr}}
-.card{text-align:left;background:#fffaf0;border:2px solid var(--ink);border-radius:4px;padding:14px;display:grid;grid-template-columns:auto 1fr;gap:6px 12px;align-content:start;color:var(--ink);box-shadow:0 4px 0 var(--ink);position:relative}
-.card:hover{transform:translateY(-2px);box-shadow:0 6px 0 var(--ink)}
-.card .icon{grid-row:span 2;width:48px;height:48px;background:var(--night);border-radius:3px;padding:6px;box-sizing:border-box}
-.card .cname{font-family:var(--display);font-size:20px;line-height:1.1}
+.card{text-align:left;background:#fff;border:1px solid var(--hair);border-radius:16px;padding:14px;display:grid;grid-template-columns:auto 1fr;gap:6px 12px;align-content:start;color:var(--ink);box-shadow:0 2px 8px rgba(0,0,0,.06);position:relative}
+.card:hover{transform:translateY(-2px);border-color:var(--pwc-line);background:var(--pwc-soft)}
+.card .icon{grid-row:span 2;width:48px;height:48px;background:var(--night);border-radius:10px;padding:6px;box-sizing:border-box}
+.card .cname{font-family:var(--display);font-weight:700;font-size:18px;line-height:1.2}
 .card .chips{display:flex;gap:4px;flex-wrap:wrap}
 .card .cdesc{grid-column:1/-1;font-size:14px;line-height:1.45}
 .card .chint{grid-column:1/-1;font-size:12px;color:var(--ink-2)}
@@ -131,11 +136,11 @@ kbd{font-family:var(--body);border:1px solid rgba(28,26,23,.3);border-radius:3px
 .loot{display:flex;gap:12px;align-items:center;margin-bottom:12px}
 #chestimg{width:56px;height:44px}
 .loot .eyebrow{margin:0 0 2px}
-.loot-h{font-family:var(--display);font-size:22px;margin:0}
-.reward{position:relative;display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:center;background:var(--night);color:var(--fg);border-radius:4px;padding:12px 14px;margin-bottom:16px;border:2px solid var(--gold);overflow:hidden}
+.loot-h{font-family:var(--display);font-weight:700;font-size:21px;margin:0}
+.reward{position:relative;display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:center;background:var(--night);color:var(--fg);border-radius:14px;padding:12px 14px;margin-bottom:16px;border:2px solid var(--gold);overflow:hidden}
 .reward .icon{width:48px;height:48px}
 .reward .rwtext{display:grid;gap:3px;min-width:0}
-.reward b{font-family:var(--display);font-size:22px;font-weight:400}
+.reward b{font-family:var(--display);font-size:20px;font-weight:700}
 .reward .rwdesc{font-size:13px;color:var(--fg-2)}
 .reward.won{box-shadow:0 0 0 3px rgba(228,184,74,.35),0 0 30px rgba(228,184,74,.5);animation:won .5s ease}
 @keyframes won{30%{transform:scale(1.03)}}
@@ -143,26 +148,26 @@ kbd{font-family:var(--body);border:1px solid rgba(28,26,23,.3);border-radius:3px
 .reward.lost .icon,.reward.lost .rwtext{filter:grayscale(1) brightness(.6)}
 .denied{position:absolute;right:14px;top:50%;font-family:var(--display);font-size:34px;color:var(--red);border:4px solid var(--red);border-radius:6px;padding:0 10px;transform:translateY(-50%) rotate(-14deg) scale(2.4);opacity:0;pointer-events:none;filter:none}
 .reward.lost .denied{opacity:1;transform:translateY(-50%) rotate(-14deg) scale(1);transition:transform .22s cubic-bezier(.3,1.6,.5,1),opacity .1s}
-.qmeta{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:12px;color:var(--ink-2);letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px}
-.qmeta .cat{color:var(--red);font-weight:700}
-.qtext{font-size:18px;font-weight:500;line-height:1.55;margin:0 0 16px}
+.qmeta{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:12px;color:var(--ink-2);margin-bottom:10px}
+.qmeta .cat{color:var(--pwc-ink);background:var(--pwc-soft);font-weight:600;padding:3px 10px;border-radius:999px}
+.qtext{font-size:19px;font-weight:700;line-height:1.55;margin:0 0 16px}
 .choices{display:grid;gap:8px}
-.choice{text-align:left;background:transparent;border:1px solid rgba(28,26,23,.25);padding:11px 14px;font-size:15px;line-height:1.45;color:var(--ink);display:grid;grid-template-columns:26px 1fr;gap:8px;align-items:start}
+.choice{text-align:left;background:#fff;border:1px solid var(--hair);border-radius:14px;padding:13px 16px;font-size:15px;line-height:1.45;color:var(--ink);display:grid;grid-template-columns:26px 1fr;gap:8px;align-items:start}
 .choice span.n{font-family:var(--pixel);font-size:10px;color:var(--ink-2);padding-top:4px}
-.choice:hover:not(:disabled){border-color:var(--ink);background:rgba(28,26,23,.04)}
+.choice:hover:not(:disabled){border-color:var(--pwc-line);background:var(--pwc-soft)}
 .choice.ok{border-color:var(--green);background:rgba(79,179,122,.14)}
 .choice.bad{border-color:var(--red);background:rgba(217,68,47,.12)}
-.verdict{margin-top:14px;padding:14px;border-radius:4px}
+.verdict{margin-top:14px;padding:16px;border-radius:16px}
 .verdict[hidden]{display:none}
 .verdict.ok{background:rgba(79,179,122,.16)}
 .verdict.bad{background:rgba(217,68,47,.12)}
-.verdict h3{font-family:var(--display);margin:0 0 6px;font-size:22px}
+.verdict h3{font-family:var(--display);font-weight:700;margin:0 0 6px;font-size:20px}
 .verdict .fx{font-size:13px;color:var(--ink-2);margin-top:8px}
 .verdict button{margin-top:12px}
 
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin:14px 0 16px}
-.stat{border-top:2px solid var(--ink);padding-top:8px}
-.stat b{display:block;font-family:var(--display);font-size:30px;line-height:1}
+.stat{border-top:3px solid var(--pwc);padding-top:8px}
+.stat b{display:block;font-family:var(--display);font-weight:800;font-size:30px;line-height:1}
 .stat span{font-size:12px;color:var(--ink-2)}
 .build{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
 .build .slot{width:42px;height:42px;background:var(--night)}
@@ -215,10 +220,11 @@ kbd{font-family:var(--body);border:1px solid rgba(28,26,23,.3);border-radius:3px
 
   <div class="overlay" id="title">
     <div class="sheet">
-      <p class="eyebrow">D-3조 · 회계 생존 학습게임 · Phaser v3</p>
+      <img id="pwclogo" alt="PwC">
+      <p class="eyebrow">D-3조 · 회계 생존 학습게임 · PM 11:47 야근 중</p>
       <div class="hero-head">
         <img id="heroimg" alt="정장 차림의 신입 회계사 도트 캐릭터">
-        <div><h1>시즌의 밤</h1><p style="margin:6px 0 0"><b>정답이 곧 무기가 된다.</b></p></div>
+        <div><h1>시즌의 <em>밤</em></h1><p style="margin:6px 0 0"><b>정답이 곧 무기가 된다.</b></p></div>
       </div>
       <p>결산 시즌의 밤, 신입 회계사가 업무 도구로 미결 전표 떼를 버텨낸다. 레벨업으로 가진 도구를 강화하고, <b>새 도구는 전리품 상자의 문제를 맞혀야 얻는다.</b> 틀리면 상자는 반려된다.</p>
       <div class="codex" id="codex"><h3>업무 도구 진화표 · 무기 Lv5 + 짝 도구 보유 후 상자 정답</h3></div>
@@ -384,15 +390,17 @@ const WEAPONS = Object.keys(ITEMS).filter(k=>ITEMS[k].type==='w');
 const PAL = {K:'#1b1a24',H:'#4a3428',h:'#7a5440',p:'#f49a9a',S:'#f2c6a0',s:'#d9a27e',G:'#3a3f5c',E:'#111018',m:'#b5654d',
   W:'#f3ead8',T:'#d9442f',R:'#8f2a1c',N:'#2c3a66',n:'#1e2848',P:'#232a40',B:'#14141c',L:'#e4b84a',Y:'#fff1c2',
   C:'#3a4060',c:'#5a6488',g:'#9fd8a8',O:'#8a5a3a',o:'#b07a4e',X:'#2a2f45',Z:'#d8f04a',z:'#f2ff7a',U:'#3d6ad6',
-  u:'#7aa2ff',V:'#8f6cf0',v:'#c9b6ff',D:'#5b3fb0',J:'#c99a52',j:'#9a7038',A:'#9aa3b8',Q:'#4fb37a',I:'#ff7ab8'};
+  u:'#7aa2ff',V:'#8f6cf0',v:'#c9b6ff',D:'#5b3fb0',J:'#c99a52',j:'#9a7038',A:'#9aa3b8',Q:'#4fb37a',I:'#ff7ab8',
+  F:'#d04a02',f:'#8f3301',y:'#ffb600'}; // F·f: PwC 오렌지 모자(본색·챙), y: 로고 노랑
+// 캐릭터는 가로 20칸: 몸은 16칸(양옆 2칸 여백), 캡모자 챙이 오른쪽 여백으로 튀어나옴
 const HERO_TOP = [
-"........KK......",
-".....KKKHKKK....",
-"...KKHHHHHHHKK..",
-"..KHHHhhHHHHHHK.",
-".KHHHHHHHHHHHHHK",
-".KHHSSHHHHSSSHHK",
-".KHSSSSSSSSSSSHK",
+"......KKKKKKKKK.....",
+"....KKFFFFFFFFFKK...",
+"...KFWWWFWFFFWFWWK..",
+"...KFWFWFWFWFWFWFK..",
+"...KFWWWFFWFWFFWWK..",
+"...KfWfffffffffffFFK",
+"...KHSSSSSSSSSSSHKKK",
 ".KSSEWSSSSSEWSSK",
 ".KSSEESSSSSEESSK",
 ".KSppSSSmSSSppSK",
@@ -402,13 +410,28 @@ const HERO_TOP = [
 "...KNNWWTWWNNK..",
 "..KSNNNNTNNNNSK.",
 "..KKNNNLNNNNNKK.",
-"...KPPPPPPPPPK.."];
+"...KPPPPPPPPPK.."].map(r=>r.length<20?'..'+r+'..':r);
+// 타이틀 화면용 도트 PwC 로고 (색 타일 + pwc 글자)
+const PWC_LOGO = [
+"........yyFF.",
+"......FFyyFF.",
+"......FFTT...",
+"KKK.K...K.KKK",
+"K.K.K.K.K.K..",
+"KKK..K.K..KKK",
+"K............"];
 const LEGS = {
   i:["....KPPK.KPPK...","...KBBBK.KBBBK.."],
   a:["....KPPK.KPPK...","....KBBK.KBBBK.."],
   b:["....KPPK.KPPK...","...KBBBK.KBBK..."]};
-const PADROW = "................";
-const HERO_FRAMES = [HERO_TOP.concat(LEGS.a,[PADROW]),[PADROW].concat(HERO_TOP,LEGS.i),HERO_TOP.concat(LEGS.b,[PADROW]),[PADROW].concat(HERO_TOP,LEGS.i)];
+for(const k in LEGS)LEGS[k]=LEGS[k].map(r=>'..'+r+'..');
+const PADROW = "....................";
+const flipRow=r=>[...r].reverse().join('');
+const setCh=(r,i,c)=>r.slice(0,i)+c+r.slice(i+1);
+// 왼쪽 보기 프레임: 몸과 챙은 좌우반전, 모자 글자(위 5줄)는 반전 없이 한 칸 당겨 머리에 맞춤 — setFlipX를 쓰면 글자가 거울상이 됨
+const HERO_TOP_L = HERO_TOP.map((r,j)=>j<5?r.slice(1)+'.':j===5?setCh(flipRow(r.replace('W','f')),4,'W'):flipRow(r));
+const mkFrames=(top,fl)=>{const L=k=>fl?LEGS[k].map(flipRow):LEGS[k];return [top.concat(L('a'),[PADROW]),[PADROW].concat(top,L('i')),top.concat(L('b'),[PADROW]),[PADROW].concat(top,L('i'))]};
+const HERO_FRAMES = mkFrames(HERO_TOP,false), HERO_FRAMES_L = mkFrames(HERO_TOP_L,true);
 const RECEIPT = ["KKKKKKKK","KWWWWWWK","KWEWWEWK","KWWWWWWK","KWAAAAWK","KWWWWWWK","KWAAAWWK","KWWWWWWK","KWTTTTWK","KWWWWWWK","KKWKKWKK","..K..K.."];
 const MOB0 = [
 "..KKKKKKK...",
@@ -517,7 +540,7 @@ const CHEST_URL = pixCanvas(CHEST,4).toDataURL(), CHESTG_URL = pixCanvas(CHEST,4
 function makeTextures(sc){
   if(sc.textures.exists('hero0'))return;
   const add=(k,map,px,over)=>sc.textures.addCanvas(k,pixCanvas(map,px,over));
-  HERO_FRAMES.forEach((f,i)=>add('hero'+i,f,3));
+  HERO_FRAMES.forEach((f,i)=>add('hero'+i,f,3));HERO_FRAMES_L.forEach((f,i)=>add('heroL'+i,f,3));
   add('mob0',MOB0,3);add('receipt',RECEIPT,3);add('mob1',MOB1,3);add('elite',ELITE,3);
   add('boss1a',genBoss1(0),3);add('boss1b',genBoss1(1.6),3);add('boss2',genBoss2(),3);
   add('chest',CHEST,3);add('chestG',CHEST,3,GOLD_OVER);
@@ -671,7 +694,7 @@ class Battle extends Phaser.Scene{
 
     this.shadow=this.add.image(0,0,'shadow').setDepth(1);
     this.player=this.physics.add.image(0,0,'hero1').setDepth(6);
-    this.player.body.setCircle(13,11,28);
+    this.player.body.setCircle(13,17,28);
     this.enemies=this.physics.add.group();
     this.bullets=this.physics.add.group({maxSize:260});
     this.ebullets=this.physics.add.group({maxSize:140});
@@ -896,7 +919,7 @@ class Battle extends Phaser.Scene{
     const dt=Math.min(delta,50)/1000,S=this.S,p=this.player,cam=this.cameras.main;
     this.syncFloor();this.shadow.setPosition(p.x,p.y+29);
     const moving=this.demo?true:(p.body.velocity.lengthSq()>100);
-    const fr=moving?Math.floor(time/130)%4:1;if(p.fr!==fr){p.fr=fr;p.setTexture('hero'+fr)}
+    const fr=moving?Math.floor(time/130)%4:1,key=(p.left?'heroL':'hero')+fr;if(p.texture.key!==key)p.setTexture(key)
     if(this.demo){
       for(const e of this.enemies.getChildren()){this.animMob(e,time);if(Math.hypot(e.x-p.x,e.y-p.y)>700)e.setPosition(p.x+rnd(-300,300),p.y+rnd(-300,300))}
       return;
@@ -915,7 +938,7 @@ class Battle extends Phaser.Scene{
     if(this.joy){dx=this.joy.dx;dy=this.joy.dy}
     const l=Math.hypot(dx,dy);if(l>1){dx/=l;dy/=l}
     p.setVelocity(dx*S.speed,dy*S.speed);
-    if(l>.15){S.face.x=dx;S.face.y=dy;if(Math.abs(dx)>.2)p.setFlipX(dx<0)}
+    if(l>.15){S.face.x=dx;S.face.y=dy;if(Math.abs(dx)>.2)p.left=dx<0}
     this.dust.emitting=l>.1;
     if(S.iframe>0){S.iframe-=dt;p.setAlpha(Math.floor(time/60)%2?.4:1)}else p.setAlpha(1);
     // 스폰
@@ -1049,6 +1072,7 @@ function showResult(S,won){
 // 타이틀 / 부팅
 // =====================================================================
 (function title(){
+  $('pwclogo').src=pixCanvas(PWC_LOGO,4).toDataURL();
   let f=0;const img=$('heroimg');img.src=HERO_URLS[1];setInterval(()=>{f=(f+1)%4;img.src=HERO_URLS[f]},160);
   const cx=$('codex');
   WEAPONS.forEach(k=>{const r=el('div','recipe');const a=el('img');a.src=iconURL(k);a.alt='';const b=el('img');b.src=iconURL(ITEMS[k].pair);b.alt='';const c=el('img');c.src=iconURL(k,true);c.alt='';
