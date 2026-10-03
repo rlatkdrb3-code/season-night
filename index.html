@@ -91,7 +91,6 @@ img{image-rendering:pixelated}
 .sheet{background:var(--paper);color:var(--ink);width:min(560px,100%);border-radius:4px;padding:26px 24px;box-shadow:0 8px 0 #000,0 30px 80px rgba(0,0,0,.6);position:relative;box-sizing:border-box;animation:drop .26s cubic-bezier(.2,.9,.3,1.2);margin:auto}
 .sheet.wide{width:min(720px,100%)}
 @keyframes drop{from{transform:translateY(-14px) rotate(-.6deg);opacity:0}}
-.sheet::before{content:"";position:absolute;left:34px;top:0;bottom:0;width:1px;background:rgba(217,68,47,.35);pointer-events:none}
 .sheet h1{font-family:var(--display);font-size:clamp(42px,10vw,66px);line-height:1;margin:0;letter-spacing:.02em}
 .sheet h2{font-family:var(--display);font-size:28px;margin:0 0 4px;letter-spacing:.02em;text-wrap:balance}
 .eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-2);margin:0 0 8px}
@@ -180,7 +179,6 @@ kbd{font-family:var(--body);border:1px solid rgba(28,26,23,.3);border-radius:3px
   .slot{width:28px;height:28px}.slot img{width:20px;height:20px}
   #slots{padding:6px 10px 0}
   .sheet{padding:22px 18px}
-  .sheet::before{left:10px}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
