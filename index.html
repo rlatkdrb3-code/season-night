@@ -504,13 +504,13 @@ const ITEMS = {
           lv:['바라보는 방향으로 형광펜을 그어 베기','길이·피해 증가','뒤쪽도 함께 긋기','길이·피해 증가','피해 증가, 쿨타임 감소']},
   // 본부별 기본 무기 (starter): 해당 본부로 시작할 때만 지급, 상자에서는 나오지 않음
   zap:   {type:'w', name:'데이터 스파크', max:5, starter:true,
-          lv:['가까운 적에게 번개가 튀어 주변 적 3명까지 연쇄','피해 증가','연쇄 +1 (4명)','피해 증가','연쇄 +1 (5명), 연사 증가']},
-  laser: {type:'w', name:'샘플링 레이저', max:5, starter:true,
-          lv:['적 1명을 표본으로 찍어 조준 → 레이저로 일직선 관통','표본 +1 (2명)','피해·빔 굵기 증가','표본 +1 (3명)','피해·빔 굵기 증가, 연사 증가']},
-  hole:  {type:'w', name:'누진세 블랙홀', max:5, starter:true,
-          lv:['소용돌이를 던져 적을 빨아들이고, 많이 빨아들일수록 세율이 올라 크게 폭발','범위 증가','지속시간·피해 증가','범위 증가','범위·피해 증가, 주기 단축']},
+          lv:['가까운 적에게 번개가 튀어 주변 적 5명까지 연쇄','피해 증가','연쇄 +2 (7명), 피해 증가','피해 증가','연쇄 +2 (9명), 연사 증가']},
+  laser: {type:'w', name:'조회서 클리어', max:5, starter:true,
+          lv:['조회처 1곳에 조회서 발송 → 회신이 오면 일직선으로 관통하며 클리어','조회처 회신 +1 (2곳)','회신 일치: 클리어 폭·사거리 증가','조회처 회신 +1 (3곳), 회신 대기 단축','모든 조회서 클리어: 피해·클리어 폭 증가, 발송 주기 단축']},
+  hole:  {type:'w', name:'세무조정 폭탄', max:5, starter:true,
+          lv:['폭탄을 던져 주변 적을 끌어모은 뒤 폭발로 세무조정 완료 · 많이 모을수록 조정액이 커져 크게 폭발 · 보스에게 피해 2.5배','익금산입: 조정 범위 증가, 투척 주기 단축','손금불산입: 도화선 시간·지속 피해·폭발 피해 증가','세무조정계산서 작성: 조정 범위·폭발 피해 증가','소득금액조정합계표 완성: 범위·폭발 피해 증가, 투척 주기 단축']},
   comp:  {type:'w', name:'복리 동전', max:5, starter:true,
-          lv:['동전이 적 사이를 튕겨 다니며 맞힐 때마다 커지고 강해짐 (복리)','튕김 +1','동전 +1 (2개)','튕김 +1, 복리율 증가','피해·복리율 증가, 연사 증가']},
+          lv:['동전이 적 사이를 튕겨 다니며 맞힐 때마다 커지고 강해짐 (복리) · 보스에게 피해 1.6배','튕김 +1','동전 +1 (2개)','튕김 +1, 복리율 증가','피해·복리율 증가, 연사 증가']},
   book:  {type:'p', name:'회계기준서', max:5, desc:'공격력 +10%'},
   coffee:{type:'p', name:'아메리카노', max:5, desc:'공격 속도 +8% (모든 쿨타임 -8%)'},
   card:  {type:'p', name:'법인카드',   max:5, desc:'증빙 흡수 범위 +35%'},
@@ -529,11 +529,13 @@ const W_STATS = {
   calc: {n:[2,3,4,5,6], dmg:[8,10,12,14,16], r:[70,72,76,80,88], spd:[2.6,2.8,3,3.2,3.4], evo:{n:8,dmg:26,r:108,spd:4.2}},
   stamp:{cd:[3.2,3,3,2.8,2.5], n:[1,1,2,2,3], rad:[60,70,75,85,95], dmg:[24,30,36,42,50], evo:{cd:2.3,n:3,rad:125,dmg:85}},
   hl:   {cd:[1.5,1.4,1.4,1.3,1.1], len:[110,125,130,145,155], dmg:[16,20,24,28,34], back:[0,0,1,1,1], evo:{cd:1,len:195,dmg:46,back:1}},
-  zap:  {cd:[1.15,1.1,1.05,1,.9], dmg:[10,12,14,17,20], jumps:[3,3,4,4,5], range:[320,320,330,340,350], hop:[150,155,160,165,175]},
-  laser:{cd:[1.5,1.45,1.4,1.3,1.2], n:[1,2,2,3,3], dmg:[11,11,13,14,16], w:[12,12,15,15,18], len:[560,560,600,620,660], aim:[.45,.42,.4,.38,.34]},
+  zap:  {cd:[1.15,1.1,1.05,1,.9], dmg:[10,12,15,17,20], jumps:[5,5,7,7,9], range:[320,320,330,340,350], hop:[150,155,160,165,175]},
+  laser:{cd:[1.5,1.45,1.4,1.3,1.2], n:[1,2,2,3,3], dmg:[15,15,15,15,17], w:[12,12,15,15,18], len:[560,560,600,620,660], aim:[.45,.42,.4,.38,.34]},
   hole: {cd:[5.5,5,4.6,4.2,3.8], rad:[85,95,105,115,125], dur:[2.0,2.1,2.4,2.5,2.8], tick:[1,1,2,2,2], boom:[4,5,7,8,9], pull:[150,160,170,180,200]},
   comp: {cd:[2.0,1.9,1.8,1.7,1.6], n:[1,1,2,2,2], dmg:[5,6,5,5,5], bounce:[3,4,4,5,5], rate:[1.15,1.15,1.15,1.18,1.2]}
 };
+// 보스 상대 피해 배수: 택스·딜 기본 무기는 범위형이라 보스 한 마리에 약해서 보정 (밸런스 측정 기준, 2026-10)
+const BOSS_MUL = {hole:2.5, comp:1.6};
 const WEAPONS = Object.keys(ITEMS).filter(k=>ITEMS[k].type==='w'&&!ITEMS[k].starter); // 진화가 있는 일반 무기
 const STARTERS = Object.keys(ITEMS).filter(k=>ITEMS[k].starter);
 
@@ -565,6 +567,7 @@ const HERO_TOP = [
 "..KKNNNLNNNNNKK.",
 "...KPPPPPPPPPK.."].map(r=>r.length<20?'..'+r+'..':r);
 // 타이틀 화면용 도트 PwC 로고 (색 타일 + pwc 글자)
+const PWC_TXT = ["WWW.W...W.WW","W.W.W.W.W.W.","WWW..W.W..WW","W..........."]; // 폭탄에 찍는 작은 pwc 글자
 const PWC_LOGO = [
 "........yyFF.",
 "......FFyyFF.",
@@ -851,7 +854,7 @@ const ICONS = {
 ICONS.taxi = ICONS.shoes;
 ICONS.zap  = ["......KKKK..",".....KuuuK..","....KuuuK...","...KuuuK....","..KuuuKKKK..",".KUUUUUUUK..","..KKKKUUK...","....KUUK....","...KUUK.....","..KUUK......","..KUK.......","..KK........"];
 ICONS.laser= [".KKK....KKK.", ".KTT....TTK.", ".KT......TK.", "............", "....KKKK....", "....KYYK....", "....KYYK....", "....KKKK....", "............", ".KT......TK.", ".KTT....TTK.", ".KKK....KKK."];
-ICONS.hole = ["....KKKK....", "..KKWTTTKK..", ".KTTRRRRTTK.", ".KTRRKKRRTK.", "KTRRKBBKRRTK", "KTRKBBBBKRTK", "KTRKBBBBKRTK", "KTRRKBBKRRTK", ".KTRRKKRRTK.", ".KTTRRRRTTK.", "..KKTTTTKK..", "....KKKK...."];
+ICONS.hole = ["........Y.Y.", ".........L..", "........K.Y.", ".......K....", "...KKKKK....", "..KXXXXXK...", ".KXWXXXXXK..", ".KXWXXXXXK..", ".KFFFFFFFK..", ".KXXXXXXXK..", "..KXXXXXK...", "...KKKKK...."]; // 세무조정 폭탄 (PwC 오렌지 띠)
 ICONS.comp = ["............", "...KKKKKK...", "..KYYLLLLK..", ".KYLLjjLLLK.", ".KLLjjjjLLK.", ".KLjjjjjjLK.", ".KLLLjjLLLK.", ".KLLLjjLLLK.", ".KLLLjjLLjK.", "..KLLLLLjK..", "...KKKKKK...", "............"];
 const EVO_OVER = {pen:{U:'#e4b84a',L:'#d9442f',Y:'#ffffff'}, calc:{C:'#2a2f45',g:'#d8f04a',W:'#9fd8a8'}, stamp:{O:'#e4b84a',o:'#fff1c2',T:'#ff4a2f'}, hl:{Z:'#ff7ab8',z:'#7aa2ff',X:'#e4b84a'}};
 
@@ -1191,7 +1194,7 @@ class Battle extends Phaser.Scene{
     this.fxTrail=P('spark',{lifespan:350,speed:{min:5,max:25},scale:{start:1.6,end:0},alpha:{start:.5,end:0},blendMode:'ADD',tint:0xb44bea,frequency:18}).setDepth(3);
     this.dust=P('spark',{lifespan:420,speed:{min:5,max:20},scale:{start:.8,end:0},alpha:{start:.3,end:0},tint:0x9aa3b8,frequency:80,follow:this.player,followOffset:{x:0,y:28}}).setDepth(2);
     this.tele=this.add.graphics().setDepth(2);
-    this.holes=[];this.holeG=this.add.graphics().setDepth(2);this.laserG=this.add.graphics().setDepth(8).setBlendMode('ADD');this.aims=[];
+    this.holes=[];this.holeG=this.add.graphics().setDepth(5);this.laserG=this.add.graphics().setDepth(8).setBlendMode('ADD');this.aims=[];
     this.fxZap=P('spark',{lifespan:{min:100,max:240},speed:{min:60,max:220},scale:{start:.9,end:0},blendMode:'ADD',tint:[0x9fe8ff,0xffffff,0x3d6ad6]}).setDepth(8);
     this.keys=this.input.keyboard.addKeys('W,A,S,D,UP,DOWN,LEFT,RIGHT');
     this.joy=null;
@@ -1423,7 +1426,7 @@ class Battle extends Phaser.Scene{
       g.lineStyle(2.5,col,.55+.45*k);const L=7;
       for(const [sx,sy] of [[-1,-1],[1,-1],[1,1],[-1,1]]){const cx=a.x+sx*r,cy=a.y+sy*r;g.beginPath();g.moveTo(cx,cy-sy*L);g.lineTo(cx,cy);g.lineTo(cx-sx*L,cy);g.strokePath()}
       if(k>.5){g.fillStyle(0xff5a1e,.5*k);g.fillCircle(a.x,a.y,3)}
-      if(a.t>=a.T&&!a.done){a.done=true;this.beam(p.x,p.y-6,Math.atan2(a.y-(p.y-6),a.x-p.x),a.s)}
+      if(a.t>=a.T&&!a.done){a.done=true;this.float(a.x,a.y-30,'회신','#ffb066',12,'"Do Hyeon",sans-serif');this.beam(p.x,p.y-6,Math.atan2(a.y-(p.y-6),a.x-p.x),a.s)}
     }
     this.aims=this.aims.filter(a=>!a.done);
   }
@@ -1436,7 +1439,7 @@ class Battle extends Phaser.Scene{
     draw();this.tweens.add({targets:o,w:0,duration:220,ease:'Quad.easeIn',onUpdate:draw,onComplete:()=>g.destroy()});
     this.fxSpark.explode(8,x+ux*20,y+uy*20);if(len<s.len)this.fxSpark.explode(10,ex,ey);this.cameras.main.shake(50,.002);SFX.laser();
   }
-  // 택스: 소용돌이를 던져 주변 적을 빨아들임. 빨아들인 수가 많을수록 세율(배수)이 올라 마지막 폭발이 커짐
+  // 택스: 세무조정 폭탄을 던짐. 도화선이 타는 동안 주변 적을 끌어모으고, 모은 수가 많을수록 세율(배수)이 올라 폭발이 커짐
   fireHole(){
     const S=this.S,p=this.player,s=wstat(S,'hole'),tg=this.nearest(380);if(!tg.length)return false;
     // 적이 가장 많이 모인 지점 근처를 노림: 가까운 적 몇 명 중 주변 밀도가 가장 높은 적
@@ -1449,7 +1452,7 @@ class Battle extends Phaser.Scene{
     for(const h of this.holes){
       const s=h.s;
       if(h.fly<1){h.fly=Math.min(1,h.fly+dt/.28);const k=h.fly,x=h.x+(h.tx-h.x)*k,y=h.y+(h.ty-h.y)*k-Math.sin(k*Math.PI)*60;
-        g.fillStyle(0x0b0b10,1);g.fillCircle(x,y,9);g.lineStyle(2,0xffffff,1);g.strokeCircle(x,y,9);
+        this.drawBomb(g,x,y,9,1,0);
         if(h.fly>=1){h.x=h.tx;h.y=h.ty;this.fxSpark.explode(12,h.x,h.y)}continue}
       h.t+=dt;h.spin+=dt*(5+h.got.size*.35);h.scale=Math.min(1,h.scale+dt*5);
       const R=s.rad*h.scale;
@@ -1458,26 +1461,42 @@ class Battle extends Phaser.Scene{
       for(const e of this.targets()){const dx=h.x-e.x,dy=h.y-e.y,d=Math.hypot(dx,dy);if(d>R+e.hitR)continue;
         h.got.add(e);
         if(!e.isBoss&&d>8){e.kb=Math.max(e.kb||0,.05);const v=s.pull*(.55+.45*(1-d/R))+40;e.setVelocity(dx/d*v,dy/d*v)}
-        if(tick)this.dmg(e,Math.max(1,Math.round(s.tick*this.S.might)),0,0,'#e6e8f0',8)}
+        if(tick)this.dmg(e,Math.max(1,Math.round(s.tick*this.S.might*(e.isBoss?BOSS_MUL.hole:1))),0,0,'#e6e8f0',8)}
       // 그리기: 어두운 중심 + 회전하는 나선팔
       const rate=taxRate(h.got.size),hot=rate.i/4;
       g.fillStyle(0xf3ead8,.06+.05*hot);g.fillCircle(h.x,h.y,R);
       g.lineStyle(1.5,0xffffff,.4);g.strokeCircle(h.x,h.y,R);
-      for(let arm=0;arm<4;arm++){g.lineStyle(arm%2?2:3.5,arm%2?0xc9ccd6:0xffffff,arm%2?.55:.85);g.beginPath();
-        for(let i=0;i<=14;i++){const t=i/14,r=R*(1-t)+6,a=h.spin+arm*Math.PI/2+t*3.2;const X=h.x+Math.cos(a)*r,Y=h.y+Math.sin(a)*r*.82;i?g.lineTo(X,Y):g.moveTo(X,Y)}g.strokePath()}
-      g.fillStyle(0x0b0b10,1);g.fillCircle(h.x,h.y,10+4*hot);g.lineStyle(2,0xe0301e,.5+.5*hot);g.strokeCircle(h.x,h.y,10+4*hot);
+      // 끌어모으는 줄무늬 (바깥 → 폭탄 쪽으로 이동)
+      for(let i=0;i<8;i++){const a=i*TAU/8+h.spin*.15,ph=(h.t*1.6+i*.37)%1,r1=R*(1-ph)+16,r2=r1-12,c=Math.cos(a),sn=Math.sin(a)*.82;
+        g.lineStyle(2,0xffffff,.2+.4*ph);g.lineBetween(h.x+c*r1,h.y+sn*r1,h.x+c*r2,h.y+sn*r2)}
+      // 폭탄 본체: 도화선이 타들어가며 짧아짐
+      const tip=this.drawBomb(g,h.x,h.y,11+4*hot,1-h.t/s.dur,hot);if(Math.random()<.5)this.fxSpark.emitParticleAt(tip.x,tip.y,1);
       if(Math.random()<.6){const a=rnd(0,TAU);this.fxSpark.emitParticleAt(h.x+Math.cos(a)*R*.9,h.y+Math.sin(a)*R*.75,1)}
       if(h.t>=s.dur)this.holeBoom(h);
     }
     this.holes=this.holes.filter(h=>!h.dead);
   }
+  drawBomb(g,x,y,r,fuse,hot){
+    g.fillStyle(0x2a2f45,1);g.fillCircle(x,y,r);
+    // PwC 오렌지 띠 + 흰 도트 'pwc' 글자
+    const px=r*.13,bw=12*px,bh=4*px+px*1.4,by=y-bh*.15;
+    g.fillStyle(0xd04a02,1);g.fillRect(x-r*.92,by,r*1.84,bh);
+    g.fillStyle(0xffffff,1);PWC_TXT.forEach((row,j)=>{for(let i=0;i<row.length;i++)if(row[i]==='W')g.fillRect(x-bw/2+i*px,by+px*.7+j*px,px,px)});
+    g.lineStyle(2,0x0b0b10,1);g.strokeCircle(x,y,r);
+    g.fillStyle(0xf3ead8,.8);g.fillCircle(x-r*.4,y-r*.4,r*.22);
+    if(hot){g.lineStyle(2,0xe0301e,.4+.6*hot);g.strokeCircle(x,y,r+3)}
+    const fx=x+r*.55,fy=y-r*.75,len=(6+r*.6)*Math.max(0,fuse),tx=fx+len*.6,ty=fy-len*.8;
+    g.lineStyle(2,0x9a7038,1);g.lineBetween(fx,fy,tx,ty);
+    g.fillStyle(0xffb600,1);g.fillCircle(tx,ty,2.5+Math.random()*1.5);
+    return {x:tx,y:ty};
+  }
   holeBoom(h){
     h.dead=true;const s=h.s,rate=taxRate(h.got.size),R=s.rad*1.05;
     const dmg=Math.round(s.boom*rate.mult*this.S.might);
-    for(const e of this.targets()){const d=Math.hypot(e.x-h.x,e.y-h.y);if(d<R+e.hitR)this.dmg(e,dmg,Math.atan2(e.y-h.y,e.x-h.x),320,'#ffd86b')}
+    for(const e of this.targets()){const d=Math.hypot(e.x-h.x,e.y-h.y);if(d<R+e.hitR)this.dmg(e,e.isBoss?Math.round(dmg*BOSS_MUL.hole):dmg,Math.atan2(e.y-h.y,e.x-h.x),320,'#ffd86b')}
     this.ring(h.x,h.y,0xffffff,R,false);this.ring(h.x,h.y,0xe0301e,R*.6,false);
     this.fxSpark.explode(20+rate.i*8,h.x,h.y);this.fxRed.explode(4+rate.i*4,h.x,h.y);
-    this.float(h.x,h.y-64,'세율 '+rate.label,rate.i>=3?'#ff6a52':'#ffffff',12+rate.i*3,'"Do Hyeon",sans-serif');
+    this.float(h.x,h.y-64,'조정 완료',rate.i>=3?'#ff6a52':'#ffffff',12+rate.i*3,'"Do Hyeon",sans-serif');
     this.cameras.main.shake(120+rate.i*40,.004+rate.i*.002);SFX.boom(rate.i>=3);
   }
   // 딜: 동전이 적 사이를 튕기며 맞힐 때마다 피해·크기가 복리로 불어남. 튕김을 다 쓰면 금빛 폭발
@@ -1491,7 +1510,7 @@ class Battle extends Phaser.Scene{
   coinHit(b,e){
     if(b.hits.has(e))return;b.hits.add(e);b.n++;
     const n=b.n,x=b.x,y=b.y;
-    this.dmg(e,b.dmg,Math.atan2(b.body.velocity.y,b.body.velocity.x),260,n>=4?'#fff1c2':'#ffd86b',11+Math.min(n,6)*1.5);
+    this.dmg(e,e.isBoss?Math.round(b.dmg*BOSS_MUL.comp):b.dmg,Math.atan2(b.body.velocity.y,b.body.velocity.x),260,n>=4?'#fff1c2':'#ffd86b',11+Math.min(n,6)*1.5);
     // 타격감: 금화 파편 + 빛 고리 + 화면 흔들림 + 짧은 멈춤 + 점점 높아지는 효과음
     this.fxGold.explode(6+n*3,x,y);this.fxSpark.explode(5,x,y);
     this.ring(x,y,0xffe6a0,20+n*5,false);
