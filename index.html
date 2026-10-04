@@ -332,7 +332,7 @@ kbd{font-family:var(--body);border:1px solid rgba(28,26,23,.3);border-radius:3px
     <div class="title-a">
       <img id="heroimg" alt="PwC 캡모자를 쓴 신입 회계사 도트 캐릭터">
       <h1 class="title-name">시즌의 <em>밤</em></h1>
-      <p class="title-time"><b>PM 11:47</b><span>결산 시즌</span></p>
+      <p class="title-time"><b>PM 11:47</b><span>감사 시즌</span></p>
       <button class="title-start" id="start" type="button">감사 시작</button>
       <p class="title-press" aria-hidden="true">PRESS ENTER</p>
       <div class="title-links">
@@ -432,7 +432,7 @@ kbd{font-family:var(--body);border:1px solid rgba(28,26,23,.3);border-radius:3px
 
   <div class="overlay" id="result" hidden>
     <div class="sheet">
-      <p class="eyebrow" id="rtag">결산 결과</p>
+      <p class="eyebrow" id="rtag">감사 결과</p>
       <h2 id="rtitle"></h2>
       <div class="stats">
         <div class="stat"><b id="rtime"></b><span>생존 시간</span></div>
@@ -1972,7 +1972,7 @@ class Battle extends Phaser.Scene{
   }
   gameOver(won){
     const S=this.S;if(S.over)return;S.over=true;this.joy=null;$('stick').hidden=true;
-    if(won){toast('결산 마감');this.cameras.main.flash(500,255,240,200);this.fxGold.explode(60,this.player.x,this.player.y)}
+    if(won){toast('감사 마감');this.cameras.main.flash(500,255,240,200);this.fxGold.explode(60,this.player.x,this.player.y)}
     else{SFX.die();this.fxGold.explode(50,this.player.x,this.player.y);this.fxRed.explode(30,this.player.x,this.player.y);this.player.setVisible(false);this.shadow.setVisible(false);this.dust.emitting=false;this.calcKeys.forEach(k=>k.setVisible(false));this.cameras.main.shake(400,.02)}
     this.physics.pause();
     this.time.delayedCall(won?1200:1000,()=>{showResult(S,won);this.scene.pause()});
@@ -2231,7 +2231,7 @@ function answerChest(sc,i){
 function showResult(S,won){
   recordPlay();
   $('hud').hidden=true;$('vig').className='';$('inds').replaceChildren();
-  setText('rtag',won?'결산 마감':'결산 실패');setText('rtitle',won?'시즌의 밤을 넘겼다.':'미결 전표에 묻혔다.');
+  setText('rtag',won?'감사 마감':'감사 실패');setText('rtitle',won?'시즌의 밤을 넘겼다.':'미결 전표에 묻혔다.');
   setText('rtime',fmt(S.t));setText('rboss',S.bossKills);setText('rkill',S.kills);setText('rq',`${S.correct} / ${S.asked}`);
   const bd=$('rbuild');bd.replaceChildren();[...S.wOrder,...S.pOrder].forEach(k=>bd.appendChild(slotEl(S,k)));
   const rv=$('review');rv.replaceChildren();
