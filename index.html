@@ -7,7 +7,7 @@
 <meta name="description" content="D-3조 회계 생존 학습게임. 몰려오는 미결 전표를 버티며 전리품 상자의 문제를 맞혀 업무 도구를 모으세요.">
 <meta property="og:title" content="시즌의 밤">
 <meta property="og:description" content="D-3조 회계 생존 학습게임 · 정답이 곧 무기가 된다">
-<meta name="theme-color" content="#0b1020">
+<meta name="theme-color" content="#FD5108">
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&family=Press+Start+2P&display=swap">
@@ -16,7 +16,7 @@
 :root{
   --night:#0b1020; --night-2:#141b33; --line:rgba(233,228,214,.14);
   --paper:#fff; --paper-2:#f6f6f6; --ink:#221f1f; --ink-2:#6b6b6b; --hair:#e7e5e4;
-  --pwc:#d04a02; --pwc-ink:#b23f02; --pwc-soft:#fdf0e7; --pwc-line:rgba(208,74,2,.3); /* PwC 오렌지 톤 */
+  --pwc:#FD5108; --pwc-ink:#c43d00; --pwc-deep:#a83300; --pwc-hover:#e64806; --pwc-soft:#fff1ea; --pwc-line:rgba(253,81,8,.32); --pwc-glow:rgba(253,81,8,.45); /* 삼일PwC 주황 RGB(253,81,8) 키컬러 */
   --fg:#e9e4d6; --fg-2:#9aa3b8;
   --gold:#ffb600; --gold-2:#fff1c2; --red:#e0301e; --green:#4fb37a; --violet:#8f6cf0;
   --display:"Do Hyeon","Noto Sans KR",system-ui,sans-serif;
@@ -38,7 +38,7 @@ img{image-rendering:pixelated}
 #hud{position:absolute;inset:0 0 auto 0;padding-top:env(safe-area-inset-top,0px);pointer-events:none;font-variant-numeric:tabular-nums}
 #hud[hidden]{display:none}
 #xpbar{position:relative;height:14px;background:rgba(0,0,0,.55);border-bottom:2px solid #000}
-#xpbar>i{position:absolute;inset:0 auto 0 0;background:linear-gradient(#ffe08a,var(--gold) 60%,#b88a25);transition:width .12s linear}
+#xpbar>i{position:absolute;inset:0 auto 0 0;background:linear-gradient(#ff9a66,var(--pwc) 60%,var(--pwc-deep));transition:width .12s linear}
 #lvtag{position:absolute;right:8px;top:2px;font-family:var(--pixel);font-size:9px;color:#fff;text-shadow:1px 1px 0 #000}
 .hudrow{display:grid;grid-template-columns:1fr auto 1fr;align-items:start;gap:10px;padding:8px 14px 0}
 .me{display:flex;gap:8px;align-items:center;min-width:0}
@@ -50,6 +50,19 @@ img{image-rendering:pixelated}
 .clock{text-align:center;display:grid;gap:4px}
 #timer{font-family:var(--pixel);font-size:18px;color:#fff;text-shadow:2px 2px 0 #000}
 #stagetag{font-family:var(--display);font-size:14px;color:var(--fg-2);letter-spacing:.04em}
+.clock-row{display:flex;align-items:center;justify-content:center;gap:8px}
+#pauseBtn{pointer-events:auto;width:26px;height:26px;padding:0;display:grid;place-items:center;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.22);border-radius:6px}
+#pauseBtn::before{content:"";width:10px;height:11px;background:linear-gradient(90deg,var(--fg) 0 35%,transparent 35% 65%,var(--fg) 65%)}
+#pauseBtn:hover{background:var(--pwc);border-color:var(--pwc)}
+.pause-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px}
+.pause-actions .primary{grid-column:1/-1}
+.pause-actions .result-change{padding:12px 0}
+/* 맵 경계 근처: 해당 화면 가장자리에 주황 빛 (위쪽은 경험치 바 아래부터) */
+.edge{position:absolute;pointer-events:none;opacity:0;transition:opacity .15s linear}
+#edgeN{left:0;right:0;top:calc(env(safe-area-inset-top,0px) + 16px);height:90px;background:linear-gradient(rgba(253,81,8,.38),rgba(253,81,8,0))}
+#edgeS{left:0;right:0;bottom:0;height:90px;background:linear-gradient(0deg,rgba(253,81,8,.38),rgba(253,81,8,0))}
+#edgeW{top:0;bottom:0;left:0;width:90px;background:linear-gradient(90deg,rgba(253,81,8,.38),rgba(253,81,8,0))}
+#edgeE{top:0;bottom:0;right:0;width:90px;background:linear-gradient(270deg,rgba(253,81,8,.38),rgba(253,81,8,0))}
 .meta{justify-self:end;display:flex;flex-direction:column;align-items:flex-end;gap:5px;font-size:12px;color:var(--fg-2)}
 .meta b{font-family:var(--pixel);font-size:10px;color:var(--fg)}
 .chip{display:inline-block;font-family:var(--display);font-size:13px;line-height:1;padding:4px 7px;border-radius:3px;background:rgba(255,255,255,.1);color:var(--fg);white-space:nowrap}
@@ -63,15 +76,15 @@ img{image-rendering:pixelated}
 .slot img{width:24px;height:24px}
 .slot .pips{position:absolute;left:2px;right:2px;bottom:1px;display:flex;gap:1px;justify-content:center}
 .slot .pips i{width:4px;height:3px;background:rgba(255,255,255,.2)}
-.slot .pips i.on{background:var(--gold)}
+.slot .pips i.on{background:var(--pwc)}
 .slot.evo{border-color:var(--gold);box-shadow:0 0 8px rgba(228,184,74,.6)}
 .slot.evo::after{content:"EVO";position:absolute;top:-6px;right:-6px;font-family:var(--pixel);font-size:6px;background:var(--gold);color:#000;padding:2px 2px 1px;border-radius:2px}
 .slot.ready{border-color:#9fd8a8;animation:ready 1s ease-in-out infinite}
 #buffs{display:flex;gap:6px;padding:6px 14px 0}
 #buffs:empty{display:none}
-.buff{display:flex;align-items:center;gap:6px;background:rgba(11,16,32,.8);border:2px solid var(--gold);border-radius:3px;padding:3px 8px 3px 4px;font-family:var(--display);font-size:13px;color:var(--fg);white-space:nowrap}
+.buff{display:flex;align-items:center;gap:6px;background:rgba(11,16,32,.8);border:2px solid var(--pwc);border-radius:3px;padding:3px 8px 3px 4px;font-family:var(--display);font-size:13px;color:var(--fg);white-space:nowrap}
 .buff img{width:20px;height:20px}
-.buff b{font-family:var(--pixel);font-size:9px;color:var(--gold)}
+.buff b{font-family:var(--pixel);font-size:9px;color:#ff8a52}
 @keyframes ready{50%{box-shadow:0 0 10px rgba(159,216,168,.8)}}
 #boss{position:absolute;left:50%;top:calc(env(safe-area-inset-top,0px) + 74px);transform:translateX(-50%);width:min(440px,calc(100% - 32px));display:grid;gap:4px}
 #boss[hidden]{display:none}
@@ -85,7 +98,7 @@ img{image-rendering:pixelated}
 #toast.warn{color:#ff8a76}
 #stick{position:absolute;width:104px;height:104px;margin:-52px 0 0 -52px;border-radius:50%;border:2px solid rgba(233,228,214,.25);pointer-events:none}
 #stick[hidden]{display:none}
-#stick>i{position:absolute;left:50%;top:50%;width:44px;height:44px;margin:-22px;border-radius:50%;background:rgba(228,184,74,.5)}
+#stick>i{position:absolute;left:50%;top:50%;width:44px;height:44px;margin:-22px;border-radius:50%;background:var(--pwc-glow)}
 .ind{position:absolute;left:0;top:0;width:34px;height:34px;margin:-17px 0 0 -17px;pointer-events:none;display:grid;place-items:center}
 .ind img{width:28px;height:22px;filter:drop-shadow(0 0 6px rgba(228,184,74,.8));animation:bob .8s ease-in-out infinite}
 .ind i{position:absolute;inset:0;transform-origin:50% 50%}
@@ -95,7 +108,7 @@ img{image-rendering:pixelated}
 /* Sheets */
 .overlay[hidden]{display:none}
 /* 야근 배경: 밤 사무실 빌딩 창문 불빛 (몇 칸만 켜짐) */
-.overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:16px;background:linear-gradient(rgba(6,9,18,.72),rgba(6,9,18,.86)),url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='168' height='96'%3E%3Cg fill='%23233050'%3E%3Crect x='8' y='8' width='16' height='24'/%3E%3Crect x='36' y='8' width='16' height='24'/%3E%3Crect x='92' y='8' width='16' height='24'/%3E%3Crect x='148' y='8' width='16' height='24'/%3E%3Crect x='8' y='56' width='16' height='24'/%3E%3Crect x='64' y='56' width='16' height='24'/%3E%3Crect x='92' y='56' width='16' height='24'/%3E%3Crect x='120' y='56' width='16' height='24'/%3E%3C/g%3E%3Cg fill='%23ffb600' fill-opacity='.55'%3E%3Crect x='64' y='8' width='16' height='24'/%3E%3Crect x='120' y='8' width='16' height='24'/%3E%3Crect x='36' y='56' width='16' height='24'/%3E%3Crect x='148' y='56' width='16' height='24'/%3E%3C/g%3E%3C/svg%3E") var(--night);overflow:auto}
+.overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:16px;background:linear-gradient(rgba(6,9,18,.72),rgba(6,9,18,.86)),url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='168' height='96'%3E%3Cg fill='%23233050'%3E%3Crect x='8' y='8' width='16' height='24'/%3E%3Crect x='36' y='8' width='16' height='24'/%3E%3Crect x='92' y='8' width='16' height='24'/%3E%3Crect x='148' y='8' width='16' height='24'/%3E%3Crect x='8' y='56' width='16' height='24'/%3E%3Crect x='64' y='56' width='16' height='24'/%3E%3Crect x='92' y='56' width='16' height='24'/%3E%3Crect x='120' y='56' width='16' height='24'/%3E%3C/g%3E%3Cg fill='%23FD5108' fill-opacity='.5'%3E%3Crect x='64' y='8' width='16' height='24'/%3E%3Crect x='120' y='8' width='16' height='24'/%3E%3Crect x='36' y='56' width='16' height='24'/%3E%3Crect x='148' y='56' width='16' height='24'/%3E%3C/g%3E%3C/svg%3E") var(--night);overflow:auto}
 .sheet{background:var(--paper);color:var(--ink);width:min(560px,100%);--display:"Pretendard Variable",Pretendard,"Noto Sans KR",system-ui,sans-serif;font-family:var(--display);border-radius:20px;padding:28px 26px;box-shadow:0 30px 80px rgba(0,0,0,.55),0 0 90px rgba(122,162,255,.18);position:relative;box-sizing:border-box;animation:drop .26s cubic-bezier(.2,.9,.3,1.2);margin:auto}
 .sheet.wide{width:min(720px,100%)}
 @keyframes drop{from{transform:translateY(-14px) rotate(-.6deg);opacity:0}}
@@ -107,9 +120,9 @@ img{image-rendering:pixelated}
 .muted{color:var(--ink-2);font-size:13px}
 button{font:inherit;cursor:pointer;border:0;border-radius:4px}
 .primary{background:var(--pwc);color:#fff;font-family:var(--display);font-weight:700;font-size:19px;padding:15px 28px;width:100%;border-radius:999px}
-.primary:hover{background:#b84102}
+.primary:hover{background:var(--pwc-hover)}
 .primary:active{transform:translateY(1px)}
-button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+button:focus-visible{outline:3px solid var(--pwc);outline-offset:2px}
 kbd{font-family:var(--body);border:1px solid rgba(28,26,23,.3);border-radius:3px;padding:0 5px;font-size:11px}
 
 .hero-head{display:flex;gap:18px;align-items:center;margin-bottom:10px}
@@ -119,12 +132,12 @@ kbd{font-family:var(--body);border:1px solid rgba(28,26,23,.3);border-radius:3px
 #heroimg{width:clamp(110px,18vh,160px);height:clamp(110px,18vh,160px);filter:drop-shadow(0 10px 0 rgba(0,0,0,.35));animation:heroBob 1.6s ease-in-out infinite}
 @keyframes heroBob{50%{transform:translateY(-4px)}}
 .title-name{margin:0;font-family:"Pretendard Variable",Pretendard,"Noto Sans KR",sans-serif;font-weight:900;font-size:clamp(52px,11vw,96px);line-height:1;letter-spacing:-.03em;color:#fff;text-shadow:0 6px 0 rgba(0,0,0,.4)}
-.title-name em{font-style:normal;color:#ff7a2e}
+.title-name em{font-style:normal;color:var(--pwc)}
 .title-time{margin:0;display:flex;gap:10px;align-items:center;justify-content:center;font-family:"Pretendard Variable",Pretendard,"Noto Sans KR",sans-serif;font-weight:600;font-size:15px;color:rgba(255,255,255,.7)}
-.title-time b{font-family:var(--pixel);font-weight:400;font-size:12px;color:var(--gold)}
-.title-start{margin-top:4px;width:min(260px,80vw);padding:16px 0;border:0;border-radius:999px;background:var(--pwc);color:#fff;font-family:"Pretendard Variable",Pretendard,"Noto Sans KR",sans-serif;font-weight:800;font-size:20px;box-shadow:0 6px 0 #8a3101,0 0 40px rgba(208,74,2,.45);cursor:pointer}
-.title-start:hover{background:#e0560a}
-.title-start:active{transform:translateY(3px);box-shadow:0 3px 0 #8a3101,0 0 40px rgba(208,74,2,.45)}
+.title-time b{font-family:var(--pixel);font-weight:400;font-size:12px;color:var(--pwc)}
+.title-start{margin-top:4px;width:min(260px,80vw);padding:16px 0;border:0;border-radius:999px;background:var(--pwc);color:#fff;font-family:"Pretendard Variable",Pretendard,"Noto Sans KR",sans-serif;font-weight:800;font-size:20px;box-shadow:0 6px 0 var(--pwc-deep),0 0 40px var(--pwc-glow);cursor:pointer}
+.title-start:hover{background:var(--pwc-hover)}
+.title-start:active{transform:translateY(3px);box-shadow:0 3px 0 var(--pwc-deep),0 0 40px var(--pwc-glow)}
 .title-press{margin:0;font-family:var(--pixel);font-size:10px;letter-spacing:.08em;color:rgba(255,255,255,.75);animation:blink 1.1s steps(2,start) infinite}
 @keyframes blink{to{visibility:hidden}}
 @media (hover:none){.title-press{display:none}}
@@ -136,7 +149,7 @@ kbd{font-family:var(--body);border:1px solid rgba(28,26,23,.3);border-radius:3px
 /* 캐릭터 선택 */
 #select{background:radial-gradient(ellipse at 50% 40%,rgba(6,9,18,.55) 0%,rgba(6,9,18,.9) 75%)}
 .sel{width:min(860px,100%);margin:auto;display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center;font-family:"Pretendard Variable",Pretendard,"Noto Sans KR",sans-serif}
-.sel-eyebrow{margin:0;font-size:13px;font-weight:700;color:#ff7a2e;letter-spacing:.04em}
+.sel-eyebrow{margin:0;font-size:13px;font-weight:700;color:var(--pwc);letter-spacing:.04em}
 .sel-title{margin:0;font-size:clamp(24px,4vw,34px);font-weight:800;color:#fff;letter-spacing:-.02em}
 .sel-gender{display:inline-flex;padding:4px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16)}
 .sel-gender button{border:0;border-radius:999px;background:transparent;color:rgba(255,255,255,.7);font:700 15px "Pretendard Variable",Pretendard,"Noto Sans KR",sans-serif;padding:8px 26px;cursor:pointer}
@@ -144,8 +157,8 @@ kbd{font-family:var(--body);border:1px solid rgba(28,26,23,.3);border-radius:3px
 .sel-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;width:100%;margin-top:4px}
 .sel-card{position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;padding:16px 10px 14px;border-radius:18px;background:rgba(255,255,255,.06);border:2px solid rgba(255,255,255,.12);color:#fff;cursor:pointer;font-family:inherit;min-width:0}
 .sel-card:hover{background:rgba(255,255,255,.1)}
-/* 본부 테마색: 감사 PwC 주황 · 택스 화이트 · 딜 블랙(+금) · 디지털 블루 */
-.sel-card{--acc:208,74,2;background:linear-gradient(180deg,rgba(var(--acc),.16),rgba(255,255,255,.04) 60%);overflow:hidden}
+/* 본부 테마색: 감사 삼일PwC 주황 · 택스 화이트 · 딜 블랙(+금) · 디지털 블루 */
+.sel-card{--acc:253,81,8;background:linear-gradient(180deg,rgba(var(--acc),.16),rgba(255,255,255,.04) 60%);overflow:hidden}
 .sel-card::before{content:"";position:absolute;left:0;right:0;top:0;height:4px;background:rgb(var(--acc));opacity:.85}
 .sel-card[data-part="tax"]{--acc:243,240,232}
 .sel-card[data-part="deal"]{--acc:228,184,74;background:linear-gradient(180deg,#050508,#121218 70%);border-color:rgba(228,184,74,.28)}
@@ -158,7 +171,7 @@ kbd{font-family:var(--body);border:1px solid rgba(28,26,23,.3);border-radius:3px
 .sel-card b{font-size:20px;font-weight:800}
 .sel-card .full{font-size:12px;color:rgba(255,255,255,.6)}
 .sel-card .atk{margin-top:6px;font-size:12px;font-weight:700;color:#fff}
-.sel-card .qs{margin-top:2px;font-size:11.5px;color:#ffb600;font-weight:600}
+.sel-card .qs{margin-top:2px;font-size:11.5px;color:#ff8a52;font-weight:600}
 .sel-card.locked{cursor:not-allowed}
 .sel-card.locked img{filter:brightness(0) opacity(.55)}
 .sel-card.locked b,.sel-card.locked .full{color:rgba(255,255,255,.4)}
@@ -221,16 +234,16 @@ kbd{font-family:var(--body);border:1px solid rgba(28,26,23,.3);border-radius:3px
 #chestimg{width:56px;height:44px}
 .loot .eyebrow{margin:0 0 2px}
 .loot-h{font-family:var(--display);font-weight:700;font-size:21px;margin:0}
-.reward{position:relative;display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:center;background:var(--night);color:var(--fg);border-radius:14px;padding:12px 14px;margin-bottom:16px;border:2px solid var(--gold);overflow:hidden}
+.reward{position:relative;display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:center;background:var(--night);color:var(--fg);border-radius:14px;padding:12px 14px;margin-bottom:16px;border:2px solid var(--pwc);overflow:hidden}
 .reward .icon{width:48px;height:48px}
 .reward .rwtext{display:grid;gap:3px;min-width:0}
 .reward b{font-family:var(--display);font-size:20px;font-weight:700}
 .reward .rwdesc{font-size:13px;color:var(--fg-2)}
-.reward.won{box-shadow:0 0 0 3px rgba(228,184,74,.35),0 0 30px rgba(228,184,74,.5);animation:won .5s ease}
+.reward.won{box-shadow:0 0 0 3px var(--pwc-line),0 0 30px var(--pwc-glow);animation:won .5s ease}
 @keyframes won{30%{transform:scale(1.03)}}
 .reward.lost{border-color:#555}
 .reward.lost .icon,.reward.lost .rwtext,.reward.lost .rwbonus{filter:grayscale(1) brightness(.6)}
-.rwbonus{grid-column:1/-1;display:flex;align-items:center;gap:8px;padding-top:8px;border-top:1px dashed rgba(228,184,74,.4);font-size:13px;color:var(--fg-2)}
+.rwbonus{grid-column:1/-1;display:flex;align-items:center;gap:8px;padding-top:8px;border-top:1px dashed var(--pwc-line);font-size:13px;color:var(--fg-2)}
 .rwbonus[hidden]{display:none}
 .rwbonus img{width:28px;height:28px;flex:none}
 .reward .rwbonus b{font-size:15px;color:var(--fg)}
@@ -238,6 +251,13 @@ kbd{font-family:var(--body);border:1px solid rgba(28,26,23,.3);border-radius:3px
 .reward.lost .denied{opacity:1;transform:translateY(-50%) rotate(-14deg) scale(1);transition:transform .22s cubic-bezier(.3,1.6,.5,1),opacity .1s}
 .qmeta{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:12px;color:var(--ink-2);margin-bottom:10px}
 .qmeta .cat{color:var(--pwc-ink);background:var(--pwc-soft);font-weight:600;padding:3px 10px;border-radius:999px}
+.qtimer{display:grid;grid-template-columns:1fr auto;align-items:center;gap:10px;margin:-2px 0 12px}
+.qtimer .track{height:8px;border-radius:999px;background:var(--hair);overflow:hidden}
+.qtimer .track i{display:block;height:100%;width:100%;background:var(--pwc);border-radius:999px;transform-origin:left;transition:background .2s}
+.qtimer b{font-family:var(--pixel);font-size:11px;color:var(--pwc-ink);min-width:3.2em;text-align:right}
+.qtimer.hurry .track i{background:var(--red);animation:hurry .5s ease-in-out infinite alternate}
+.qtimer.hurry b{color:var(--red);animation:hurry .5s ease-in-out infinite alternate}
+@keyframes hurry{to{opacity:.45}}
 .qtext{font-size:19px;font-weight:700;line-height:1.55;margin:0 0 16px}
 .choices{display:grid;gap:8px}
 .choice{text-align:left;background:#fff;border:1px solid var(--hair);border-radius:14px;padding:13px 16px;font-size:15px;line-height:1.45;color:var(--ink);display:grid;grid-template-columns:26px 1fr;gap:8px;align-items:start}
@@ -282,6 +302,7 @@ kbd{font-family:var(--body);border:1px solid rgba(28,26,23,.3);border-radius:3px
 <div id="app">
   <div id="game"></div>
   <div id="vig"></div>
+  <div class="edge" id="edgeN"></div><div class="edge" id="edgeS"></div><div class="edge" id="edgeW"></div><div class="edge" id="edgeE"></div>
   <div id="inds"></div>
   <div id="stick" hidden><i></i></div>
 
@@ -292,7 +313,7 @@ kbd{font-family:var(--body);border:1px solid rgba(28,26,23,.3);border-radius:3px
         <img id="portrait" alt="">
         <div class="hpwrap"><div class="hpbar"><i id="hpfill" style="width:100%"></i></div><span id="hptxt">100/100</span></div>
       </div>
-      <div class="clock"><b id="timer">0:00</b><span id="stagetag">STAGE 1 / 4</span></div>
+      <div class="clock"><div class="clock-row"><b id="timer">0:00</b><button id="pauseBtn" type="button" aria-label="일시정지" title="일시정지 (P)"></button></div><span id="stagetag">STAGE 1 / 4</span></div>
       <div class="meta">
         <span>처치 <b id="kills">0</b></span>
         <button id="mute" type="button">소리 켬</button>
@@ -349,6 +370,19 @@ kbd{font-family:var(--body);border:1px solid rgba(28,26,23,.3);border-radius:3px
     </div>
   </div>
 
+  <div class="overlay" id="pauseModal" hidden>
+    <div class="sheet">
+      <p class="eyebrow">일시정지</p>
+      <h2>잠깐 숨 돌리는 중</h2>
+      <p class="muted">P 또는 Esc 키로도 멈추고 이어 할 수 있어요.</p>
+      <div class="pause-actions">
+        <button class="primary" id="pauseResume" type="button">계속하기</button>
+        <button class="result-change" id="pauseRestart" type="button">다시 시작</button>
+        <button class="result-change" id="pauseQuit" type="button">타이틀로</button>
+      </div>
+    </div>
+  </div>
+
   <div class="overlay" id="helpModal" hidden>
     <div class="sheet">
       <p class="eyebrow">게임 설명</p>
@@ -359,7 +393,7 @@ kbd{font-family:var(--body);border:1px solid rgba(28,26,23,.3);border-radius:3px
         <div class="help-row"><span class="help-k">레벨업</span><span>적이 떨어뜨린 노란 증빙을 모으면 레벨업합니다. 가진 도구 중 하나를 골라 강화해요.</span></div>
         <div class="help-row"><span class="help-k">전리품 상자</span><span>화면 가장자리 화살표가 위치를 알려줍니다. 열면 회계 문제가 나오고, 맞히면 새 도구나 진화를 얻고 틀리면 반려됩니다. 보기는 숫자키로도 고를 수 있어요.</span></div>
         <div class="help-row"><span class="help-k">보급품</span><span class="help-enemies" id="helpSupply"></span></div>
-        <div class="help-row"><span class="help-k">보스</span><span>2·3·4스테이지에 등장합니다. 붉은 예고선이 보이면 돌진이 오니 옆으로 피하세요. 부정 적발은 분신 중 진짜를 찾아야 하고, 최종 보스 금감원 감리의 조사 통보(바닥의 원)가 뜨면 도장이 찍히기 전에 원 밖으로 나가세요.</span></div>
+        <div class="help-row"><span class="help-k">보스</span><span>2·3·4스테이지에 등장합니다. 붉은 예고선이 보이면 돌진이 오니 옆으로 피하세요. 부정 적발(택스 본부: 탈세적발)은 분신 중 진짜를 찾아야 하고, 최종 보스 금감원 감리(택스 본부: 세무조사의 심판)의 조사 통보(바닥의 원)가 뜨면 도장이 찍히기 전에 원 밖으로 나가세요.</span></div>
       </div>
       <button class="primary" type="button" data-close>닫기</button>
     </div>
@@ -384,6 +418,7 @@ kbd{font-family:var(--body);border:1px solid rgba(28,26,23,.3);border-radius:3px
         <div class="denied">반려</div>
       </div>
       <div class="qmeta"><span>문제 <span id="qno"></span> · 전투 일시정지</span><span class="cat" id="qcat"></span></div>
+      <div class="qtimer" id="qtimer" role="timer" aria-label="남은 시간"><div class="track"><i id="qtbar"></i></div><b id="qtsec">30s</b></div>
       <p class="qtext" id="qtext"></p>
       <div class="choices" id="choices"></div>
       <div class="verdict" id="verdict" hidden>
@@ -510,6 +545,15 @@ const CFG = {
     4:{key:'audit', name:'금감원 감리',     hp:4200, dmg:36, speed:60, r:42, frames:['audA','audB'], shot:14, slam:55}
   }
 };
+// 본부별 보스 외형: 해당 본부로 플레이할 때 이름·그림만 바꿈 (공격 패턴·체력·크기는 원래 보스 그대로)
+const PART_BOSSES = {
+  tax:{
+    boss1:{name:'누락소득의 망령',  frames:['omitA','omitB']},
+    fraud:{name:'탈세적발',        frames:['evadeA','evadeB']},
+    boss2:{name:'조세회피의 군주',  frames:['haven']},
+    audit:{name:'세무조사의 심판',  frames:['judgeA','judgeB']}
+  }
+};
 const ITEMS = {
   pen:   {type:'w', name:'만년필',   max:5, pair:'book',
           lv:['가장 가까운 적에게 잉크 탄 발사','피해 +4','탄 +1 (2발)','피해 +4','탄 +1 (3발), 연사 증가']},
@@ -549,6 +593,8 @@ const SUPPLY = {
   snack: {name:'출출박스', flavor:'출출박스에서 촉촉란을 구매했다',    desc:'10초간 이동 속도 +60% 또는 공격 속도 +60%', wt:30},
 };
 // chestBonus: 퀴즈 정답 시 원래 보상과 함께 보급품 1개를 추가로 줄 확률
+// 전리품 퀴즈 제한 시간(초)과, 째깍 소리를 시작할 남은 시간(초)
+const QUIZ_TIME=30,QUIZ_TICK_FROM=5;
 const SUPPLY_CFG = {mobDrop:.012, eliteDrop:.15, maxOnField:3, buffDur:10, stun:2.5, chestBonus:.3};
 // 보급품 하나 뽑기 (wt 비율. HP가 낮으면 S-WITH, 피해 감소가 최대면 비타민몰 비중 조정)
 function pickSupply(S,except=[]){
@@ -578,7 +624,7 @@ const PAL = {K:'#1b1a24',H:'#4a3428',h:'#7a5440',p:'#f49a9a',S:'#f2c6a0',s:'#d9a
   W:'#f3ead8',T:'#d9442f',R:'#8f2a1c',N:'#2c3a66',n:'#1e2848',P:'#232a40',B:'#14141c',L:'#e4b84a',Y:'#fff1c2',
   C:'#3a4060',c:'#5a6488',g:'#9fd8a8',O:'#8a5a3a',o:'#b07a4e',X:'#2a2f45',Z:'#d8f04a',z:'#f2ff7a',U:'#3d6ad6',
   u:'#7aa2ff',V:'#8f6cf0',v:'#c9b6ff',D:'#5b3fb0',J:'#c99a52',j:'#9a7038',A:'#9aa3b8',Q:'#4fb37a',I:'#ff7ab8',
-  F:'#d04a02',f:'#8f3301',y:'#ffb600',w:'#f3ead8',q:'#2f7a4f',e:'#c9ccd6',x:'#3a3f52',a:'#2fb3a0',d:'#1d7a6e',
+  F:'#FD5108',f:'#a83300',y:'#ffb600',w:'#f3ead8',q:'#2f7a4f',e:'#c9ccd6',x:'#3a3f52',a:'#2fb3a0',d:'#1d7a6e',
   M:'#45c08a',r:'#2b8f66',b:'#b5742e',l:'#7c4a1c',i:'#4f7fe0',k:'#3559b8',t:'#1f2a5c'}; // M·r: 부정 적발 몸, b·l: 돈가방, i·k·t: 금감원 감리 몸·모자 // F·f: PwC 오렌지 모자(본색·챙), y: 로고 노랑
 // 캐릭터는 가로 20칸: 몸은 16칸(양옆 2칸 여백), 캡모자 챙이 오른쪽 여백으로 튀어나옴
 const HERO_TOP = [
@@ -627,7 +673,7 @@ const HERO_FRAMES = mkFrames(HERO_TOP,false), HERO_FRAMES_L = mkFrames(HERO_TOP_
 // cats = 이 본부로 플레이할 때 나오는 문제 분류 ('삼일'은 공통, 비어 있으면 전체 문제)
 // =====================================================================
 const PARTS = [
-  {id:'audit',   color:'#d04a02', starter:'laser',  name:'감사',   full:'감사본부',   role:'재무제표를 검증하는 감사인', cats:['감사본부']},
+  {id:'audit',   color:'#FD5108', starter:'laser',  name:'감사',   full:'감사본부',   role:'재무제표를 검증하는 감사인', cats:['감사본부']},
   {id:'tax',     color:'#f3f0e8', starter:'hole',  name:'택스',   full:'택스본부',   role:'세무조정과 신고를 맡는 세무 전문가', cats:['택스본부']},
   {id:'deal',    color:'#e4b84a', starter:'comp',  name:'딜',     full:'딜본부',     role:'M&A와 가치평가를 돕는 딜 전문가', cats:['딜본부']},
   {id:'digital', color:'#3d6ad6', starter:'zap',  name:'디지털', full:'디지털',     role:'데이터와 IT로 일하는 디지털 전문가', cats:['디지털']}
@@ -978,6 +1024,98 @@ function genAudit(phase){
   put(g,35,22,'WWWWW');put(g,35,23,'WWWWW');
   return g.map(r=>r.join(''));
 }
+// ----- 택스 본부 전용 보스 외형 (패턴·크기는 원래 보스와 같고 그림만 다름) -----
+// 누락소득의 망령: 창백한 청록 유령 + 텅 빈 눈 + 흩날리는 지폐 (미수금의 그림자와 같은 몸 크기)
+function genOmit(phase){
+  let g=grid(32,30);
+  for(let y=0;y<30;y++)for(let x=0;x<32;x++){const dx=(x-15.5)/14;let ins;
+    if(y<=14)ins=dx*dx+((y-14)/13)**2<=1;else ins=Math.abs(x-15.5)<=14&&y<=25+Math.round(2*Math.sin(x*.9+phase));
+    if(ins)g[y][x]=x>21?'d':'g'}
+  g=outline(g);
+  // 텅 빈 눈 (어두운 구멍 + 작은 빛)
+  for(const x0 of [8,19])for(let y=10;y<=13;y++)for(let x=x0;x<x0+5;x++)g[y][x]=(y===10&&(x===x0||x===x0+4))?'g':'B';
+  put(g,10,11,'W');put(g,21,11,'W');
+  // 처진 입
+  put(g,12,18,'KKKKKKKK');put(g,11,19,'K');put(g,20,19,'K');
+  // 이마의 ₩
+  put(g,13,5,'K.K.K');put(g,13,6,'KKKKK');put(g,14,7,'K.K');
+  return g.map(r=>r.join(''));
+}
+// 지폐 조각 (망령 주변에 붙여 그림)
+function addBills(map,phase){
+  const g=map.map(r=>r.split('')),B=["KKKKKK","KQQWQK","KQWQQK","KKKKKK"];
+  const spots=phase?[[0,2],[26,4],[1,20]]:[[1,3],[26,2],[0,19]];
+  for(const [x0,y0] of spots)B.forEach((row,j)=>{for(let i=0;i<row.length;i++)if(g[y0+j]&&g[y0+j][x0+i]!==undefined)g[y0+j][x0+i]=row[i]});
+  return g.map(r=>r.join(''));
+}
+// 탈세적발: 겨자색 유령 + 빨간 띠 페도라 + 선글라스 + 금괴 더미 (부정 적발과 같은 몸 위치)
+function genEvade(phase){
+  let g=grid(38,34);
+  for(let y=9;y<=31;y++)for(let x=4;x<=29;x++){const dx=(x-16.5)/12.5;let ins;
+    if(y<=19)ins=dx*dx+((y-19)/10.5)**2<=1;else ins=y<=28+Math.round(2*Math.sin(x*.9+phase));
+    if(ins)g[y][x]=x>=24?'j':'J'}
+  // 금괴 더미 (오른쪽 아래)
+  for(const [x0,y0] of [[27,29],[32,29],[29,25]])for(let y=y0;y<y0+4;y++)for(let x=x0;x<x0+6;x++)g[y][x]=y===y0?'Y':'L';
+  g=outline(g);
+  // 페도라
+  for(let y=2;y<=7;y++)for(let x=11;x<=22;x++)g[y][x]=(y>=5&&y<=6)?'T':'X';
+  put(g,15,2,'....');put(g,12,3,'x');put(g,12,4,'x');
+  for(let x=5;x<=28;x++)g[8][x]='X';
+  // 선글라스
+  for(let y=12;y<=15;y++){for(let x=9;x<=15;x++)g[y][x]='B';for(let x=18;x<=24;x++)g[y][x]='B'}
+  put(g,16,12,'KK');put(g,10,13,'uu');put(g,19,13,'uu');
+  // 능글맞은 입
+  put(g,12,19,'K');put(g,13,20,'KKKKKKK');put(g,20,19,'K');put(g,14,20,'WWWWW');
+  put(g,8,17,'pp');put(g,24,17,'pp');
+  return g.map(r=>r.join(''));
+}
+// 조세회피의 군주: 청록 금고 몸통 + 금관 + 배의 금고 다이얼 (분식의 군주와 같은 크기)
+function genHaven(){
+  let g=grid(36,36);
+  for(let y=11;y<=33;y++)for(let x=5;x<=30;x++)g[y][x]=x<=7?'d':(x>=29?'g':'a');
+  for(let y=7;y<=10;y++)for(let x=7;x<=28;x++)g[y][x]='L';
+  for(const c of [9,15,21,27])for(let y=2;y<=6;y++){const hw=Math.floor((y-2)/2);for(let x=c-hw;x<=c+hw;x++)g[y][x]=y===2?'Y':'L'}
+  g=outline(g);
+  put(g,12,8,'T');put(g,18,8,'U');put(g,24,8,'T');
+  // 금고 경첩·리벳
+  for(const y of [13,31]){g[y][9]='e';g[y][26]='e'}
+  // 눈 (가늘게 뜬 눈)
+  for(let x=11;x<=15;x++)g[17][x]='Y';for(let x=20;x<=24;x++)g[17][x]='Y';
+  put(g,11,16,'KKK');put(g,22,16,'KKK');g[17][14]='E';g[17][21]='E';
+  // 씩 웃는 입
+  put(g,13,21,'KKKKKKKKK');put(g,14,22,'WKWKWKW');
+  // 금고 다이얼
+  for(let y=24;y<=32;y++)for(let x=13;x<=22;x++){const d=Math.hypot(x-17.5,y-28);if(d<=4.6)g[y][x]=d>3.6?'K':(d>2.4?'e':'A')}
+  g[28][17]='L';g[28][18]='L';g[25][17]='K';g[25][18]='K';
+  return g.map(r=>r.join(''));
+}
+// 세무조사의 심판: 검은 법복 유령 + 흰 판사 가발 + 금테 안경 + 고지서 + 판사봉 (금감원 감리와 같은 몸 위치)
+function genJudge(phase){
+  let g=grid(42,36);
+  for(let y=8;y<=33;y++)for(let x=8;x<=33;x++){const dx=(x-20.5)/12.5;let ins;
+    if(y<=18)ins=dx*dx+((y-18)/10)**2<=1;else ins=y<=30+Math.round(2*Math.sin(x*.9+phase));
+    if(ins)g[y][x]=x>=28?'X':'x'}
+  g=outline(g);
+  // 판사 가발: 머리 위 곱슬 + 양옆으로 늘어진 컬
+  for(let y=1;y<=9;y++)for(let x=9;x<=32;x++){const dx=(x-20.5)/11.5;if(dx*dx+((y-9)/8)**2<=1)g[y][x]=((x+y)%3===0)?'e':'W'}
+  for(let y=6;y<=19;y++)for(const x of [7,8,9,32,33,34])g[y][x]=((x+y)%3===0)?'e':'W';
+  for(let y=1;y<=19;y++)for(let x=6;x<=35;x++){if(g[y][x]!=='W'&&g[y][x]!=='e')continue;
+    for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){const c=g[y+dy]&&g[y+dy][x+dx];if(c==='.')g[y+dy][x+dx]='K'}}
+  // 안경
+  for(const x0 of [11,23]){for(let y=11;y<=16;y++)for(let i=x0;i<=x0+6;i++)g[y][i]=(y===11||y===16||i===x0||i===x0+6)?'L':'Y';put(g,x0+2,13,'EE');put(g,x0+2,14,'EE')}
+  put(g,18,12,'LLLLL');
+  put(g,18,19,'KKKKK');
+  // 흰 목장식(자보)
+  put(g,17,21,'WWWWWWW');put(g,18,22,'WWWWW');put(g,19,23,'WeW');put(g,20,24,'W');
+  // 고지서 (왼쪽): 빨간 머리띠 + 줄
+  for(let y=16;y<=34;y++)for(let x=0;x<=9;x++)g[y][x]=(y===16||y===34||x===0||x===9)?'K':(y>=17&&y<=19?'T':'W');
+  for(const y of [22,25,28])put(g,2,y,'AAAAAA');put(g,2,31,'AAA');put(g,6,31,'TT');
+  // 판사봉 (오른쪽): 가로 망치 머리 + 손잡이
+  for(let y=3;y<=8;y++)for(let x=33;x<=41;x++)g[y][x]=(y===3||y===8||x===33||x===41)?'K':(x===36||x===38)?'j':'O';
+  for(let y=9;y<=24;y++)for(let x=36;x<=38;x++)g[y][x]=(x===36||x===38)?'K':'o';
+  g[24][36]='K';g[24][37]='K';g[24][38]='K';
+  return g.map(r=>r.join(''));
+}
 function pixCanvas(map,px,over={}){
   const h=map.length,w=Math.max(...map.map(r=>r.length));
   const c=document.createElement('canvas');c.width=w*px;c.height=h*px;const x=c.getContext('2d');
@@ -995,6 +1133,8 @@ function makeTextures(sc){
   add('mob0',MOB0,3);add('receipt',RECEIPT,3);add('mob1',MOB1,3);add('elite',ELITE,3);
   add('boss1a',genBoss1(0),3);add('boss1b',genBoss1(1.6),3);add('boss2',genBoss2(),3);
   add('fraudA',genFraud(0),3);add('fraudB',genFraud(1.6),3);add('audA',genAudit(0),3);add('audB',genAudit(1.6),3);
+  add('omitA',addBills(genOmit(0),0),3);add('omitB',addBills(genOmit(1.6),1),3);add('evadeA',genEvade(0),3);add('evadeB',genEvade(1.6),3);
+  add('haven',genHaven(),3);add('judgeA',genJudge(0),3);add('judgeB',genJudge(1.6),3);
   add('fslip',["KKKKKKK","KWWWWTK","KWAAWWK","KWWWTTK","KKKKKKK"],3); // 위조 전표
   add('dslip',["KKKKKK","KWWWTK","KWAAWK","KWWWWK","KWAAWK","KKKKKK"],3); // 지적 서류
   add('chest',CHEST,3);add('chestG',CHEST,3,GOLD_OVER);
@@ -1063,6 +1203,7 @@ const SFX = {
   dash(){this.noise(.32,{vol:.14,freq:280})},
   ring(){this.tone(520,.22,{type:'sine',vol:.08,slide:.5})},
   bossDie(){this.noise(.9,{vol:.22,freq:180});[392,523,659,784,1047].forEach((f,i)=>this.tone(f,.2,{type:'triangle',vol:.1,delay:.25+i*.08}))},
+  tickTock(n){this.tone(n%2?1500:1050,.06,{type:'square',vol:.11});this.noise(.035,{vol:.08,freq:n%2?5200:3400})}, // 째깍째깍 (번갈아 높낮이)
   supply(){[784,988,1319].forEach((f,i)=>this.tone(f,.12,{type:'triangle',vol:.09,delay:i*.06}))},
   freeze(){this.noise(.5,{vol:.12,freq:6000});[1568,2093,2637].forEach((f,i)=>this.tone(f,.28,{type:'sine',vol:.06,delay:i*.05}))},
   correct(){[659,988].forEach((f,i)=>this.tone(f,.16,{type:'triangle',vol:.13,delay:i*.09}))},
@@ -1171,6 +1312,8 @@ const FILLERS=[
 ];
 const FILLER_BAG=FILLERS.flatMap(f=>Array(f.wt).fill(f));
 const CHUNK=560;
+// 맵 크기: 시작 지점(0,0)을 중심으로 가로·세로 MAP_HALF*2. 경계 밖으로는 나갈 수 없음
+const MAP_HALF=2500,MAP={x:-MAP_HALF,y:-MAP_HALF,w:MAP_HALF*2,h:MAP_HALF*2};
 // 랜드마크 등장: 맵 로드 시 순서를 정해 두고(첫 번째는 아모레퍼시픽 고정, 나머지는 셔플) LM_TIMES(초)마다 1채씩 등장. 각 1회만
 // 플레이어가 가는 방향 화면 바로 바깥에 생겨, 계속 걸어가면 화면에 들어옴
 // 랜드마크끼리 최소 간격 LM_GAP (한 화면에 몰리지 않도록), 시작 지점 주변 비울 거리 LM_START
@@ -1199,18 +1342,15 @@ function signBox(x,txt,cx,cy,size,fg,bg){
   x.fillStyle=fg;x.textAlign='center';x.textBaseline='middle';x.fillText(txt,cx,cy+1);
 }
 function roofEdge(x,w,T){x.fillStyle='rgba(0,0,0,.35)';x.fillRect(0,T-2,w,3)}
-// 아모레퍼시픽 본사: 흰 루버로 감싼 큐브 + 가운데 뚫린 정원
+// 아모레퍼시픽 본사: 흰색+옅은 하늘색 루버로 감싼 큐브 + 가운데 뚫린 빈 중정
 function drawAP(x,w,h){
   const F=Math.round(h*.38),T=h-F;
-  x.fillStyle='#e8e2d4';x.fillRect(0,0,w,T);x.fillStyle='#d3cbb8';for(let i=4;i<w;i+=6)x.fillRect(i,0,2,T);
+  x.fillStyle='#eef4fa';x.fillRect(0,0,w,T);x.fillStyle='#d3e0ec';for(let i=4;i<w;i+=6)x.fillRect(i,0,2,T);
   const cw=w*.38,ch=T*.52,cx=(w-cw)/2,cy=(T-ch)/2;
-  x.fillStyle='#16241c';x.fillRect(cx,cy,cw,ch);
-  [[.22,.35,'#3e7d4f'],[.62,.3,'#3e7d4f'],[.42,.72,'#3e7d4f'],[.8,.7,'#3e7d4f'],[.25,.32,'#5fa86a'],[.6,.26,'#5fa86a'],[.4,.68,'#5fa86a'],[.78,.66,'#5fa86a']]
-    .forEach(([a,b,c],i)=>{x.fillStyle=c;x.beginPath();x.arc(cx+cw*a,cy+ch*b,ch*(i<4?.2:.12),0,7);x.fill()});
-  x.fillStyle='#f3eee2';x.fillRect(0,T,w,F);x.fillStyle='#cfc6b2';for(let i=3;i<w;i+=5)x.fillRect(i,T,2,F);
-  x.fillStyle='#1d2433';x.fillRect(w*.06,T+F*.14,w*.22,F*.34);x.fillRect(w*.72,T+F*.1,w*.22,F*.3);
-  x.fillStyle='#2a3245';x.fillRect(w*.42,T+F*.6,w*.16,F*.4);x.fillStyle='#ffd86b';x.fillRect(w*.42,T+F*.6,w*.16,2);
-  roofEdge(x,w,T);signBox(x,'아모레퍼시픽',w/2,T+F*.36,13,'#f3eee2','#1d2433');
+  x.fillStyle='#2b3a4f';x.fillRect(cx,cy,cw,ch);x.fillStyle='#3d5068';x.fillRect(cx,cy,cw,4); // 빈 중정 (안쪽 벽면 그림자)
+  x.fillStyle='#f8fbfe';x.fillRect(0,T,w,F);x.fillStyle='#cfdcea';for(let i=3;i<w;i+=5)x.fillRect(i,T,2,F);
+  x.fillStyle='#2a3245';x.fillRect(w*.42,T+F*.6,w*.16,F*.4);x.fillStyle='#bfe2ff';x.fillRect(w*.42,T+F*.6,w*.16,2);
+  roofEdge(x,w,T);signBox(x,'아모레퍼시픽',w/2,T+F*.36,13,'#f8fbfe','#1d2433');
 }
 // LS용산타워: 유리 고층 타워 + 옥상 헬리패드
 function drawLS(x,w,h){
@@ -1267,11 +1407,11 @@ class Battle extends Phaser.Scene{
   create(){
     window.BATTLE=this;makeTextures(this);
     const cam=this.cameras.main;cam.setBackgroundColor('#0b1020');
-    this.S=newState();this.modalOpen=false;this.modalQ=[];this.chests=[];this.supplies=[];this.calcKeys=[];this.textPool=[];this.stopping=false;
+    this.S=newState();this.paused=false;this.modalOpen=false;this.modalQ=[];this.chests=[];this.supplies=[];this.calcKeys=[];this.textPool=[];this.stopping=false;
     this.floor=this.add.tileSprite(0,0,64,64,'floor').setOrigin(0).setDepth(-10);
     this.physics.world.setBounds(-1e5,-1e5,2e5,2e5);
     this.applyZoom();this.scale.on('resize',this.applyZoom,this);
-    this.events.once('shutdown',()=>{this.scale.off('resize',this.applyZoom,this);$('inds').replaceChildren();$('buffs').replaceChildren();hc.buff=''});
+    this.events.once('shutdown',()=>{this.scale.off('resize',this.applyZoom,this);$('inds').replaceChildren();$('buffs').replaceChildren();hc.buff='';stopQuizTimer();$('pauseModal').hidden=true;for(const k of 'NSWE'){$('edge'+k).style.opacity=0;hc['edge'+k]=''}});
     this.buildObstacles();this.physics.world.on('worldstep',this.resolveObs,this);
 
     this.shadow=this.add.image(0,0,'shadow').setDepth(1);
@@ -1326,6 +1466,9 @@ class Battle extends Phaser.Scene{
   // ----- 지형물 -----
   // 맵 초기화: 유니크 랜드마크 목록을 섞어 무작위 좌표에 하나씩(중복 없이) 배치
   buildObstacles(){
+    // 맵 경계: 바깥을 두꺼운 벽 4개로 막아 지형물과 같은 충돌·미끄러짐·엄폐 처리를 받게 함
+    const T=4000;this.walls=[{x:MAP.x-T,y:MAP.y-T,w:MAP.w+T*2,h:T},{x:MAP.x-T,y:MAP.y+MAP.h,w:MAP.w+T*2,h:T},{x:MAP.x-T,y:MAP.y,w:T,h:MAP.h},{x:MAP.x+MAP.w,y:MAP.y,w:T,h:MAP.h}];
+    this.drawBounds();
     this.obs=[];this.chunks=new Map();this.chunkKey='';this.landmarks=[];
     // 유니크 목록: 앞에서부터 하나씩 꺼내 쓰므로 중복 없음. 첫 번째는 아모레퍼시픽
     const first=LANDMARKS.find(L=>L.key==='lm_ap');
@@ -1350,13 +1493,32 @@ class Battle extends Phaser.Scene{
   tryLandmark(L,cx,cy,gap=LM_GAP){
     const r={x:Math.round(cx-L.w/2),y:Math.round(cy-L.h/2),w:L.w,h:L.h,lm:true,key:L.key};
     const qx=Phaser.Math.Clamp(0,r.x,r.x+r.w),qy=Phaser.Math.Clamp(0,r.y,r.y+r.h);
+    if(r.x<MAP.x+120||r.y<MAP.y+120||r.x+r.w>MAP.x+MAP.w-120||r.y+r.h>MAP.y+MAP.h-120)return false; // 맵 밖·경계 근처 제외
     if(Math.hypot(qx,qy)<LM_START||this.landmarks.some(o=>rectGap(o,r)<gap))return false;
     if(this.chests&&this.chests.some(c=>c.x>r.x-40&&c.x<r.x+r.w+40&&c.y>r.y-40&&c.y<r.y+r.h+40))return false;
     // 자리에 있던 가구는 치움 (나중에 다시 와도 생기지 않게 청크 기록에서도 제거)
     for(const c of this.chunks.values())c.rects=c.rects.filter(f=>{if(rectGap(f,r)>=130)return true;if(c.live){f.img.destroy();f.sh.destroy()}return false});
     this.landmarks.push(r);this.addObsSprite(r,r.key);this.refreshObs();return true;
   }
-  refreshObs(){this.obs=this.landmarks.slice();for(const c of this.chunks.values())if(c.live)this.obs.push(...c.rects)}
+  refreshObs(){this.obs=this.walls.concat(this.landmarks);for(const c of this.chunks.values())if(c.live)this.obs.push(...c.rects)}
+  // 경계 표시: 밖은 어둡게 + 바깥쪽 주황 사선 띠 + 경계선(주황 실선·빛)
+  drawBounds(){
+    const g=this.add.graphics().setDepth(2.8),T=6000,B=36,{x,y,w,h}=MAP;
+    g.fillStyle(0x03050c,.72);g.fillRect(x-T,y-T,w+T*2,T);g.fillRect(x-T,y+h,w+T*2,T);g.fillRect(x-T,y,T,h);g.fillRect(x+w,y,T,h);
+    g.fillStyle(0x2a1206,.9);g.fillRect(x-B,y-B,w+B*2,B);g.fillRect(x-B,y+h,w+B*2,B);g.fillRect(x-B,y,B,h);g.fillRect(x+w,y,B,h);
+    g.fillStyle(0xfd5108,.85);
+    for(let i=-B;i<w+B;i+=32){g.fillPoints([{x:x+i,y:y-B},{x:x+i+14,y:y-B},{x:x+i+14+B,y:y},{x:x+i+B,y:y}],true);g.fillPoints([{x:x+i,y:y+h},{x:x+i+14,y:y+h},{x:x+i+14+B,y:y+h+B},{x:x+i+B,y:y+h+B}],true)}
+    for(let j=-B;j<h+B;j+=32){g.fillPoints([{x:x-B,y:y+j},{x:x-B,y:y+j+14},{x:x,y:y+j+14+B},{x:x,y:y+j+B}],true);g.fillPoints([{x:x+w,y:y+j},{x:x+w,y:y+j+14},{x:x+w+B,y:y+j+14+B},{x:x+w+B,y:y+j+B}],true)}
+    g.lineStyle(14,0xfd5108,.22);g.strokeRect(x,y,w,h);g.lineStyle(4,0xfd5108,1);g.strokeRect(x,y,w,h);
+  }
+  // 맵 안으로 좌표 당기기 (pad: 경계에서 띄울 거리)
+  inMap(x,y,pad=40){return{x:Phaser.Math.Clamp(x,MAP.x+pad,MAP.x+MAP.w-pad),y:Phaser.Math.Clamp(y,MAP.y+pad,MAP.y+MAP.h-pad)}}
+  // 경계에 가까우면 그쪽 화면 가장자리를 주황으로 (가까울수록 진하게)
+  updEdges(){
+    const p=this.player,R=320,f=d=>Math.max(0,Math.min(1,1-d/R)).toFixed(2);
+    const v={N:f(p.y-MAP.y),S:f(MAP.y+MAP.h-p.y),W:f(p.x-MAP.x),E:f(MAP.x+MAP.w-p.x)};
+    for(const k in v)if(hc['edge'+k]!==v[k]){hc['edge'+k]=v[k];$('edge'+k).style.opacity=v[k]}
+  }
   addObsSprite(r,key){r.sh=this.add.rectangle(r.x+7,r.y+9,r.w,r.h,0x000000,.35).setOrigin(0).setDepth(.5);r.img=this.add.image(r.x,r.y,key).setOrigin(0).setDepth(2.6)}
   // 필러 가구: 랜드마크를 피해 남은 빈 공간에 확률적으로 채움. 무한맵이라 플레이어 주변 청크 단위로 생성
   // (맵 로드 시 시작 지점 주변을 먼저 채우고, 이동하면 새 청크를 채움. 한 번 만든 청크는 기억해 같은 배치 유지)
@@ -1374,6 +1536,7 @@ class Battle extends Phaser.Scene{
     for(let t=0;t<n*5&&out.length<n;t++){
       const f=pick(FILLER_BAG),r={x:Math.round(x0+rnd(40,CHUNK-40-f.w)),y:Math.round(y0+rnd(40,CHUNK-40-f.h)),w:f.w,h:f.h,key:f.key};
       if(Math.hypot(r.x+r.w/2,r.y+r.h/2)<260)continue; // 시작 지점은 비워 둠
+      if(r.x<MAP.x+60||r.y<MAP.y+60||r.x+r.w>MAP.x+MAP.w-60||r.y+r.h>MAP.y+MAP.h-60)continue; // 맵 밖 제외
       if(this.landmarks.some(o=>rectGap(o,r)<130)||out.some(o=>rectGap(o,r)<90))continue;
       out.push(r)}
     return out;
@@ -1432,7 +1595,7 @@ class Battle extends Phaser.Scene{
              receipt:{tex:'receipt',r:10,hp:10+6*s,dmg:7,xp:1,spd:128+s*8},
              elite:{tex:'elite',r:18,hp:95+15*s,dmg:18,xp:3,spd:58+s*6}}[type];
     const diff=1+S.t/170,dd=1+S.t/240;
-    const x=pos?pos.x:p.x+Math.cos(a)*d,y=pos?pos.y:p.y+Math.sin(a)*d;
+    const {x,y}=this.inMap(pos?pos.x:p.x+Math.cos(a)*d,pos?pos.y:p.y+Math.sin(a)*d);
     const e=this.enemies.create(x,y,T.tex).setDepth(4);
     e.body.setCircle(T.r,e.width/2-T.r,e.height/2-T.r);
     Object.assign(e,{hp:Math.round(T.hp*diff),dmg:Math.round(T.dmg*dd),xp:T.xp,speed:T.spd+rnd(-8,8),kb:0,flashT:0,seed:rnd(0,10),elite:type==='elite',type,hitR:T.r,f:0});
@@ -1459,8 +1622,10 @@ class Battle extends Phaser.Scene{
     this.fxGold.explode(16,x,y);
   }
   spawnBoss(def){
+    const skin=PART_BOSSES[CHOICE.part]&&PART_BOSSES[CHOICE.part][def.key];if(skin)def=Object.assign({},def,skin);
     const S=this.S,a=rnd(0,TAU),d=this.viewMax()*.5;
-    const b=this.physics.add.image(this.player.x+Math.cos(a)*d,this.player.y+Math.sin(a)*d,def.frames[0]).setDepth(5);
+    const at=this.inMap(this.player.x+Math.cos(a)*d,this.player.y+Math.sin(a)*d,def.r+20);
+    const b=this.physics.add.image(at.x,at.y,def.frames[0]).setDepth(5);
     b.body.setCircle(def.r,(def.cx??b.width/2)-def.r,(def.cy??b.height/2)-def.r); // cx·cy: 소품(돈가방 등) 때문에 몸 중심이 그림 중앙이 아닐 때
     const hp=Math.round(def.hp*S.bossBuff.hp);
     Object.assign(b,{def,hp,maxhp:hp,isBoss:true,dmg:Math.round(def.dmg*S.bossBuff.dmg),state:'chase',stateT:2.4,ringT:3,spreadT:1.6,flashT:0,baseScale:1+(S.bossBuff.hp-1)*.25,hitR:def.r,
@@ -1473,6 +1638,13 @@ class Battle extends Phaser.Scene{
     toast('WARNING · '+def.name,true,1800);SFX.warn();this.cameras.main.shake(500,.006);this.fxViolet.explode(40,b.x,b.y);
   }
 
+  // ----- 일시정지 -----
+  togglePause(){
+    if(this.demo||this.S.over||this.modalOpen)return;
+    this.paused=!this.paused;$('pauseModal').hidden=!this.paused;
+    if(this.paused){this.joy=null;$('stick').hidden=true;this.scene.pause();$('pauseResume').focus()}
+    else this.scene.resume();
+  }
   // ----- 모달 (레벨업 / 상자) -----
   openModal(kind,data){
     if(this.modalOpen){this.modalQ.push([kind,data]);return}
@@ -1546,7 +1718,7 @@ class Battle extends Phaser.Scene{
     const ux=Math.cos(ang),uy=Math.sin(ang),len=this.rayLen(x,y,ux,uy,s.len),dmg=Math.round(s.dmg*this.S.might),ex=x+ux*len,ey=y+uy*len;
     for(const e of this.targets()){const dx=e.x-x,dy=e.y-y,t=dx*ux+dy*uy;if(t<0||t>len)continue;const off=Math.abs(dx*uy-dy*ux);if(off<s.w*.5+e.hitR*(e.baseScale||1))this.dmg(e,dmg,ang,150,'#ffb066')}
     const g=this.add.graphics().setDepth(8).setBlendMode('ADD'),o={w:1};
-    const draw=()=>{g.clear();g.lineStyle(s.w*1.9*o.w,0xd04a02,.35);g.lineBetween(x,y,ex,ey);g.lineStyle(s.w*o.w,0xff7a2e,.85);g.lineBetween(x,y,ex,ey);g.lineStyle(Math.max(1,s.w*.35*o.w),0xfff1c2,1);g.lineBetween(x,y,ex,ey)};
+    const draw=()=>{g.clear();g.lineStyle(s.w*1.9*o.w,0xfd5108,.35);g.lineBetween(x,y,ex,ey);g.lineStyle(s.w*o.w,0xff7a2e,.85);g.lineBetween(x,y,ex,ey);g.lineStyle(Math.max(1,s.w*.35*o.w),0xfff1c2,1);g.lineBetween(x,y,ex,ey)};
     draw();this.tweens.add({targets:o,w:0,duration:220,ease:'Quad.easeIn',onUpdate:draw,onComplete:()=>g.destroy()});
     this.fxSpark.explode(8,x+ux*20,y+uy*20);if(len<s.len)this.fxSpark.explode(10,ex,ey);this.cameras.main.shake(50,.002);SFX.laser();
   }
@@ -1591,7 +1763,7 @@ class Battle extends Phaser.Scene{
     g.fillStyle(0x2a2f45,1);g.fillCircle(x,y,r);
     // PwC 오렌지 띠 + 흰 도트 'pwc' 글자
     const px=r*.13,bw=12*px,bh=4*px+px*1.4,by=y-bh*.15;
-    g.fillStyle(0xd04a02,1);g.fillRect(x-r*.92,by,r*1.84,bh);
+    g.fillStyle(0xfd5108,1);g.fillRect(x-r*.92,by,r*1.84,bh);
     g.fillStyle(0xffffff,1);PWC_TXT.forEach((row,j)=>{for(let i=0;i<row.length;i++)if(row[i]==='W')g.fillRect(x-bw/2+i*px,by+px*.7+j*px,px,px)});
     g.lineStyle(2,0x0b0b10,1);g.strokeCircle(x,y,r);
     g.fillStyle(0xf3ead8,.8);g.fillCircle(x-r*.4,y-r*.4,r*.22);
@@ -1854,7 +2026,7 @@ class Battle extends Phaser.Scene{
       if(e.stunT>0){e.stunT-=dt;e.setVelocity(0,0);if(e.flashT<=0)e.stunT>0?e.setTint(0xbfe8ff):e.clearTint();continue}
       if(e.kb>0)e.kb-=dt;else{this.physics.moveToObject(e,p,e.speed);this.slide(e,e.speed,dt)}
       this.animMob(e,time);e.setFlipX(e.x>p.x);
-      if(Math.abs(e.x-p.x)>far||Math.abs(e.y-p.y)>far){const a=rnd(0,TAU),d=V*.62;e.setPosition(p.x+Math.cos(a)*d,p.y+Math.sin(a)*d)}
+      if(Math.abs(e.x-p.x)>far||Math.abs(e.y-p.y)>far){const a=rnd(0,TAU),d=V*.62;const q=this.inMap(p.x+Math.cos(a)*d,p.y+Math.sin(a)*d);e.setPosition(q.x,q.y)}
     }
     if(this.boss)this.updBoss(dt,time);
     for(const d of this.decoys.getChildren().slice())this.updFraud(d,dt,time);
@@ -1868,7 +2040,7 @@ class Battle extends Phaser.Scene{
         continue}
       if(d<S.magnet||g.pull){g.pull=true;this.physics.moveToObject(g,p,480)}
     }
-    this.updSupplies(dt);
+    this.updSupplies(dt);this.updEdges();
     // 상자
     for(const c of this.chests.slice()){
       if(Math.hypot(c.x-p.x,c.y-p.y)<36){this.chests.splice(this.chests.indexOf(c),1);c.ind.remove();this.tweens.killTweensOf([c,c.beam]);c.beam.destroy();this.fxGold.explode(30,c.x,c.y);SFX.chest();const gold=c.gold;c.destroy();this.openModal('chest',{gold});continue}
@@ -1972,7 +2144,7 @@ class Battle extends Phaser.Scene{
     if(b.stunT>0){b.stunT-=dt;b.setVelocity(0,0);if(b.flashT<=0)b.stunT>0?b.setTint(0xbfe8ff):b.clearTint();b.label.setPosition(b.x,b.y+def.r*b.baseScale+10);setW('bossfill',b.hp/b.maxhp*100);return}
     if(def.key==='fraud'){this.updFraud(b,dt,time);return}
     if(def.key==='audit'){this.updAudit(b,dt,time);return}
-    if(def.key==='boss1'){const f=Math.floor(time/250)%2;if(b.f!==f){b.f=f;b.setTexture(f?'boss1b':'boss1a')}}
+    if(def.key==='boss1'){const f=Math.floor(time/250)%2;if(b.f!==f){b.f=f;b.setTexture(def.frames[f])}}
     b.setFlipX(p.x<b.x);
     if(b.state==='chase'){
       this.physics.moveToObject(b,p,def.speed);this.slide(b,def.speed,dt);b.stateT-=dt;
@@ -2024,17 +2196,34 @@ function showChest(sc,{gold}){
   const order=q.fixed?[...q.choices.keys()]:shuffle([...q.choices.keys()]);S.curChoices=order.map(i=>q.choices[i]);S.curAns=order.indexOf(q.answer);
   S.curChoices.forEach((c,i)=>{const b=el('button','choice');b.type='button';b.append(el('span','n',String(i+1)),el('span','',c));b.onclick=()=>answerChest(sc,i);box.appendChild(b)});
   $('chest').hidden=false;box.firstElementChild.focus();
+  startQuizTimer(sc);
+}
+// 퀴즈 제한 시간: 남은 시간 바 + QUIZ_TICK_FROM초부터 매초 째깍 소리, 0초가 되면 시간 초과(오답 처리)
+let quizTimer=0;
+function stopQuizTimer(){clearInterval(quizTimer);quizTimer=0}
+function startQuizTimer(sc){
+  stopQuizTimer();const t0=performance.now(),qt=$('qtimer');let lastSec=QUIZ_TIME;
+  qt.hidden=false;qt.classList.remove('hurry');
+  const tick=()=>{
+    const left=Math.max(0,QUIZ_TIME-(performance.now()-t0)/1000),sec=Math.ceil(left);
+    $('qtbar').style.transform=`scaleX(${left/QUIZ_TIME})`;setText('qtsec',sec+'s');
+    if(left<=QUIZ_TICK_FROM){qt.classList.add('hurry');if(sec<lastSec&&sec>0)SFX.tickTock(sec)}
+    lastSec=sec;
+    if(left<=0){stopQuizTimer();answerChest(sc,-1)}
+  };
+  tick();quizTimer=setInterval(tick,100);
 }
 function answerChest(sc,i){
   const S=sc.S,q=S.curQ,rw=S.curReward,bs=[...$('choices').children];if(bs[0].disabled)return;
+  stopQuizTimer();const timeout=i<0;$('qtimer').classList.remove('hurry');
   bs.forEach(b=>b.disabled=true);bs[S.curAns].classList.add('ok');
   const ok=i===S.curAns,v=$('verdict'),info=rewardInfo(S,rw);
   if(ok){S.correct++;applyReward(sc,rw);if(S.curGold)S.hp=S.maxhp;SFX.correct();$('reward').classList.add('won');
     const sup=S.curSupply;if(sup)S.postFx.push(()=>sc.time.delayedCall(450,()=>sc.useSupply(sup))); // 원래 보상 연출 뒤에 발동
     setText('vtitle',`정답. ${info.name}${sup?' + '+SUPPLY[sup].name:''} 획득!`);setText('vfx',rw.kind==='evo'?'업무 도구가 진화했다.':'HUD 슬롯에서 확인할 수 있다.');v.className='verdict ok';
     S.postFx.push(()=>{const p=sc.player;sc.fxGold.explode(40,p.x,p.y);sc.ring(p.x,p.y,0xe4b84a,150,true);sc.float(p.x,p.y-46,info.name,'#ffd86b',22,'"Do Hyeon",sans-serif')});
-  }else{bs[i].classList.add('bad');S.wrong.push({q,picked:S.curChoices[i]});SFX.wrong();$('reward').classList.add('lost');
-    setText('vtitle','오답. 전리품이 반려됐다.');setText('vfx','다음 상자에서 다시 도전하자.');v.className='verdict bad';
+  }else{if(!timeout)bs[i].classList.add('bad');S.wrong.push({q,picked:timeout?'시간 초과':S.curChoices[i]});SFX.wrong();$('reward').classList.add('lost');
+    setText('vtitle',timeout?'시간 초과. 전리품이 반려됐다.':'오답. 전리품이 반려됐다.');setText('vfx','다음 상자에서 다시 도전하자.');v.className='verdict bad';
     S.postFx.push(()=>{sc.cameras.main.flash(260,120,20,30);toast('전리품 반려',true)});
   }
   setText('vexp',`정답: ${q.choices[q.answer]}`+(q.exp?` — ${q.exp}`:''));v.hidden=false;$('resume').focus();
@@ -2056,7 +2245,7 @@ function showResult(S,won){
 // 타이틀 / 부팅
 // =====================================================================
 (function title(){
-  $('pwclogo').src=pixCanvas(PWC_LOGO,4).toDataURL();
+  $('pwclogo').src=pixCanvas(PWC_LOGO,4,{F:'#d04a02'}).toDataURL();
   let f=0;const img=$('heroimg');setInterval(()=>{f=(f+1)%4;img.src=heroURLs(CHOICE.part,CHOICE.g)[f];document.querySelectorAll('.sel-card img').forEach(i=>{i.src=heroURLs(i.dataset.part,SEL.g)[f]})},160);img.src=heroURLs(CHOICE.part,CHOICE.g)[1];
   // 도감: [무기] + [짝 도구] = [진화]
   const cx=$('codex');
@@ -2112,7 +2301,7 @@ function recordPlay(){
 }
 
 let game;
-function startRun(){SFX.init();['title','select','result','levelup','chest','codexModal','helpModal'].forEach(id=>$(id).hidden=true);game.scene.getScene('Battle').scene.restart({demo:false})}
+function startRun(){SFX.init();['title','select','result','levelup','chest','codexModal','helpModal','pauseModal'].forEach(id=>$(id).hidden=true);game.scene.getScene('Battle').scene.restart({demo:false})}
 if(window.Phaser){
   game=new Phaser.Game({type:Phaser.AUTO,parent:'game',backgroundColor:'#0b1020',scale:{mode:Phaser.Scale.RESIZE,width:'100%',height:'100%'},
     physics:{default:'arcade',arcade:{debug:false}},audio:{noAudio:true},banner:false,scene:[Battle]});
@@ -2120,9 +2309,16 @@ if(window.Phaser){
 }else $('loading').textContent='게임 엔진을 불러오지 못했습니다. 네트워크를 확인하고 새로고침해 주세요.';
 $('start').onclick=openSelect;$('retry').onclick=startRun;
 $('resume').onclick=()=>window.BATTLE.closeModal();
+$('pauseBtn').onclick=()=>window.BATTLE&&window.BATTLE.togglePause();
+$('pauseResume').onclick=()=>window.BATTLE.togglePause();
+$('pauseRestart').onclick=startRun;
+$('pauseQuit').onclick=()=>{$('pauseModal').hidden=true;$('hud').hidden=true;game.scene.getScene('Battle').scene.restart({demo:true});$('title').hidden=false;$('start').focus()};
 $('mute').onclick=()=>{SFX.muted=!SFX.muted;$('mute').textContent=SFX.muted?'소리 끔':'소리 켬'};
 addEventListener('keydown',e=>{
   const n=parseInt(e.key,10);
+  // 전투 중 P / Esc: 일시정지 전환 (다른 창이 떠 있을 때는 제외)
+  const B=window.BATTLE;
+  if((e.key==='p'||e.key==='P'||e.key==='ㅔ'||e.key==='Escape')&&B&&!B.demo&&!B.S.over&&!B.modalOpen&&!$('hud').hidden){e.preventDefault();B.togglePause();return}
   if(e.key==='Escape'){['codexModal','helpModal'].forEach(id=>$(id).hidden=true)}
   if(e.key==='Enter'&&!$('title').hidden&&$('codexModal').hidden&&$('helpModal').hidden&&document.activeElement===document.body){e.preventDefault();openSelect();return}
   if(!$('select').hidden){
