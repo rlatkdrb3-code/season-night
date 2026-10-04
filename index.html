@@ -924,6 +924,7 @@ function makeTextures(sc){
     if(square){x.strokeRect(10,10,100,100);x.lineWidth=3;x.strokeRect(20,20,80,80)}else{x.beginPath();x.arc(60,60,52,0,7);x.stroke();x.lineWidth=3;x.beginPath();x.arc(60,60,42,0,7);x.stroke()}
     x.font='bold 30px "Do Hyeon","Noto Sans KR",sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillText(text,60,62);sc.textures.addCanvas(key,c)};
   mk('approve','rgba(217,68,47,.85)','승인',false);mk('seal','rgba(228,90,47,.9)','직인',true);
+  makeObsTextures(sc);
 }
 
 // =====================================================================
@@ -1048,6 +1049,109 @@ function renderSlots(S){
 }
 
 // =====================================================================
+// 지형물: 용산 랜드마크(판마다 1회씩, 유니크) + 사무실 가구(빈 공간 반복 배치)
+// 모두 직사각형. w/h = 충돌 영역 = 그림 크기
+// =====================================================================
+const LANDMARKS=[
+  {key:'lm_ap',w:230,h:190,draw:drawAP},
+  {key:'lm_ls',w:150,h:200,draw:drawLS},
+  {key:'lm_ipark',w:320,h:150,draw:drawIPark},
+  {key:'lm_station',w:280,h:140,draw:drawStation},
+];
+const FILLERS=[
+  {key:'f_partH',w:130,h:20,wt:3,draw:drawPartH},{key:'f_partV',w:20,h:130,wt:3,draw:drawPartV},
+  {key:'f_water',w:32,h:38,wt:2,draw:drawWater},{key:'f_copier',w:66,h:48,wt:2,draw:drawCopier},{key:'f_cab',w:46,h:72,wt:2,draw:drawCabinet},
+];
+const FILLER_BAG=FILLERS.flatMap(f=>Array(f.wt).fill(f));
+const CHUNK=560;
+// 랜드마크 등장: 맵 로드 시 순서를 정해 두고(첫 번째는 아모레퍼시픽 고정, 나머지는 셔플) LM_TIMES(초)마다 1채씩 등장. 각 1회만
+// 플레이어가 가는 방향 화면 바로 바깥에 생겨, 계속 걸어가면 화면에 들어옴
+// 랜드마크끼리 최소 간격 LM_GAP (한 화면에 몰리지 않도록), 시작 지점 주변 비울 거리 LM_START
+const LM_TIMES=[5,30,60,90],LM_GAP=600,LM_START=200;
+// 두 사각형 사이 간격(겹치면 음수)
+function rectGap(a,b){return Math.max(b.x-(a.x+a.w),a.x-(b.x+b.w),b.y-(a.y+a.h),a.y-(b.y+b.h))}
+// 선분 (x,y)+(dx,dy)*t 가 사각형에 들어가는 t (0~1), 안 맞으면 Infinity. 시작점이 이미 안이면 무시
+function segT(o,x,y,dx,dy){
+  if(x>o.x&&x<o.x+o.w&&y>o.y&&y<o.y+o.h)return Infinity;
+  let t0=0,t1=1;
+  for(const [p,d,lo,hi] of [[x,dx,o.x,o.x+o.w],[y,dy,o.y,o.y+o.h]]){
+    if(Math.abs(d)<1e-9){if(p<lo||p>hi)return Infinity;continue}
+    let a=(lo-p)/d,b=(hi-p)/d;if(a>b)[a,b]=[b,a];t0=Math.max(t0,a);t1=Math.min(t1,b);if(t0>t1)return Infinity}
+  return t0;
+}
+function makeObsTextures(sc){
+  for(const d of LANDMARKS.concat(FILLERS)){
+    const c=document.createElement('canvas');c.width=d.w;c.height=d.h;const x=c.getContext('2d');
+    d.draw(x,d.w,d.h);x.strokeStyle='#0b1020';x.lineWidth=3;x.strokeRect(1.5,1.5,d.w-3,d.h-3);
+    sc.textures.addCanvas(d.key,c);
+  }
+}
+function signBox(x,txt,cx,cy,size,fg,bg){
+  x.font=`${size}px "Do Hyeon","Noto Sans KR",sans-serif`;const w=x.measureText(txt).width+size*.9,h=size*1.45;
+  if(bg){x.fillStyle=bg;x.fillRect(Math.round(cx-w/2),Math.round(cy-h/2),Math.round(w),Math.round(h))}
+  x.fillStyle=fg;x.textAlign='center';x.textBaseline='middle';x.fillText(txt,cx,cy+1);
+}
+function roofEdge(x,w,T){x.fillStyle='rgba(0,0,0,.35)';x.fillRect(0,T-2,w,3)}
+// 아모레퍼시픽 본사: 흰 루버로 감싼 큐브 + 가운데 뚫린 정원
+function drawAP(x,w,h){
+  const F=Math.round(h*.38),T=h-F;
+  x.fillStyle='#e8e2d4';x.fillRect(0,0,w,T);x.fillStyle='#d3cbb8';for(let i=4;i<w;i+=6)x.fillRect(i,0,2,T);
+  const cw=w*.38,ch=T*.52,cx=(w-cw)/2,cy=(T-ch)/2;
+  x.fillStyle='#16241c';x.fillRect(cx,cy,cw,ch);
+  [[.22,.35,'#3e7d4f'],[.62,.3,'#3e7d4f'],[.42,.72,'#3e7d4f'],[.8,.7,'#3e7d4f'],[.25,.32,'#5fa86a'],[.6,.26,'#5fa86a'],[.4,.68,'#5fa86a'],[.78,.66,'#5fa86a']]
+    .forEach(([a,b,c],i)=>{x.fillStyle=c;x.beginPath();x.arc(cx+cw*a,cy+ch*b,ch*(i<4?.2:.12),0,7);x.fill()});
+  x.fillStyle='#f3eee2';x.fillRect(0,T,w,F);x.fillStyle='#cfc6b2';for(let i=3;i<w;i+=5)x.fillRect(i,T,2,F);
+  x.fillStyle='#1d2433';x.fillRect(w*.06,T+F*.14,w*.22,F*.34);x.fillRect(w*.72,T+F*.1,w*.22,F*.3);
+  x.fillStyle='#2a3245';x.fillRect(w*.42,T+F*.6,w*.16,F*.4);x.fillStyle='#ffd86b';x.fillRect(w*.42,T+F*.6,w*.16,2);
+  roofEdge(x,w,T);signBox(x,'아모레퍼시픽',w/2,T+F*.36,13,'#f3eee2','#1d2433');
+}
+// LS용산타워: 유리 고층 타워 + 옥상 헬리패드
+function drawLS(x,w,h){
+  const F=Math.round(h*.55),T=h-F;
+  x.fillStyle='#2b3550';x.fillRect(0,0,w,T);x.fillStyle='#3b4766';x.fillRect(8,8,w-16,T-16);
+  const r=Math.min(w,T)*.3;x.fillStyle='#1f2638';x.beginPath();x.arc(w/2,T/2,r,0,7);x.fill();
+  x.strokeStyle='#e4b84a';x.lineWidth=3;x.stroke();signBox(x,'H',w/2,T/2,r*1.1,'#e4b84a');
+  const g=x.createLinearGradient(0,T,0,h);g.addColorStop(0,'#5a7cb3');g.addColorStop(1,'#1f2d4d');x.fillStyle=g;x.fillRect(0,T,w,F);
+  x.fillStyle='rgba(159,196,232,.45)';for(let i=12;i<w;i+=14)x.fillRect(i,T,1,F);x.fillStyle='rgba(159,196,232,.3)';for(let j=T+10;j<h;j+=10)x.fillRect(0,j,w,1);
+  x.fillStyle='rgba(255,255,255,.12)';x.beginPath();x.moveTo(w*.15,T);x.lineTo(w*.45,T);x.lineTo(w*.1,h);x.lineTo(0,h);x.lineTo(0,T+F*.3);x.fill();
+  x.fillStyle='#d9442f';x.fillRect(w/2-20,T+10,40,24);signBox(x,'LS',w/2,T+22,18,'#ffffff');
+  x.fillStyle='#141b2e';x.fillRect(w*.38,h-26,w*.24,26);
+  roofEdge(x,w,T);signBox(x,'LS용산타워',w/2,h-40,14,'#f3eee2','#141b2e');
+}
+// 용산 아이파크몰: 넓은 쇼핑몰 + 빨간 간판
+function drawIPark(x,w,h){
+  const F=Math.round(h*.42),T=h-F;
+  x.fillStyle='#4a5068';x.fillRect(0,0,w,T);
+  x.fillStyle='#9fc4e8';for(let j=0;j<3;j++)for(let i=0;i<5;i++)x.fillRect(22+i*40,12+j*22,26,10);
+  x.fillStyle='#6b7189';[[w-70,T-36],[w-40,T-36]].forEach(([a,b])=>{x.fillRect(a,b,22,22);x.fillStyle='#2a3245';x.fillRect(a+4,b+4,14,2);x.fillRect(a+4,b+9,14,2);x.fillStyle='#6b7189'});
+  x.fillStyle='#ece7dc';x.fillRect(0,T,w,F);
+  x.fillStyle='#d9442f';x.fillRect(0,T,w,F*.36);
+  x.fillStyle='#6f9cc6';x.fillRect(10,T+F*.46,w-20,F*.42);x.fillStyle='#ece7dc';for(let i=10;i<w-10;i+=30)x.fillRect(i,T+F*.46,2,F*.42);
+  x.fillStyle='#1d2433';x.fillRect(w*.2,T+F*.56,36,F*.44);x.fillRect(w*.7,T+F*.56,36,F*.44);
+  roofEdge(x,w,T);signBox(x,"I'PARK MALL · 용산 아이파크몰",w/2,T+F*.18,14,'#ffffff');
+}
+// 용산역: 곡선 지붕 역사 + 코레일 파란 간판
+function drawStation(x,w,h){
+  const F=Math.round(h*.42),T=h-F;
+  const g=x.createLinearGradient(0,0,0,T);g.addColorStop(0,'#2a4250');g.addColorStop(.5,'#46707f');g.addColorStop(1,'#2a4250');x.fillStyle=g;x.fillRect(0,0,w,T);
+  x.fillStyle='rgba(11,16,32,.35)';for(let i=8;i<w;i+=12)x.fillRect(i,0,2,T);
+  x.fillStyle='#8fb7cf';x.fillRect(0,T,w,F);x.fillStyle='#5d8aa6';for(let i=0;i<w;i+=16)x.fillRect(i,T,2,F);for(let j=T;j<h;j+=12)x.fillRect(0,j,w,2);
+  x.fillStyle='#1d2433';x.fillRect(w*.35,h-F*.45,w*.3,F*.45);
+  roofEdge(x,w,T);signBox(x,'용산역  YONGSAN',w/2,T+F*.28,14,'#ffffff','#1f4fa0');
+}
+// 사무실 가구
+function drawPartH(x,w,h){x.fillStyle='#8a93ab';x.fillRect(0,0,w,h);x.fillStyle='#3a4766';x.fillRect(3,6,w-6,h-9);x.fillStyle='#b9c0d2';x.fillRect(0,0,w,4);x.fillStyle='#4c5a7d';for(let i=8;i<w-6;i+=10)x.fillRect(i,10,4,2)}
+function drawPartV(x,w,h){x.fillStyle='#8a93ab';x.fillRect(0,0,w,h);x.fillStyle='#3a4766';x.fillRect(4,6,w-8,h-9);x.fillStyle='#b9c0d2';x.fillRect(0,0,w,5);x.fillStyle='#4c5a7d';for(let j=12;j<h-6;j+=10)x.fillRect(8,j,4,4)}
+function drawWater(x,w,h){x.fillStyle='#e9edf3';x.fillRect(3,14,w-6,h-14);x.fillStyle='#c9ccd6';x.fillRect(3,h-8,w-6,8);
+  x.fillStyle='#6fb3e8';x.beginPath();x.arc(w/2,11,10,0,7);x.fill();x.fillStyle='#bfe2ff';x.fillRect(w/2-5,5,4,4);
+  x.fillStyle='#d9442f';x.fillRect(8,20,5,4);x.fillStyle='#3d6ad6';x.fillRect(w-13,20,5,4)}
+function drawCopier(x,w,h){x.fillStyle='#c9ccd6';x.fillRect(0,0,w,30);x.fillStyle='#9aa0b3';x.fillRect(5,5,40,19);
+  x.fillStyle='#2a3245';x.fillRect(49,5,13,19);x.fillStyle='#5fe08a';x.fillRect(52,8,4,4);x.fillStyle='#e4b84a';x.fillRect(52,15,7,2);
+  x.fillStyle='#a8adbd';x.fillRect(0,30,w,h-30);x.fillStyle='#f3ead8';x.fillRect(8,33,30,5);x.fillStyle='#7d8398';x.fillRect(4,40,w-8,2)}
+function drawCabinet(x,w,h){x.fillStyle='#8a93ab';x.fillRect(0,0,w,12);x.fillStyle='#6b7489';x.fillRect(0,12,w,h-12);
+  for(let j=12;j<h-4;j+=15){x.fillStyle='#4c5568';x.fillRect(3,j+13,w-6,2);x.fillStyle='#c9ccd6';x.fillRect(w/2-7,j+5,14,3);x.fillStyle='#f3ead8';x.fillRect(6,j+4,8,5)}}
+
+// =====================================================================
 // 전투 씬
 // =====================================================================
 class Battle extends Phaser.Scene{
@@ -1061,6 +1165,7 @@ class Battle extends Phaser.Scene{
     this.physics.world.setBounds(-1e5,-1e5,2e5,2e5);
     this.applyZoom();this.scale.on('resize',this.applyZoom,this);
     this.events.once('shutdown',()=>{this.scale.off('resize',this.applyZoom,this);$('inds').replaceChildren()});
+    this.buildObstacles();this.physics.world.on('worldstep',this.resolveObs,this);
 
     this.shadow=this.add.image(0,0,'shadow').setDepth(1);
     this.heroKey='_'+CHOICE.part+'_'+CHOICE.g;
@@ -1075,7 +1180,7 @@ class Battle extends Phaser.Scene{
     this.physics.add.overlap(this.player,this.enemies,(p,e)=>this.hurt(e.dmg),null,this);
     this.physics.add.overlap(this.player,this.ebullets,(p,b)=>{if(!b.active)return;this.killB(this.ebullets,b);this.hurt(b.dmg)},null,this);
     this.boss=null;
-    cam.startFollow(this.player,true,.14,.14);
+    cam.startFollow(this.player,true,.14,.14);this.updChunks();
 
     const P=(tex,cfg)=>this.add.particles(0,0,tex,Object.assign({emitting:false},cfg));
     this.fxRed=P('bit',{lifespan:{min:300,max:650},speed:{min:60,max:240},rotate:{min:0,max:360},scale:{start:1.2,end:0},alpha:{start:1,end:0},tint:[0xf3ead8,0xd9442f,0x9aa3b8]}).setDepth(7);
@@ -1104,7 +1209,106 @@ class Battle extends Phaser.Scene{
   applyZoom(){const w=this.scale.width,h=this.scale.height;this.cameras.main.setZoom(Phaser.Math.Clamp(Math.min(w,h)/720,.62,1))}
   syncFloor(){const wv=this.cameras.main.worldView;const w=Math.ceil(wv.width)+4,h=Math.ceil(wv.height)+4;if(this.floor.width!==w||this.floor.height!==h)this.floor.setSize(w,h);this.floor.setPosition(wv.x-2,wv.y-2);this.floor.tilePositionX=wv.x;this.floor.tilePositionY=wv.y}
   targets(){const l=this.enemies.getChildren().filter(e=>e.active);if(this.boss&&this.boss.active)l.push(this.boss);return l}
-  nearest(range){const p=this.player,r2=range*range,o=[];for(const e of this.targets()){const d=(e.x-p.x)**2+(e.y-p.y)**2;if(d<r2)o.push({e,d})}return o.sort((a,b)=>a.d-b.d)}
+  // los=true: 지형물에 가려진 적은 제외 (엄폐)
+  nearest(range,los=false){const p=this.player,r2=range*range,o=[];for(const e of this.targets()){const d=(e.x-p.x)**2+(e.y-p.y)**2;if(d<r2&&(!los||this.los(p.x,p.y,e.x,e.y)))o.push({e,d})}return o.sort((a,b)=>a.d-b.d)}
+
+  // ----- 지형물 -----
+  // 맵 초기화: 유니크 랜드마크 목록을 섞어 무작위 좌표에 하나씩(중복 없이) 배치
+  buildObstacles(){
+    this.obs=[];this.chunks=new Map();this.chunkKey='';this.landmarks=[];
+    // 유니크 목록: 앞에서부터 하나씩 꺼내 쓰므로 중복 없음. 첫 번째는 아모레퍼시픽
+    const first=LANDMARKS.find(L=>L.key==='lm_ap');
+    this.lmQueue=[first,...shuffle(LANDMARKS.filter(L=>L!==first))];
+  }
+  // 등장 시각이 된 랜드마크를 플레이어 진행 방향의 화면 바로 바깥에 배치 (실패하면 다음 프레임에 다시 시도)
+  updLandmarks(){
+    const i=LANDMARKS.length-this.lmQueue.length;if(!this.lmQueue.length||this.S.t<LM_TIMES[i])return;
+    const L=this.lmQueue[0],p=this.player,v=p.body.velocity,wv=this.cameras.main.worldView;
+    const base=v.lengthSq()>100?Math.atan2(v.y,v.x):Math.atan2(this.S.face.y,this.S.face.x);
+    // 진행 방향 정면, 화면 바로 바깥에 놓되 옆으로 벗어나는 폭은 화면 안쪽으로 제한 → 그 방향으로 걸으면 반드시 화면에 들어옴
+    // 자리가 없으면(다른 랜드마크와 너무 가까움 등) 방향·거리를 넓히고 간격 조건도 조금씩 완화 → 한곳에 머물러도 반드시 등장
+    const half=(ax,ay)=>Math.abs(ax)*wv.width/2+Math.abs(ay)*wv.height/2,cw=wv.centerX,ch=wv.centerY;
+    for(let k=0;k<40;k++){
+      const a=base+(k<12?0:rnd(-1,1)*Math.PI*k/40),ux=Math.cos(a),uy=Math.sin(a),nx=-uy,ny=ux;
+      const lat=rnd(-1,1)*Math.max(0,half(nx,ny)-Math.max(L.w,L.h)/2-40);
+      let d=100;const off=()=>{const cx=cw+ux*d+nx*lat,cy=ch+uy*d+ny*lat;return cx-L.w/2>wv.right+30||cx+L.w/2<wv.x-30||cy-L.h/2>wv.bottom+30||cy+L.h/2<wv.y-30};
+      while(!off())d+=20;
+      d+=rnd(20,120)+(k<12?0:k*25);
+      if(this.tryLandmark(L,cw+ux*d+nx*lat,ch+uy*d+ny*lat,LM_GAP*Math.max(.5,1-k/40))){this.lmQueue.shift();return}}
+  }
+  tryLandmark(L,cx,cy,gap=LM_GAP){
+    const r={x:Math.round(cx-L.w/2),y:Math.round(cy-L.h/2),w:L.w,h:L.h,lm:true,key:L.key};
+    const qx=Phaser.Math.Clamp(0,r.x,r.x+r.w),qy=Phaser.Math.Clamp(0,r.y,r.y+r.h);
+    if(Math.hypot(qx,qy)<LM_START||this.landmarks.some(o=>rectGap(o,r)<gap))return false;
+    if(this.chests&&this.chests.some(c=>c.x>r.x-40&&c.x<r.x+r.w+40&&c.y>r.y-40&&c.y<r.y+r.h+40))return false;
+    // 자리에 있던 가구는 치움 (나중에 다시 와도 생기지 않게 청크 기록에서도 제거)
+    for(const c of this.chunks.values())c.rects=c.rects.filter(f=>{if(rectGap(f,r)>=130)return true;if(c.live){f.img.destroy();f.sh.destroy()}return false});
+    this.landmarks.push(r);this.addObsSprite(r,r.key);this.refreshObs();return true;
+  }
+  refreshObs(){this.obs=this.landmarks.slice();for(const c of this.chunks.values())if(c.live)this.obs.push(...c.rects)}
+  addObsSprite(r,key){r.sh=this.add.rectangle(r.x+7,r.y+9,r.w,r.h,0x000000,.35).setOrigin(0).setDepth(.5);r.img=this.add.image(r.x,r.y,key).setOrigin(0).setDepth(2.6)}
+  // 필러 가구: 랜드마크를 피해 남은 빈 공간에 확률적으로 채움. 무한맵이라 플레이어 주변 청크 단위로 생성
+  // (맵 로드 시 시작 지점 주변을 먼저 채우고, 이동하면 새 청크를 채움. 한 번 만든 청크는 기억해 같은 배치 유지)
+  updChunks(){
+    const p=this.player,cx=Math.floor(p.x/CHUNK),cy=Math.floor(p.y/CHUNK),k=cx+','+cy;if(k===this.chunkKey)return;this.chunkKey=k;
+    for(let i=-2;i<=2;i++)for(let j=-2;j<=2;j++){const key=(cx+i)+','+(cy+j);let c=this.chunks.get(key);
+      if(!c){c={rects:this.genChunk(cx+i,cy+j),live:false};this.chunks.set(key,c)}
+      if(!c.live){c.live=true;c.rects.forEach(r=>this.addObsSprite(r,r.key))}}
+    for(const [key,c] of this.chunks){if(!c.live)continue;const [x,y]=key.split(',').map(Number);
+      if(Math.abs(x-cx)>3||Math.abs(y-cy)>3){c.live=false;c.rects.forEach(r=>{r.img.destroy();r.sh.destroy()})}}
+    this.refreshObs();
+  }
+  genChunk(cx,cy){
+    const out=[],n=pick([0,1,1,1,2,2]),x0=cx*CHUNK,y0=cy*CHUNK;
+    for(let t=0;t<n*5&&out.length<n;t++){
+      const f=pick(FILLER_BAG),r={x:Math.round(x0+rnd(40,CHUNK-40-f.w)),y:Math.round(y0+rnd(40,CHUNK-40-f.h)),w:f.w,h:f.h,key:f.key};
+      if(Math.hypot(r.x+r.w/2,r.y+r.h/2)<260)continue; // 시작 지점은 비워 둠
+      if(this.landmarks.some(o=>rectGap(o,r)<130)||out.some(o=>rectGap(o,r)<90))continue;
+      out.push(r)}
+    return out;
+  }
+  // 슬라이딩 충돌 (축 분리): 물리 스텝마다 이번 스텝 이동량을 X축 → Y축 순서로 나눠 적용.
+  // 막힌 축만 벽면에 붙이고 그 축 속도만 0으로 → 다른 축 이동은 살아 있어 벽을 따라 미끄러짐
+  resolveObs(){
+    const hitAt=(x,y,w,h)=>{for(const R of this.obs)if(x<R.x+R.w&&x+w>R.x&&y<R.y+R.h&&y+h>R.y)return R;return null};
+    const one=(o,mob)=>{const b=o.body;if(!b||!b.enable||!b.width)return;
+      const w=b.width,h=b.height,px=b.prev.x,py=b.prev.y,v=b.velocity;let x=b.position.x,y=b.position.y,R;
+      // 시작부터 겹쳐 있으면(스폰·재배치 직후) 가장 가까운 면 밖으로 꺼냄
+      if((R=hitAt(px,py,w,h))){const l=x+w-R.x,rt=R.x+R.w-x,t=y+h-R.y,bt=R.y+R.h-y,m=Math.min(l,rt,t,bt);
+        if(m===l)x=R.x-w;else if(m===rt)x=R.x+R.w;else if(m===t)y=R.y-h;else y=R.y+R.h}
+      else{
+        // X축만 이동해 보고 겹치면 벽면에 붙임
+        const dx=x-px,dy=y-py;
+        if(dx&&(R=hitAt(x,py,w,h))){x=dx>0?R.x-w:R.x+R.w;if(v.x*dx>0)v.x=0;if(mob){o.wallN={x:dx>0?-1:1,y:0};o.wallR=R;o.wallT=.15}}
+        // 그 다음 Y축
+        if(dy&&(R=hitAt(x,y,w,h))){y=dy>0?R.y-h:R.y+R.h;if(v.y*dy>0)v.y=0;if(mob){o.wallN={x:0,y:dy>0?-1:1};o.wallR=R;o.wallT=.15}}
+      }
+      if(x!==b.position.x||y!==b.position.y){b.position.x=x;b.position.y=y;b.updateCenter()}};
+    one(this.player,false);for(const e of this.enemies.getChildren())one(e,true);if(this.boss&&this.boss.active)one(this.boss,true);
+  }
+  // 적 추적 보정: 벽에 막히면 벽면 방향으로 속도를 돌려 계속 이동. 정면으로 막히면 가까운 모서리 쪽으로 돌아감
+  slide(e,spd,dt){
+    if(!(e.wallT>0)){e.slideS=0;return}e.wallT-=dt;
+    const n=e.wallN,v=e.body.velocity,vn=v.x*n.x+v.y*n.y;if(vn>=0)return;
+    let tx=v.x-vn*n.x,ty=v.y-vn*n.y;
+    if(e.slideS||Math.hypot(tx,ty)<spd*.35){
+      if(!e.slideS){const R=e.wallR;e.slideS=((e.x-R.x-R.w/2)*-n.y+(e.y-R.y-R.h/2)*n.x)>=0?1:-1}
+      tx=-n.y*e.slideS;ty=n.x*e.slideS}
+    const l=Math.hypot(tx,ty)||1;v.x=tx/l*spd;v.y=ty/l*spd;
+  }
+  // 발사체 판정: 충돌 박스(AABB)가 장애물과 겹치거나, 지난 프레임 위치→현재 위치 선분이 장애물을 지나면(빠른 탄 관통 방지) true
+  projHit(b){
+    const B=b.body,x=B.x,y=B.y,w=B.width,h=B.height,px=b.px??b.x,py=b.py??b.y,dx=b.x-px,dy=b.y-py;
+    for(const R of this.obs){
+      if(x<R.x+R.w&&x+w>R.x&&y<R.y+R.h&&y+h>R.y)return true;
+      if((dx||dy)&&segT(R,px,py,dx,dy)<=1)return true}
+    return false;
+  }
+  inObs(x,y,pad=0){for(const o of this.obs)if(x>o.x-pad&&x<o.x+o.w+pad&&y>o.y-pad&&y<o.y+o.h+pad)return o;return null}
+  los(x0,y0,x1,y1){const dx=x1-x0,dy=y1-y0;for(const o of this.obs){if(Math.max(x0,x1)<o.x||Math.min(x0,x1)>o.x+o.w||Math.max(y0,y1)<o.y||Math.min(y0,y1)>o.y+o.h)continue;if(segT(o,x0,y0,dx,dy)<=1)return false}return true}
+  rayLen(x,y,ux,uy,len){let t=1;for(const o of this.obs)t=Math.min(t,segT(o,x,y,ux*len,uy*len));return t*len}
+  freeSpot(x,y,pad){for(const o of this.obs){if(x>o.x-pad&&x<o.x+o.w+pad&&y>o.y-pad&&y<o.y+o.h+pad){const l=x-o.x+pad,r=o.x+o.w+pad-x,t=y-o.y+pad,b=o.y+o.h+pad-y,m=Math.min(l,r,t,b);
+    if(m===l)x=o.x-pad;else if(m===r)x=o.x+o.w+pad;else if(m===t)y=o.y-pad;else y=o.y+o.h+pad}}return{x,y}}
 
   // ----- 스폰 -----
   spawnMob(demo=false,pos=null,force=null){
@@ -1131,6 +1335,7 @@ class Battle extends Phaser.Scene{
     toast('포위 경고! 빈틈으로 빠져나가세요',true,1600);SFX.warn();
   }
   spawnChest(x,y,gold=false){
+    ({x,y}=this.freeSpot(x,y,30));
     const c=this.add.image(x,y,gold?'chestG':'chest').setDepth(3);c.gold=gold;
     c.beam=this.add.image(x,y+8,'beam').setOrigin(.5,1).setDepth(2).setBlendMode('ADD').setTint(gold?0xffd86b:0xe4b84a).setAlpha(.7);
     this.tweens.add({targets:c,y:y-5,duration:600,yoyo:true,repeat:-1,ease:'Sine.easeInOut'});
@@ -1168,28 +1373,28 @@ class Battle extends Phaser.Scene{
   }
 
   // ----- 무기 -----
-  fireB(group,tex,x,y,a,spd){const b=group.get(x,y,tex);if(!b)return null;b.setActive(true).setVisible(true).setDepth(6).setScale(1);b.coin=false;b.hits=null;b.body.enable=true;b.body.reset(x,y);b.setVelocity(Math.cos(a)*spd,Math.sin(a)*spd);b.rotation=a;return b}
+  fireB(group,tex,x,y,a,spd){const b=group.get(x,y,tex);if(!b)return null;b.px=x;b.py=y;b.setActive(true).setVisible(true).setDepth(6).setScale(1);b.coin=false;b.hits=null;b.body.enable=true;b.body.reset(x,y);b.setVelocity(Math.cos(a)*spd,Math.sin(a)*spd);b.rotation=a;return b}
   killB(group,b){b.body.enable=false;group.killAndHide(b)}
   firePen(){
     const S=this.S,p=this.player,s=wstat(S,'pen'),evo=S.items.pen.evo;
-    const tg=this.nearest(470);if(!tg.length)return false;
+    const tg=this.nearest(470,true);if(!tg.length)return false;
     const bi=tg.findIndex(o=>o.e.isBoss);if(bi>0)tg.unshift(tg.splice(bi,1)[0]);
     for(let i=0;i<s.n;i++){
       const t=tg[i%tg.length].e,rep=Math.floor(i/tg.length);
       const a=Math.atan2(t.y-p.y,t.x-p.x)+(rep?(rep%2?1:-1)*Math.ceil(rep/2)*.14:0);
-      const b=this.fireB(this.bullets,evo?'inkE':'ink',p.x,p.y-4,a,evo?680:600);if(!b)continue;
+      const b=this.fireB(this.bullets,evo?'inkE':'ink',p.body.center.x,p.body.center.y,a,evo?680:600);if(!b)continue;
       b.body.setCircle(6,6,-1.5);b.life=1.1;b.dmg=Math.round(s.dmg*S.might);b.pierce=s.pierce||0;b.hits=null;b.evo=evo;
     }
     SFX.shoot();return true;
   }
   // 디지털: 가장 가까운 적에게 번개 → 주변 적으로 연쇄
   fireZap(){
-    const S=this.S,p=this.player,s=wstat(S,'zap'),tg=this.nearest(s.range);if(!tg.length)return false;
+    const S=this.S,p=this.player,s=wstat(S,'zap'),tg=this.nearest(s.range,true);if(!tg.length)return false;
     const hit=new Set(),pts=[{x:p.x,y:p.y-8}];let cur=tg[0].e;const dmg=Math.round(s.dmg*S.might);
     for(let j=0;j<s.jumps&&cur;j++){
       hit.add(cur);pts.push({x:cur.x,y:cur.y});
       const from=cur;this.dmg(cur,dmg,Math.atan2(cur.y-p.y,cur.x-p.x),90,'#9fe8ff');this.fxZap.explode(5,from.x,from.y);
-      let best=null,bd=s.hop*s.hop;for(const e of this.targets()){if(hit.has(e)||!e.active)continue;const d=(e.x-from.x)**2+(e.y-from.y)**2;if(d<bd){bd=d;best=e}}
+      let best=null,bd=s.hop*s.hop;for(const e of this.targets()){if(hit.has(e)||!e.active||!this.los(from.x,from.y,e.x,e.y))continue;const d=(e.x-from.x)**2+(e.y-from.y)**2;if(d<bd){bd=d;best=e}}
       cur=best;
     }
     const g=this.add.graphics().setDepth(8).setBlendMode('ADD');
@@ -1201,7 +1406,7 @@ class Battle extends Phaser.Scene{
   }
   // 감사: 표본 n명을 조준 → 잠시 뒤 플레이어에서 표본 방향으로 레이저가 일직선 관통
   fireLaser(){
-    const S=this.S,p=this.player,s=wstat(S,'laser'),tg=this.nearest(s.len*.8);if(!tg.length)return false;
+    const S=this.S,p=this.player,s=wstat(S,'laser'),tg=this.nearest(s.len*.8,true);if(!tg.length)return false;
     const pool=tg.slice(0,Math.max(s.n*3,8)).map(o=>o.e);Phaser.Utils.Array.Shuffle(pool);
     const bi=pool.findIndex(e=>e.isBoss);if(bi>0)pool.unshift(pool.splice(bi,1)[0]);
     const picks=pool.slice(0,s.n);
@@ -1223,13 +1428,13 @@ class Battle extends Phaser.Scene{
     this.aims=this.aims.filter(a=>!a.done);
   }
   beam(x,y,ang,s){
-    const dmg=Math.round(s.dmg*this.S.might),ex=x+Math.cos(ang)*s.len,ey=y+Math.sin(ang)*s.len;
-    const ux=Math.cos(ang),uy=Math.sin(ang);
-    for(const e of this.targets()){const dx=e.x-x,dy=e.y-y,t=dx*ux+dy*uy;if(t<0||t>s.len)continue;const off=Math.abs(dx*uy-dy*ux);if(off<s.w*.5+e.hitR*(e.baseScale||1))this.dmg(e,dmg,ang,150,'#ffb066')}
+    // 레이저는 지형물에 닿으면 거기서 끊김
+    const ux=Math.cos(ang),uy=Math.sin(ang),len=this.rayLen(x,y,ux,uy,s.len),dmg=Math.round(s.dmg*this.S.might),ex=x+ux*len,ey=y+uy*len;
+    for(const e of this.targets()){const dx=e.x-x,dy=e.y-y,t=dx*ux+dy*uy;if(t<0||t>len)continue;const off=Math.abs(dx*uy-dy*ux);if(off<s.w*.5+e.hitR*(e.baseScale||1))this.dmg(e,dmg,ang,150,'#ffb066')}
     const g=this.add.graphics().setDepth(8).setBlendMode('ADD'),o={w:1};
     const draw=()=>{g.clear();g.lineStyle(s.w*1.9*o.w,0xd04a02,.35);g.lineBetween(x,y,ex,ey);g.lineStyle(s.w*o.w,0xff7a2e,.85);g.lineBetween(x,y,ex,ey);g.lineStyle(Math.max(1,s.w*.35*o.w),0xfff1c2,1);g.lineBetween(x,y,ex,ey)};
     draw();this.tweens.add({targets:o,w:0,duration:220,ease:'Quad.easeIn',onUpdate:draw,onComplete:()=>g.destroy()});
-    this.fxSpark.explode(8,x+ux*20,y+uy*20);this.cameras.main.shake(50,.002);SFX.laser();
+    this.fxSpark.explode(8,x+ux*20,y+uy*20);if(len<s.len)this.fxSpark.explode(10,ex,ey);this.cameras.main.shake(50,.002);SFX.laser();
   }
   // 택스: 소용돌이를 던져 주변 적을 빨아들임. 빨아들인 수가 많을수록 세율(배수)이 올라 마지막 폭발이 커짐
   fireHole(){
@@ -1277,9 +1482,9 @@ class Battle extends Phaser.Scene{
   }
   // 딜: 동전이 적 사이를 튕기며 맞힐 때마다 피해·크기가 복리로 불어남. 튕김을 다 쓰면 금빛 폭발
   fireComp(){
-    const S=this.S,p=this.player,s=wstat(S,'comp'),tg=this.nearest(360);if(!tg.length)return false;
+    const S=this.S,p=this.player,s=wstat(S,'comp'),tg=this.nearest(360,true);if(!tg.length)return false;
     for(let i=0;i<s.n;i++){const t=tg[Math.min(i,tg.length-1)].e,a=Math.atan2(t.y-p.y,t.x-p.x)+(i?(i%2?1:-1)*.25:0);
-      const b=this.fireB(this.bullets,'coin',p.x,p.y-4,a,560);if(!b)continue;
+      const b=this.fireB(this.bullets,'coin',p.body.center.x,p.body.center.y,a,560);if(!b)continue;
       b.body.setCircle(11,2.5,2.5);b.life=.75;b.dmg=Math.round(s.dmg*S.might);b.pierce=0;b.hits=new Set();b.evo=false;b.coin=true;b.bounce=s.bounce;b.rate=s.rate;b.n=0;b.base=1}
     this.fxGold.explode(5,p.x,p.y-4);SFX.coin();return true;
   }
@@ -1298,7 +1503,7 @@ class Battle extends Phaser.Scene{
     this.tweens.killTweensOf(b);b.setScale(b.base*1.6);this.tweens.add({targets:b,scale:b.base,duration:140,ease:'Back.easeOut'});
     if(b.bounce<=0){this.coinBoom(b);return}
     b.bounce--;
-    let best=null,bd=280*280;for(const o of this.targets()){if(!o.active||b.hits.has(o))continue;const d=(o.x-x)**2+(o.y-y)**2;if(d<bd){bd=d;best=o}}
+    let best=null,bd=280*280;for(const o of this.targets()){if(!o.active||b.hits.has(o)||!this.los(x,y,o.x,o.y))continue;const d=(o.x-x)**2+(o.y-y)**2;if(d<bd){bd=d;best=o}}
     if(!best){this.coinBoom(b);return}
     const a=Math.atan2(best.y-y,best.x-x),v=600+n*50;b.setVelocity(Math.cos(a)*v,Math.sin(a)*v);b.life=.7;
   }
@@ -1420,7 +1625,7 @@ class Battle extends Phaser.Scene{
   // ----- 메인 루프 -----
   update(time,delta){
     const dt=Math.min(delta,50)/1000,S=this.S,p=this.player,cam=this.cameras.main;
-    this.syncFloor();this.shadow.setPosition(p.x,p.y+29);
+    this.syncFloor();this.updChunks();this.shadow.setPosition(p.x,p.y+29);
     const moving=this.demo?true:(p.body.velocity.lengthSq()>100);
     const fr=moving?Math.floor(time/130)%4:1,key=(p.left?'heroL':'hero')+this.heroKey+fr;if(p.texture.key!==key)p.setTexture(key)
     if(this.demo){
@@ -1428,7 +1633,7 @@ class Battle extends Phaser.Scene{
       return;
     }
     if(S.over)return;
-    S.t+=dt;S.stageT+=dt;
+    S.t+=dt;S.stageT+=dt;this.updLandmarks();
     // 보스 & 스테이지
     const bdef=CFG.bosses[S.stage];
     if(bdef&&S.bossSpawnedFor!==S.stage&&S.stageT>=CFG.bossAt){S.bossSpawnedFor=S.stage;this.spawnBoss(bdef)}
@@ -1454,13 +1659,15 @@ class Battle extends Phaser.Scene{
     cd('zap',()=>this.fireZap());cd('laser',()=>this.fireLaser());cd('hole',()=>this.fireHole());cd('comp',()=>this.fireComp());
     this.updLaser(dt);this.updHoles(dt);
     this.updCalc(dt);
+    // 엄폐: 탄환은 지형물에 닿으면 소멸
+    for(const b of this.bullets.getChildren()){if(!b.active)continue;if(this.projHit(b)){this.fxSpark.explode(4,b.x,b.y);if(b.coin&&b.n>0)this.coinBoom(b);else{this.tweens.killTweensOf(b);this.killB(this.bullets,b)}continue}b.px=b.x;b.py=b.y}
     for(const b of this.bullets.getChildren()){if(!b.active)continue;b.life-=dt;if(b.life<=0){if(b.coin&&b.n>0)this.coinBoom(b);else this.killB(this.bullets,b)}else if(!b.coin&&(b.evo||Math.random()<.3))this.fxInk.emitParticleAt(b.x,b.y,1);else if(b.coin){b.rotation+=dt*14;this.fxSpark.emitParticleAt(b.x,b.y,1);if(Math.random()<.35)this.fxGold.emitParticleAt(b.x,b.y,1)}}
-    for(const b of this.ebullets.getChildren()){if(!b.active)continue;b.life-=dt;if(b.life<=0)this.killB(this.ebullets,b)}
+    for(const b of this.ebullets.getChildren()){if(!b.active)continue;b.life-=dt;if(b.life<=0)this.killB(this.ebullets,b);else if(this.projHit(b)){this.fxViolet.explode(4,b.x,b.y);this.killB(this.ebullets,b)}else{b.px=b.x;b.py=b.y}}
     // 적
     const V=this.viewMax(),far=V*1.25;
     for(const e of this.enemies.getChildren()){
       if(e.flashT>0){e.flashT-=dt;if(e.flashT<=0)e.clearTint()}
-      if(e.kb>0)e.kb-=dt;else this.physics.moveToObject(e,p,e.speed);
+      if(e.kb>0)e.kb-=dt;else{this.physics.moveToObject(e,p,e.speed);this.slide(e,e.speed,dt)}
       this.animMob(e,time);e.setFlipX(e.x>p.x);
       if(Math.abs(e.x-p.x)>far||Math.abs(e.y-p.y)>far){const a=rnd(0,TAU),d=V*.62;e.setPosition(p.x+Math.cos(a)*d,p.y+Math.sin(a)*d)}
     }
@@ -1501,7 +1708,7 @@ class Battle extends Phaser.Scene{
     if(def.key==='boss1'){const f=Math.floor(time/250)%2;if(b.f!==f){b.f=f;b.setTexture(f?'boss1b':'boss1a')}}
     b.setFlipX(p.x<b.x);
     if(b.state==='chase'){
-      this.physics.moveToObject(b,p,def.speed);b.stateT-=dt;
+      this.physics.moveToObject(b,p,def.speed);this.slide(b,def.speed,dt);b.stateT-=dt;
       if(b.stateT<=0){b.state='tele';b.stateT=.8;b.dashA=Math.atan2(p.y-b.y,p.x-b.x);b.setVelocity(0,0);SFX.tele()}
     }else if(b.state==='tele'){
       b.stateT-=dt;b.x+=rnd(-1.5,1.5);
