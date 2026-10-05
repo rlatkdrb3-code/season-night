@@ -182,6 +182,8 @@ kbd{font-family:var(--body);border:1px solid rgba(28,26,23,.3);border-radius:3px
 .sel-card .dancer img{display:block;margin:0;transform-origin:50% 100%;will-change:transform}
 .sel-card[aria-pressed="true"]:not(.locked) .dancer::before,.sel-card[aria-pressed="true"]:not(.locked) .dancer::after{content:"\266A";position:absolute;top:14px;left:-4px;font-size:16px;font-weight:800;color:rgb(var(--acc));opacity:0;animation:noteUp 1.6s ease-out infinite;pointer-events:none}
 .sel-card[aria-pressed="true"]:not(.locked) .dancer::after{content:"\266B";left:auto;right:-6px;animation-delay:.8s}
+.sel-card[data-part="tax"][aria-pressed="true"]:not(.locked) .dancer::before,.sel-card[data-part="tax"][aria-pressed="true"]:not(.locked) .dancer::after{content:"\2661";color:#ff9ac8}
+.sel-card[data-part="deal"][aria-pressed="true"]:not(.locked) .dancer::before,.sel-card[data-part="deal"][aria-pressed="true"]:not(.locked) .dancer::after{content:"L";font:400 14px "Press Start 2P",ui-monospace,monospace}
 @keyframes noteUp{0%{transform:translateY(8px) scale(.6) rotate(-10deg);opacity:0}25%{opacity:1}100%{transform:translateY(-22px) scale(1) rotate(14deg);opacity:0}}
 .sel-note{margin:0;min-height:20px;font-size:14px;color:rgba(255,255,255,.75)}
 .sel-actions{display:flex;gap:12px;align-items:center}
@@ -189,7 +191,7 @@ kbd{font-family:var(--body);border:1px solid rgba(28,26,23,.3);border-radius:3px
 .sel-actions .title-start:disabled{background:#4a4a4a;box-shadow:none;cursor:not-allowed}
 .sel-help{margin:0;font-size:12px;color:rgba(255,255,255,.45)}
 @media (hover:none){.sel-help{display:none}}
-@media (max-width:640px){.sel-cards{grid-template-columns:repeat(2,1fr)}.sel-card img{width:72px;height:72px}.sel-actions .title-start{width:180px}}
+@media (max-width:640px){.sel-cards{grid-template-columns:repeat(2,1fr)}.sel-card img,.sel-card .dancer{width:72px;height:72px}.sel-actions .title-start{width:180px}}
 .unlock-note{margin:0 0 14px;padding:12px 14px;border-radius:14px;background:var(--pwc-soft);color:var(--pwc-ink);font-weight:700;font-size:15px;display:flex;gap:10px;align-items:center}
 .unlock-note img{width:40px;height:40px;background:var(--night);border-radius:10px;padding:2px}
 .result-actions{display:grid;grid-template-columns:1fr auto;gap:10px}
@@ -968,6 +970,68 @@ for(const pt of PARTS)for(const g of GENDERS){
   HERO_SET[k]={top, R:mkFramesG(top,false,legs), L:mkFramesG(leftTop(top,pt.id),true,legs), over:HERO_HAIR[k]};
 }
 const heroURLCache = {};
+// 캐릭터 선택 화면 밈 춤 포즈: 기본 도트(top 17줄)에 팔·손 도장(@ = 소매색, _ = 지우기, . = 그대로)을 찍어 만든다
+const POSE_STAMPS = {
+  // 오른쪽(화면 기준) 주먹 엄지척 — 어깨 옆 위
+  fistUpR:[8,15,["..K..",".KSK.",".KSSK",".KSSK",".K@K.","@@@K.","KKK..","._..."]],
+  // 주먹 엄지척 — 아래 (어깨 높이)
+  fistDnR:[10,15,["..K..",".KSK.",".KSSK","@@SSK","KKKK.","._..."]],
+  // 팔 벌려 아래로 (삐끼삐끼 X 다음 펴기)
+  openR:[13,15,["@K...","K@K..",".K@K.","..KSK","...K."]],
+  // 가슴 앞 X자 (오른팔이 왼쪽으로)
+  crossR:[11,6,["KSK....","K@SK...",".K@@K..","..K@@K."]],
+  // 앙탈: 손가락 깨물기 (화면 왼쪽 손이 입으로)
+  biteL:[8,5,["....K..","...KSK.","..KSSSK","..KSSK.",".K@@K..","K@@K...","K_....."]],
+  // L을 가져가: 화면 왼쪽 손으로 이마에 L
+  lHandL:[1,2,["...K....","..KSK...","..KSK...","..KSK...","..KSKKK.",".KSSSSSK",".K@KKKKK",".K@K....",".K@K....",".K@K....",".K@K....",".K@K....",".K@@@...","..KKK...","..._...."]],
+};
+const mirrorStamp=([r,c,rows])=>[r,0,rows.map(row=>{const full=Array(20).fill('.');for(let i=0;i<row.length;i++){const x=20-(c+i);if(x>=0&&x<20)full[x]=row[i]}return full.join('')})];
+function stampMap(top,st,sleeve){
+  const [r0,c0,rows]=st;const out=top.slice();
+  rows.forEach((row,j)=>{const y=r0+j;if(y<0||y>=out.length)return;let line=out[y];
+    for(let i=0;i<row.length;i++){const ch=row[i],x=c0+i;if(ch==='.'||x<0||x>=20)continue;line=putAt(line,x,ch==='_'?'.':ch==='@'?sleeve:ch)}
+    out[y]=line});
+  return out;
+}
+// 팔 지우기 (기본 손 S·옆 테두리 제거)
+function armOff(top,side){let t=top.slice();const L=side==='L';
+  const c1=L?5:15,c2=L?4:16;t[14]=putAt(putAt(t[14],c1,'K'),c2,'.');t[15]=putAt(t[15],c2,'.');return t}
+// 표정: flat = 심드렁하게 내리깐 눈, happy = 웃어서 감은 눈
+function eyes(top,kind){const t=top.slice();for(const x of [6,7,13,14]){if(!/[EW]/.test(t[7][x])||!/[E]/.test(t[8][x]))continue;
+  if(kind==='flat'){t[7]=putAt(t[7],x,'S');t[8]=putAt(t[8],x,'K')}else if(kind==='happy'){t[7]=putAt(t[7],x,'K');t[8]=putAt(t[8],x,'S')}}return t}
+// 다리: 기본 / 왼발 차기 / 오른발 차기 / 무릎 굽힘
+const DLEGS={i:["......KPPK.KPPK.....",".....KBBBK.KBBBK...."],
+  kl:["..KBBKKPK..KPPK.....","...KK......KBBBK...."],
+  kr:[".....KPPK..KPKKBBK..","....KBBBK......KK..."],
+  bend:[".....KPPK...KPPK....","....KBBBK...KBBBK..."]};
+function dLegs(g,shoe,pants,key){return DLEGS[key].map(r=>r.replace(/B/g,shoe).replace(/P/g,g==='f'?'S':pants))}
+function buildPose(k,spec){
+  const [part,g]=k.split('_');let t=HERO_MAPS[k].slice();const sleeve=t[13][6];
+  for(const name of spec.arms||[]){const side=name.slice(-1);
+    t=armOff(t,side);
+    const st=POSE_STAMPS[name]?POSE_STAMPS[name]:mirrorStamp(POSE_STAMPS[name.slice(0,-1)+(side==='L'?'R':'L')]);
+    t=stampMap(t,st,sleeve)}
+  if(spec.eyes)t=eyes(t,spec.eyes);
+  return [PADROW].concat(t,dLegs(g,HERO_SHOE[k],HERO_PANTS[part],spec.legs||'i'));
+}
+const DANCE_POSES={
+  // 감사 = 삐끼삐끼
+  pkUp:{arms:['fistUpR','fistUpL'],eyes:'flat',legs:'i'},
+  pkDn:{arms:['fistDnR','fistDnL'],eyes:'flat',legs:'bend'},
+  pkX:{arms:['crossR','crossL'],eyes:'flat',legs:'bend'},
+  pkOpen:{arms:['openR','openL'],eyes:'flat',legs:'i'},
+  // 택스 = 앙탈
+  atA:{arms:['biteL'],eyes:'happy',legs:'i'},
+  atB:{arms:['biteL'],eyes:'happy',legs:'bend'},
+  // 딜 = L을 가져가
+  lA:{arms:['lHandL','openR'],legs:'kl'},
+  lB:{arms:['lHandL','openR'],legs:'kr'},
+  lI:{arms:['lHandL','openR'],legs:'i'},
+};
+const danceURLCache={};
+// 선택 화면 춤에 쓰는 그림: 0·1·2 = 걷기 프레임, 나머지 = DANCE_POSES 이름
+function danceURLs(part,g){const k=part+'_'+g;if(!danceURLCache[k]){const o=Object.assign({},heroURLs(part,g));
+  for(const n in DANCE_POSES)o[n]=pixCanvas(buildPose(k,DANCE_POSES[n]),6,HERO_SET[k].over).toDataURL();danceURLCache[k]=o}return danceURLCache[k]}
 function heroURLs(part,g){const k=part+'_'+g;if(!heroURLCache[k]){const h=HERO_SET[k];heroURLCache[k]=h.R.map(f=>pixCanvas(f,6,h.over).toDataURL())}return heroURLCache[k]}
 function portraitURL(part,g){const h=HERO_SET[part+'_'+g];return pixCanvas(h.top.slice(0,12),4,h.over).toDataURL()}
 
@@ -2368,7 +2432,7 @@ function showResult(S,won){
 // =====================================================================
 (function title(){
   $('pwclogo').src=pixCanvas(PWC_LOGO,4,{F:'#d04a02'}).toDataURL();
-  let f=0;const img=$('heroimg');setInterval(()=>{f=(f+1)%4;img.src=heroURLs(CHOICE.part,CHOICE.g)[f];document.querySelectorAll('.sel-card img').forEach(i=>{i.src=heroURLs(i.dataset.part,SEL.g)[f]})},160);img.src=heroURLs(CHOICE.part,CHOICE.g)[1];
+  let f=0;const img=$('heroimg');setInterval(()=>{f=(f+1)%4;img.src=heroURLs(CHOICE.part,CHOICE.g)[f];document.querySelectorAll(DANCE_OFF?'.sel-card img':'.sel-card.locked img').forEach(i=>{i.src=heroURLs(i.dataset.part,SEL.g)[f]})},160);img.src=heroURLs(CHOICE.part,CHOICE.g)[1];
   // 도감: [무기] + [짝 도구] = [진화]
   const cx=$('codex');
   const cell=(icon,name,tip,evo)=>{const c=el('span','ci'+(evo?' evo':''));c.tabIndex=0;c.dataset.tip=tip;const i=el('img');i.src=icon;i.alt='';c.append(i,el('small','',name));return c};
@@ -2391,18 +2455,16 @@ function showResult(S,won){
 // 캐릭터 선택 화면
 // =====================================================================
 const SEL = {part:CHOICE.part, g:CHOICE.g};
-// 본부별 춤: t(초) → 이동·회전·크기·프레임(0,2 = 발 내딛기, 1 = 서기)
+// 본부별 밈 춤: t(초) → 이동·회전·크기·그림(f: 0·1·2 걷기 프레임 또는 DANCE_POSES 이름)
 const DANCE = {
-  // 감사: 도장 쾅쾅 통통 점프 (착지할 때 납작)
-  audit(t){const T=.56,n=Math.floor(t/T),p=t/T-n;
-    if(p>.15&&p<.85)return {y:-14*Math.sin(Math.PI*(p-.15)/.7),f:n%2?0:2};
-    const s=p<=.15?Math.sin(Math.PI*p/.15):Math.sin(Math.PI*(p-.85)/.15);return {sx:1+.1*s,sy:1-.12*s,f:1}},
-  // 택스: 좌우로 살랑살랑 차차차
-  tax(t){const a=2*Math.PI*t/1.2;return {x:9*Math.sin(a),y:-4*Math.abs(Math.sin(2*a)),r:8*Math.sin(a),sx:Math.cos(a)>=0?1:-1,f:Math.floor(t/.3)%2?0:2}},
-  // 딜: 점프 한 바퀴 턴 → 리듬 타기
-  deal(t){const T=1.8,p=(t/T)%1;
-    if(p<.4){const q=p/.4;return {y:-16*Math.sin(Math.PI*q),sx:Math.cos(2*Math.PI*q),f:1}}
-    const q=(p-.4)/.6,b=Math.floor(q*4);return {y:-3*Math.abs(Math.sin(4*Math.PI*q)),r:b%2?5:-5,f:b%2?0:2}},
+  // 감사 = 삐끼삐끼: 엄지척 주먹 위아래 2번씩 왼쪽·오른쪽 → 가슴 앞 X자 교차·펴기 4번, 무릎 까딱, 심드렁한 눈
+  audit(t){const b=.22,n=Math.floor(t/b)%16;let f,x=0,r=0;
+    if(n<8){f=n%2?'pkDn':'pkUp';const side=n<4?-1:1;x=3*side;r=4*side}else f=n%2?'pkOpen':'pkX';
+    const sink=f==='pkDn'||f==='pkX';return {x,y:sink?2:0,r,sx:sink?1.03:1,sy:sink?.96:1,f}},
+  // 택스 = 앙탈 챌린지: 손가락 깨물고 어깨 흔들기
+  tax(t){const s=Math.floor(t/.16)%2,leg=Math.floor(t/.64)%2;return {x:s?1.5:-1.5,y:leg?1:0,r:(s?4:-4)+3*Math.sin(2*Math.PI*t/1.6),f:leg?'atB':'atA'}},
+  // 딜 = L을 가져가: 이마에 L, 왼발·오른발 번갈아 펼치기
+  deal(t){const b=.26,n=Math.floor(t/b)%4,q=(t/b)%1,k=n===0?-1:n===2?1:0;return {x:3*k,y:k?-4*Math.sin(Math.PI*q):0,r:-4*k,f:['lA','lI','lB','lI'][n]}},
   // 디지털: 끊어지는 로봇 춤
   digital(t){const k=Math.floor(t/.3)%8,q=(t/.3)%1,P=[[0,0,0,1],[-6,0,-8,0],[-6,0,-8,1],[0,0,0,1],[6,0,8,2],[6,0,8,1],[0,-7,0,1],[0,0,0,1]][k],pop=q<.15?1.05:1;
     return {x:P[0],y:P[1],r:P[2],sx:pop,sy:pop,f:P[3]}}
@@ -2424,7 +2486,7 @@ function renderSelect(){
     const open=isUnlocked(pt.id), b=el('button','sel-card'+(open?'':' locked'));b.type='button';b.dataset.part=pt.id;
     b.setAttribute('aria-pressed',String(SEL.part===pt.id));
     const im=el('img');im.dataset.part=pt.id;im.src=heroURLs(pt.id,SEL.g)[1];im.alt=open?`${pt.full} ${SEL.g==='f'?'여자':'남자'} 캐릭터`:'잠긴 캐릭터';
-    const dz=el('span','dancer');dz.appendChild(im);if(open)DANCERS.push({part:pt.id,img:im,urls:heroURLs(pt.id,SEL.g),f:1});
+    const dz=el('span','dancer');dz.appendChild(im);if(open)DANCERS.push({part:pt.id,img:im,urls:danceURLs(pt.id,SEL.g),f:1});
     b.append(dz,el('b','',pt.name),el('span','full',pt.full));
     if(open){b.appendChild(el('span','atk',starterLabel(pt)));b.appendChild(el('span','qs',poolLabel(pt)))}else{b.appendChild(el('span','lock','잠김'));b.appendChild(el('span','hint',unlockHint(pt.id)))}
     b.onclick=()=>{SEL.part=pt.id;renderSelect()};
