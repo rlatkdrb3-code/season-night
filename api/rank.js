@@ -5,12 +5,11 @@
 const PARTS = ['audit', 'tax', 'deal', 'digital'];
 const MIN_T = 60, MAX_T = 7200;          // 클리어 시간 허용 범위(초)
 const NAME_MAX = 12;                     // 닉네임 최대 글자 수
-const RATE_MAX = 6, RATE_WIN = 60;       // IP당 60초에 6번까지 등록
 const URL_ = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
 const TOKEN = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
 // Production과 Preview가 같은 Redis를 써도 기록이 섞이지 않도록 환경별로 키를 나눔
 const NS = process.env.VERCEL_ENV === 'production' ? 'sn' : 'sn-' + (process.env.VERCEL_ENV || 'dev');
-const zkey = p => `${NS}:rank:${p}`, dkey = p => `${NS}:rankdate:${p}`, rkey = ip => `${NS}:rl:${ip}`;
+const zkey = p => `${NS}:rank:${p}`, dkey = p => `${NS}:rankdate:${p}`;
 
 async function redis(cmds) {
   const r = await fetch(URL_.replace(/\/$/, '') + '/pipeline', {
@@ -56,10 +55,6 @@ module.exports = async (req, res) => {
       if (!PARTS.includes(part)) return res.status(400).json({ error: 'bad_part' });
       if (!name) return res.status(400).json({ error: 'bad_name' });
       if (!Number.isFinite(t) || t < MIN_T || t > MAX_T) return res.status(400).json({ error: 'bad_time' });
-      const ip = String(req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'x').split(',')[0].trim();
-      const [hits] = await redis([['INCR', rkey(ip)]]);
-      if (hits === 1) await redis([['EXPIRE', rkey(ip), String(RATE_WIN)]]);
-      if (hits > RATE_MAX) return res.status(429).json({ error: 'rate_limited' });
       const score = Math.round(t * 100);
       const [prev] = await redis([['ZSCORE', zkey(part), name]]);
       const improved = prev === null || score < Number(prev);
