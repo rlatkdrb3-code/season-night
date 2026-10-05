@@ -267,6 +267,8 @@ kbd{font-family:var(--body);border:1px solid rgba(28,26,23,.3);border-radius:3px
 .qtimer.hurry .track i{background:var(--red);animation:hurry .5s ease-in-out infinite alternate}
 .qtimer.hurry b{color:var(--red);animation:hurry .5s ease-in-out infinite alternate}
 @keyframes hurry{to{opacity:.45}}
+.week{margin:0 0 10px;padding:9px 12px;border-radius:8px;background:var(--pwc-soft);border-left:4px solid var(--pwc);color:var(--pwc-ink);font-weight:800;font-size:15px;animation:weekIn .35s ease-out}
+@keyframes weekIn{from{opacity:0;transform:translateY(-6px)}}
 .qtext{font-size:19px;font-weight:700;line-height:1.55;margin:0 0 16px}
 .choices{display:grid;gap:8px}
 .choice{text-align:left;background:#fff;border:1px solid var(--hair);border-radius:14px;padding:13px 16px;font-size:15px;line-height:1.45;color:var(--ink);display:grid;grid-template-columns:26px 1fr;gap:8px;align-items:start}
@@ -446,6 +448,7 @@ kbd{font-family:var(--body);border:1px solid rgba(28,26,23,.3);border-radius:3px
   <div class="overlay" id="levelup" hidden>
     <div class="sheet wide">
       <p class="eyebrow">레벨 업 · <span id="lvnum"></span></p>
+      <p class="week" id="lvweek" role="status"></p>
       <h2>강화할 업무 도구를 고르세요</h2>
       <div class="cards" id="lvcards"></div>
       <p class="muted" style="margin:0">새 업무 도구와 진화는 전리품 상자에서 문제를 맞혀야 얻습니다.</p>
@@ -794,10 +797,10 @@ const HERO_FRAMES = mkFrames(HERO_TOP,false), HERO_FRAMES_L = mkFrames(HERO_TOP_
 // =====================================================================
 // clear·fail: 모든 스테이지를 클리어했을 때 / 실패했을 때 나오는 문구 (본부별)
 const PARTS = [
-  {id:'audit',   color:'#FD5108', starter:'laser',  name:'감사',   full:'감사본부',   clear:'감사 마감', fail:'감사 실패',   role:'재무제표를 검증하는 감사인', cats:['감사본부']},
-  {id:'tax',     color:'#f3f0e8', starter:'hole',  name:'택스',   full:'택스본부',   clear:'절세성공', fail:'절세 실패',   role:'세무조정과 신고를 맡는 세무 전문가', cats:['택스본부']},
-  {id:'deal',    color:'#e4b84a', starter:'comp',  name:'딜',     full:'딜본부',     clear:'딜 클로징', fail:'딜 무산',     role:'M&A와 가치평가를 돕는 딜 전문가', cats:['딜본부']},
-  {id:'digital', color:'#3d6ad6', starter:'zap',  name:'디지털', full:'디지털',     clear:'업무혁신 완료', fail:'혁신 실패',     role:'데이터와 IT로 일하는 디지털 전문가', cats:['디지털']}
+  {id:'audit',   color:'#FD5108', starter:'laser',  name:'감사',   full:'감사본부',   clear:'감사 마감', fail:'감사 실패', dead:'미결 전표에 묻혔다.',   role:'재무제표를 검증하는 감사인', cats:['감사본부']},
+  {id:'tax',     color:'#f3f0e8', starter:'hole',  name:'택스',   full:'택스본부',   clear:'절세성공', fail:'절세 실패', dead:'세무조정에 파묻혔다.',   role:'세무조정과 신고를 맡는 세무 전문가', cats:['택스본부']},
+  {id:'deal',    color:'#e4b84a', starter:'comp',  name:'딜',     full:'딜본부',     clear:'딜 클로징', fail:'딜 무산', dead:'DD자료에 깔렸다.',     role:'M&A와 가치평가를 돕는 딜 전문가', cats:['딜본부']},
+  {id:'digital', color:'#3d6ad6', starter:'zap',  name:'디지털', full:'디지털',     clear:'업무혁신 완료', fail:'혁신 실패', dead:'레거시에 먹혔다.',     role:'데이터와 IT로 일하는 디지털 전문가', cats:['디지털']}
 ];
 const GENDERS = [{id:'m',name:'남'},{id:'f',name:'여'}];
 // 해금 조건 (나중에 여기만 바꾸면 됨): after 본부 캐릭터로 plays판 플레이하면 해금
@@ -808,7 +811,7 @@ const UNLOCK_RULES = {
 };
 const partOf = id => PARTS.find(p=>p.id===id);
 // 본부별 캐릭터 도트 (가로 20칸 × 17줄: 0~6 머리·모자, 7~11 얼굴, 12~16 몸)
-// 감사: PwC 주황 캡·주황 넥타이 / 택스: 화이트 바이저·금테 안경·화이트 정장 / 딜: 블랙 페도라·선글라스·블랙 정장·금색 넥타이 / 디지털: 블루 헤드셋·블루 후드티
+// 모자(0~5행)는 아래 withCap이 본부색 PwC 캡으로 덮어씀. 감사: 네이비 정장·주황 넥타이 / 택스: 금테 안경·화이트 정장 / 딜: 선글라스·블랙 정장·금색 넥타이 / 디지털: 블루 후드티
 const HERO_MAPS = {
   audit_m:[
     "......KKKKKKKKK.....",
@@ -963,22 +966,33 @@ const HERO_PANTS = {audit:'P', tax:'e', deal:'B', digital:'N'};
 const putAt = (r,i,c) => (i>=0&&i<r.length)?r.slice(0,i)+c+r.slice(i+1):r;
 // 다리: 남자는 바지, 여자는 맨다리. 신발색은 HERO_SHOE
 const legsFor = (g,shoe,pants) => {const o={};for(const k in LEGS)o[k]=LEGS[k].map((r,j)=>{r=r.replace(/P/g,g==='f'?'S':pants);return j===1?r.replace(/B/g,shoe):r});return o};
-// 왼쪽 보기: 전체 좌우반전. 감사는 모자 글자(0~4행)가 거울상이 되지 않게 반전 없이 한 칸 당기고, 챙(5행)만 반전
-const leftTop = (top,part) => part!=='audit'?top.map(flipRow):top.map((r,j)=>j<5?r.slice(1)+'.':j===5?setCh(flipRow(r.replace('w','f')),4,'w'):flipRow(r));
+// 왼쪽 보기: 전체 좌우반전. 단, 모자 글자(0~4행)가 거울상이 되지 않게 반전 없이 한 칸 당기고, 챙(5행)만 반전
+const leftTop = (top,part) => top.map((r,j)=>j<5?r.slice(1)+'.':j===5?setCh(flipRow(r.replace('F','2')),4,'F'):flipRow(r));
 const mkFramesG=(top,fl,legs)=>{const L=k=>fl?legs[k].map(flipRow):legs[k];return [top.concat(L('a'),[PADROW]),[PADROW].concat(top,L('i')),top.concat(L('b'),[PADROW]),[PADROW].concat(top,L('i'))]};
-// 본부별 PwC 소품 (감사는 PwC 캡이 이미 있음): 기본 도트 위에 덧그림. 12~16행 = 몸통
-// 택스: 오른손에 PwC 텀블러(흰 몸통 + 주황 띠) / 딜: 목에 건 PwC 사원증(주황 목걸이 줄 + 주황 머리띠 흰 카드) / 디지털: 두 손으로 든 PwC 노트북(은색 뚜껑에 계단 모양 주황 로고)
-const HERO_PROPS = {
-  tax:{at:16, rows:{12:"KxxK",13:"KWWK",14:"KFFK",15:"KWWK",16:"KKKK"}},
-  digital:{at:6, rows:{13:"KKKKKKKKK",14:"KeeeeFFeK",15:"KeeFFeeeK",16:"KKKKKKKKK"}},
-  deal:{at:8, rows:{12:"F...F",13:".F.F.",14:".FFF.",15:".WeW."}}
+// 4개 본부 모두 PwC 캡 (pwc 글자는 주황, 모자 색은 본부별): 1 = 모자 본색, 2 = 챙, F = 글자
+const HERO_CAP = [
+"......KKKKKKKKK.....",
+"....KK111111111KK...",
+"...K1FFF1F111F1FFK..",
+"...K1F1F1F1F1F1F1K..",
+"...K1FFF11F1F11FFK..",
+"...K2F2222222222211K"];
+const CAP_COLORS = {
+  audit:  {'1':'#2c3a66','2':'#1e2848'}, // 네이비
+  tax:    {'1':'#f3f0e8','2':'#c9ccd6'}, // 화이트
+  deal:   {'1':'#3b3a46','2':'#24232c'}, // 블랙(차콜, 어두운 배경에서도 보이게)
+  digital:{'1':'#4f9cf0','2':'#2f6cc0'}  // 스카이블루
 };
-const withProp=(map,part)=>{const pr=HERO_PROPS[part];if(!pr)return map;
-  return map.map((r,j)=>{const s=pr.rows[j];if(!s)return r;for(let i=0;i<s.length;i++)if(s[i]!=='.')r=putAt(r,pr.at+i,s[i]);return r})};
+// 0~5행을 캡으로 덮고, 6행 오른쪽 끝에 챙 아랫선을 그음
+const withCap=map=>map.map((r,j)=>{
+  if(j<6){let o='';for(let i=0;i<20;i++)o+=HERO_CAP[j][i]!=='.'?HERO_CAP[j][i]:'.';return o}
+  if(j===6){for(const x of [17,18,19])r=putAt(r,x,'K');return r}
+  return r});
+for(const k in HERO_MAPS)HERO_MAPS[k]=withCap(HERO_MAPS[k]);
 const HERO_SET = {};
 for(const pt of PARTS)for(const g of GENDERS){
-  const k=pt.id+'_'+g.id, top=withProp(HERO_MAPS[k],pt.id), legs=legsFor(g.id,HERO_SHOE[k],HERO_PANTS[pt.id]);
-  HERO_SET[k]={top, R:mkFramesG(top,false,legs), L:mkFramesG(leftTop(top,pt.id),true,legs), over:HERO_HAIR[k]};
+  const k=pt.id+'_'+g.id, top=HERO_MAPS[k], legs=legsFor(g.id,HERO_SHOE[k],HERO_PANTS[pt.id]);
+  HERO_SET[k]={top, R:mkFramesG(top,false,legs), L:mkFramesG(leftTop(top,pt.id),true,legs), over:{...HERO_HAIR[k],...CAP_COLORS[pt.id]}};
 }
 const heroURLCache = {};
 // 캐릭터 선택 화면 춤 포즈: 기본 도트(top 17줄)에 팔·손 도장(@ = 소매색, _ = 지우기, . = 그대로)을 찍어 만든다
@@ -1022,8 +1036,7 @@ const DLEGS={i:["......KPPK.KPPK.....",".....KBBBK.KBBBK...."],
   bend:[".....KPPK...KPPK....","....KBBBK...KBBBK..."]};
 function dLegs(g,shoe,pants,key){return DLEGS[key].map(r=>r.replace(/B/g,shoe).replace(/P/g,g==='f'?'S':pants))}
 function buildPose(k,spec){
-  // 춤출 때는 팔이 움직여서 손에 드는 소품(텀블러·노트북)은 빼고, 목에 건 사원증만 유지
-  const [part,g]=k.split('_');let t=(part==='deal'?withProp(HERO_MAPS[k],part):HERO_MAPS[k]).slice();const sleeve=({B:'x',N:'C'})[t[13][6]]||t[13][6]; // 검정·남색 정장은 팔이 몸에 묻히지 않게 한 톤 밝게
+  const [part,g]=k.split('_');let t=HERO_MAPS[k].slice();const sleeve=({B:'x',N:'C'})[t[13][6]]||t[13][6]; // 검정·남색 정장은 팔이 몸에 묻히지 않게 한 톤 밝게
   for(const name of spec.arms||[]){const side=name.slice(-1);
     t=armOff(t,side);
     const st=POSE_STAMPS[name]?POSE_STAMPS[name]:mirrorStamp(POSE_STAMPS[name.slice(0,-1)+(side==='L'?'R':'L')]);
@@ -2391,7 +2404,7 @@ function cardEl(info,num){
   return b;
 }
 function showLevelUp(sc,data){
-  const S=sc.S;setText('lvnum','LV '+data.lv);
+  const S=sc.S;setText('lvnum','LV '+data.lv);setText('lvweek',`시즌 ${data.lv-1}주차가 경과되었습니다.`); // 레벨 n이 되면 시즌 n-1주차가 지난 것 (첫 레벨업 = 1주차)
   const box=$('lvcards');box.replaceChildren();
   levelChoices(S).forEach((ch,i)=>{const c=cardEl(rewardInfo(S,ch),i+1);c.onclick=()=>{applyReward(sc,ch);sc.closeModal()};box.appendChild(c)});
   $('levelup').hidden=false;box.firstElementChild.focus();
@@ -2445,7 +2458,7 @@ function answerChest(sc,i){
 function showResult(S,won){
   recordPlay();
   $('hud').hidden=true;$('vig').className='';$('inds').replaceChildren();
-  setText('rtag',won?partOf(CHOICE.part).clear:partOf(CHOICE.part).fail);setText('rtitle',won?'시즌의 밤을 넘겼다.':'미결 전표에 묻혔다.');
+  setText('rtag',won?partOf(CHOICE.part).clear:partOf(CHOICE.part).fail);setText('rtitle',won?'시즌의 밤을 넘겼다.':partOf(CHOICE.part).dead);
   setText('rtime',fmt(S.t));setText('rboss',S.bossKills);setText('rkill',S.kills);setText('rq',`${S.correct} / ${S.asked}`);
   const bd=$('rbuild');bd.replaceChildren();[...S.wOrder,...S.pOrder].forEach(k=>bd.appendChild(slotEl(S,k)));
   const rv=$('review');rv.replaceChildren();
