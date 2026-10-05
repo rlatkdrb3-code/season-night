@@ -1792,17 +1792,20 @@ class Battle extends Phaser.Scene{
   }
   // 택스: 세무조정 폭탄을 던짐. 도화선이 타는 동안 주변 적을 끌어모으고, 모은 수가 많을수록 세율(배수)이 올라 폭발이 커짐
   fireHole(){
-    const S=this.S,p=this.player,s=wstat(S,'hole'),tg=this.nearest(260);if(!tg.length)return false;
-    // 적이 가장 많이 모인 지점 근처를 노림: 가까운 적 몇 명 중 주변 밀도가 가장 높은 적
-    let best=tg[0].e,bn=-1;for(const o of tg.slice(0,10)){let n=0;for(const q of tg)if((q.e.x-o.e.x)**2+(q.e.y-o.e.y)**2<s.rad*s.rad)n++;if(n>bn){bn=n;best=o.e}}
-    const bo=tg.find(o=>o.e.isBoss||o.e.isDecoy);if(bo)best=bo.e; // 보스가 있으면 보스 우선
-    const h={x:p.x,y:p.y-6,tx:best.x,ty:best.y,fly:0,t:0,s,got:new Set(),tickT:0,spin:0,scale:0};
+    const S=this.S,p=this.player,s=wstat(S,'hole'),all=this.nearest(380);
+    // 보스(분신 포함)는 380px 안이면 우선 노리고, 폭탄이 보스에 달라붙음(이동기를 써도 따라감)
+    const bo=all.find(o=>o.e.isBoss||o.e.isDecoy);
+    // 일반 몹은 260px 안에서 적이 가장 많이 모인 지점 근처를 노림
+    const tg=all.filter(o=>o.d<260*260);if(!bo&&!tg.length)return false;
+    let best=bo?bo.e:tg[0].e,bn=-1;if(!bo)for(const o of tg.slice(0,10)){let n=0;for(const q of tg)if((q.e.x-o.e.x)**2+(q.e.y-o.e.y)**2<s.rad*s.rad)n++;if(n>bn){bn=n;best=o.e}}
+    const h={x:p.x,y:p.y-6,tx:best.x,ty:best.y,fly:0,t:0,s,got:new Set(),tickT:0,spin:0,scale:0,stick:bo?best:null};
     this.holes.push(h);SFX.hole();return true;
   }
   updHoles(dt){
     const g=this.holeG;g.clear();if(!this.holes.length)return;
     for(const h of this.holes){
       const s=h.s;
+      if(h.stick&&h.stick.active){h.tx=h.stick.x;h.ty=h.stick.y;if(h.fly>=1){h.x=h.tx;h.y=h.ty}} // 보스에 붙은 폭탄은 보스를 따라감
       if(h.fly<1){h.fly=Math.min(1,h.fly+dt/.28);const k=h.fly,x=h.x+(h.tx-h.x)*k,y=h.y+(h.ty-h.y)*k-Math.sin(k*Math.PI)*60;
         this.drawBomb(g,x,y,9,1,0);
         if(h.fly>=1){h.x=h.tx;h.y=h.ty;this.fxSpark.explode(12,h.x,h.y)}continue}
