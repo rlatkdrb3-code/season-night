@@ -439,7 +439,7 @@ kbd{font-family:var(--body);border:1px solid rgba(28,26,23,.3);border-radius:3px
         <div class="help-row"><span class="help-k">레벨업</span><span>적이 떨어뜨린 노란 증빙을 모으면 레벨업합니다. 가진 도구 중 하나를 골라 강화해요.</span></div>
         <div class="help-row"><span class="help-k">전리품 상자</span><span>화면 가장자리 화살표가 위치를 알려줍니다. 열면 회계 문제가 나오고, 맞히면 새 도구나 진화를 얻고 틀리면 반려됩니다. 보기는 숫자키로도 고를 수 있어요.</span></div>
         <div class="help-row"><span class="help-k">보급품</span><span class="help-enemies" id="helpSupply"></span></div>
-        <div class="help-row"><span class="help-k">보스</span><span>2·3·4스테이지에 등장합니다. 붉은 예고선이 보이면 돌진이 오니 옆으로 피하세요. 부정 적발(택스 본부: 탈세적발)은 분신 중 진짜를 찾아야 하고, 최종 보스 금감원 감리(택스 본부: 세무조사의 심판)의 조사 통보(바닥의 원)가 뜨면 도장이 찍히기 전에 원 밖으로 나가세요.</span></div>
+        <div class="help-row"><span class="help-k">보스</span><span>2·3·4스테이지에 등장합니다. 붉은 예고선이 보이면 돌진이 오니 옆으로 피하세요. 부정 적발(택스: 탈세적발 · 딜: 추가실사의 악령 · 디지털: 엑셀지옥의 그림자)은 분신 중 진짜를 찾아야 하고, 최종 보스 금감원 감리(택스: 세무조사의 심판 · 딜: 클로징의 심판 · 디지털: 디지털 전환의 심판)의 조사 통보(바닥의 원)가 뜨면 도장이 찍히기 전에 원 밖으로 나가세요.</span></div>
       </div>
       <button class="primary" type="button" data-close>닫기</button>
     </div>
@@ -675,6 +675,18 @@ const PART_BOSSES = {
     fraud:{name:'탈세적발',        frames:['evadeA','evadeB']},
     boss2:{name:'조세회피의 군주',  frames:['haven']},
     audit:{name:'세무조사의 심판',  frames:['judgeA','judgeB']}
+  },
+  deal:{
+    boss1:{name:'미매각의 그림자',  frames:['unsoldA','unsoldB']},
+    fraud:{name:'추가실사의 악령',  frames:['ddA','ddB']},
+    boss2:{name:'딜브레이크의 군주', frames:['dealbreak']},
+    audit:{name:'클로징의 심판',    frames:['closingA','closingB']}
+  },
+  digital:{
+    boss1:{name:'수작업의 망령',    frames:['manualA','manualB']},
+    fraud:{name:'엑셀지옥의 그림자', frames:['excelA','excelB']},
+    boss2:{name:'레거시의 군주',    frames:['legacy']},
+    audit:{name:'디지털 전환의 심판', frames:['transA','transB']}
   }
 };
 const ITEMS = {
@@ -1334,6 +1346,196 @@ function genJudge(phase){
   g[24][36]='K';g[24][37]='K';g[24][38]='K';
   return g.map(r=>r.join(''));
 }
+// ----- 딜·디지털 본부 전용 보스 외형 (패턴·크기는 원래 보스와 같고 그림만 다름) -----
+// 유령 몸통 공통: 미수금의 그림자 모양 (32×30)
+function ghost32(phase,main,shade){
+  const g=grid(32,30);
+  for(let y=0;y<30;y++)for(let x=0;x<32;x++){const dx=(x-15.5)/14;let ins;
+    if(y<=14)ins=dx*dx+((y-14)/13)**2<=1;else ins=Math.abs(x-15.5)<=14&&y<=25+Math.round(2*Math.sin(x*.9+phase));
+    if(ins)g[y][x]=x>21?shade:main}
+  return outline(g);
+}
+// 유령 몸통 공통: 부정 적발 모양 (38×34, 몸 중심은 왼쪽, 오른쪽 아래는 소품 자리) — 소품을 그린 뒤 outline
+function ghost38(phase,main,shade){
+  const g=grid(38,34);
+  for(let y=9;y<=31;y++)for(let x=4;x<=29;x++){const dx=(x-16.5)/12.5;let ins;
+    if(y<=19)ins=dx*dx+((y-19)/10.5)**2<=1;else ins=y<=28+Math.round(2*Math.sin(x*.9+phase));
+    if(ins)g[y][x]=x>=24?shade:main}
+  return g;
+}
+// 유령 몸통 공통: 금감원 감리 모양 (42×36, 양옆은 소품 자리)
+function ghost42(phase,main,shade){
+  const g=grid(42,36);
+  for(let y=8;y<=33;y++)for(let x=8;x<=33;x++){const dx=(x-20.5)/12.5;let ins;
+    if(y<=18)ins=dx*dx+((y-18)/10)**2<=1;else ins=y<=30+Math.round(2*Math.sin(x*.9+phase));
+    if(ins)g[y][x]=x>=28?shade:main}
+  return outline(g);
+}
+// 군주 몸통 공통: 분식의 군주 모양 (36×36, 네모 몸 + 왕관) — outline은 호출하는 쪽에서
+function lord36(main,left,right){
+  const g=grid(36,36);
+  for(let y=11;y<=33;y++)for(let x=5;x<=30;x++)g[y][x]=x<=7?left:(x>=29?right:main);
+  for(let y=7;y<=10;y++)for(let x=7;x<=28;x++)g[y][x]='L';
+  for(const c of [9,15,21,27])for(let y=2;y<=6;y++){const hw=Math.floor((y-2)/2);for(let x=c-hw;x<=c+hw;x++)g[y][x]=y===2?'Y':'L'}
+  return g;
+}
+// 미매각의 그림자: 먼지 쌓인 회색 유령 + 축 처진 눈 + 가슴에 건 '가격 인하(↓)' 매물 팻말 + 머리에 매달린 가격표
+function genUnsold(phase){
+  const g=ghost32(phase,'e','A');
+  put(g,11,9,'KK');put(g,9,10,'KK');put(g,19,9,'KK');put(g,21,10,'KK');
+  put(g,9,11,'KKKK');put(g,9,12,'YYEY');put(g,19,11,'KKKK');put(g,19,12,'YEYY');
+  put(g,13,15,'KKKKKK');g[16][12]='K';g[16][19]='K';
+  // 매물 팻말 (흰 판 + 빨간 띠 + 아래 화살표)
+  for(let y=18;y<=25;y++)for(let x=8;x<=23;x++)g[y][x]=(y===18||y===25||x===8||x===23)?'K':(y===19?'L':'W');
+  put(g,15,20,'TT');put(g,15,21,'TT');put(g,12,22,'TTTTTTTT');put(g,13,23,'TTTTTT');put(g,14,24,'TTTT');
+  put(g,10,21,'AA');put(g,20,21,'AA');
+  g[17][10]='K';g[17][21]='K';
+  // 가격표 (오른쪽 위, 실로 매달림)
+  put(g,22,1,'K');put(g,23,2,'K');put(g,24,2,'KKKKK');put(g,23,3,'KLLLLK');put(g,23,4,'KLKLLK');put(g,23,5,'KLLLLK');put(g,24,6,'KKKK');
+  // 먼지
+  const d=phase?[[6,6],[25,10],[4,17]]:[[7,5],[26,11],[5,16]];for(const [x,y] of d)g[y][x]='A';
+  return g.map(r=>r.join(''));
+}
+// 추가실사의 악령: 진홍 유령 + 머리 위 자료 바인더 더미 + 부릅뜬 눈 + 돋보기 (부정 적발과 같은 몸 위치)
+function genDiligence(phase){
+  let g=ghost38(phase,'T','R');
+  // 돋보기 (오른쪽 아래): 손잡이 + 렌즈
+  for(let i=0;i<5;i++){g[Math.min(33,29+i)][Math.max(0,26-i)]='O';g[Math.min(33,28+i)][Math.max(0,26-i)]='O'}
+  for(let y=19;y<=31;y++)for(let x=27;x<=37;x++){const d=Math.hypot(x-32,y-24.5);if(d<=5.3)g[y][x]=d>4.1?'L':'u'}
+  g=outline(g);
+  put(g,30,22,'WW');put(g,30,23,'W');
+  // 자료 바인더 더미 (머리 위): 파랑·노랑·흰 바인더
+  for(const [y0,x0,w,c] of [[6,7,20,'U'],[3,9,17,'L'],[0,11,14,'W']]){
+    for(let y=y0;y<y0+3;y++)for(let x=x0;x<x0+w;x++)g[y][x]=(y===y0||y===y0+2||x===x0||x===x0+w-1)?'K':c;
+    put(g,x0+2,y0+1,'K');put(g,x0+w-4,y0+1,'AA')}
+  // 부릅뜬 눈 + 화난 눈썹
+  for(const x0 of [9,19])for(let y=12;y<=16;y++)for(let x=x0;x<x0+6;x++)g[y][x]=(y===12||y===16||x===x0||x===x0+5)?'K':'Y';
+  put(g,11,13,'EE');put(g,11,14,'EE');put(g,21,13,'EE');put(g,21,14,'EE');
+  put(g,8,11,'KKK');put(g,11,10,'KK');put(g,23,11,'KKK');put(g,21,10,'KK');
+  // 이빨 드러낸 입
+  for(let x=11;x<=22;x++){g[19][x]='K';g[22][x]='K';g[20][x]=x%2?'W':'K';g[21][x]=x%2?'K':'W'}
+  return g.map(r=>r.join(''));
+}
+// 딜브레이크의 군주: 검은 서류가방 몸통 + 금관 + 붉은 눈 + 배에 찢어진 계약서 (분식의 군주와 같은 크기)
+function genDealbreak(){
+  const g=outline(lord36('X','B','c'));
+  put(g,12,8,'T');put(g,18,8,'U');put(g,24,8,'T');
+  for(const [x,y] of [[6,12],[29,12],[6,32],[29,32]])g[y][x]='L';
+  // 화난 눈
+  put(g,10,15,'KK');put(g,12,16,'KK');put(g,24,15,'KK');put(g,22,16,'KK');
+  for(let x=11;x<=15;x++){g[17][x]='T';g[18][x]='T'}for(let x=20;x<=24;x++){g[17][x]='T';g[18][x]='T'}
+  g[18][14]='Y';g[18][21]='Y';
+  // 이를 악문 입
+  put(g,12,21,'KKKKKKKKKKKK');put(g,12,22,'KWKWKWKWKWKK');
+  // 찢어진 계약서 (가운데가 지그재그로 갈라짐)
+  for(let y=25;y<=32;y++)for(let x=10;x<=25;x++){const cut=17+(y%2);g[y][x]=(x===cut||x===cut+1)?'X':((y===25||y===32||x===10||x===25||x===cut-1||x===cut+2)?'K':'W')}
+  put(g,12,27,'AAA');put(g,12,29,'AA');put(g,21,27,'AAA');put(g,22,29,'AA');put(g,13,31,'U');put(g,22,31,'T');
+  return g.map(r=>r.join(''));
+}
+// 클로징의 심판: 남색 유령 + 금띠 실크해트 + 외알 안경 + 금색 나비넥타이 + 계약서(인감) + 거대한 만년필 (금감원 감리와 같은 몸 위치)
+function genClosing(phase){
+  const g=ghost42(phase,'N','n');
+  // 실크해트
+  for(let y=0;y<=6;y++)for(let x=13;x<=28;x++)g[y][x]=(x===13||x===28||y===0)?'K':(y===5?'L':'B');
+  for(let y=7;y<=8;y++)for(let x=9;x<=32;x++)g[y][x]=(y===8||x===9||x===32)?'K':'B';
+  put(g,15,1,'xx');put(g,15,2,'x');
+  // 눈: 왼쪽 매서운 눈, 오른쪽 금테 외알 안경 + 줄
+  put(g,12,12,'KKKK');put(g,12,13,'YYEY');put(g,12,14,'KKKK');
+  for(let y=9;y<=17;y++)for(let x=21;x<=29;x++){const d=Math.hypot(x-25,y-13);if(d<=3.4)g[y][x]=d>2.4?'L':'Y'}
+  put(g,24,13,'EE');g[17][28]='L';g[18][28]='L';g[19][29]='L';
+  // 굳게 다문 입 + 금색 나비넥타이
+  put(g,17,19,'KKKKKK');
+  put(g,16,22,'LL...LL');put(g,16,23,'LLLKLLL');put(g,16,24,'LL...LL');put(g,18,22,'K.K');put(g,18,24,'K.K');
+  // 계약서 (왼쪽): 금색 머리 + 줄 + 서명 + 빨간 인감
+  for(let y=16;y<=34;y++)for(let x=0;x<=9;x++)g[y][x]=(y===16||y===34||x===0||x===9)?'K':(y>=17&&y<=18?'L':'W');
+  for(const y of [21,23,25])put(g,2,y,'AAAAAA');
+  put(g,2,28,'U.UU');put(g,3,29,'UU.U');
+  for(let y=29;y<=32;y++)for(let x=5;x<=8;x++)g[y][x]=((y===29||y===32)&&(x===5||x===8))?'W':'T';
+  g[30][6]='W';
+  // 거대한 만년필 (오른쪽): 검은 몸통 + 금띠 + 금 펜촉 + 잉크 방울
+  for(let y=2;y<=17;y++)for(let x=35;x<=39;x++)g[y][x]=(x===35||x===39||y===2)?'K':(y===6||y===14?'L':(x===36?'x':'B'));
+  for(let y=18;y<=24;y++){const hw=Math.max(0,2-Math.floor((y-18)/3));for(let x=36-hw;x<=38+hw;x++)g[y][x]=(x===36-hw||x===38+hw||x===37)?'K':'L'}
+  g[25][37]='K';g[26][37]='U';g[27][37]='U';g[28][37]='K';
+  return g.map(r=>r.join(''));
+}
+// 수작업의 망령: 공책 종이 유령 (파란 줄·빨간 여백선) + 다크서클 + 땀방울 + 머리에 꽂힌 연필 + 날리는 서류
+function genManual(phase){
+  const g=ghost32(phase,'W','e');
+  for(let y=6;y<=26;y+=3)for(let x=0;x<32;x++)if(g[y][x]==='W'||g[y][x]==='e')g[y][x]='u';
+  for(let y=0;y<30;y++)if(g[y][7]==='W'||g[y][7]==='u')g[y][7]='T';
+  // 지친 눈 + 다크서클
+  put(g,9,10,'KKKK');put(g,9,11,'EEEE');put(g,9,12,'AAAA');
+  put(g,19,10,'KKKK');put(g,19,11,'EEEE');put(g,19,12,'AAAA');
+  // 한숨 쉬는 입
+  put(g,14,16,'KKK');put(g,13,17,'K...K');put(g,14,18,'KKK');put(g,14,17,'BBB');
+  // 땀방울
+  put(g,25,8,'K');put(g,24,9,'KuK');put(g,24,10,'KuK');put(g,25,11,'K');
+  // 머리에 꽂힌 연필 (오른쪽 위에서 비스듬히)
+  ['I','I','y','y','y','o','B'].forEach((c,i)=>{g[i][26-i]=c;g[i][25-i]=c;g[i][27-i]='K';if(g[i+1][24-i]==='.')g[i+1][24-i]='K'});
+  // 날리는 서류 조각
+  const sh=["KKKKK","KWWWK","KWAAK","KWWWK","KKKKK"],spots=phase?[[0,3],[27,14],[1,21]]:[[1,4],[27,13],[0,20]];
+  for(const [x0,y0] of spots)sh.forEach((row,j)=>{for(let i=0;i<row.length;i++)if(g[y0+j]&&g[y0+j][x0+i]!==undefined)g[y0+j][x0+i]=row[i]});
+  return g.map(r=>r.join(''));
+}
+// 엑셀지옥의 그림자: 초록 스프레드시트 유령 (셀 격자) + 머리 위 불꽃 + 빨간 오류 셀 눈 + 경고 표지판 (부정 적발과 같은 몸 위치)
+function genExcel(phase){
+  let g=ghost38(phase,'M','r');
+  for(let y=9;y<=31;y++)for(let x=4;x<=29;x++)if(g[y][x]!=='.'&&(x%4===0||y%3===0))g[y][x]='q';
+  // 경고 표지판 (오른쪽 아래): 노란 삼각형
+  for(let y=21;y<=31;y++){const hw=Math.floor((y-21)/2)+1;for(let x=32-hw;x<=32+hw;x++)if(x<38)g[y][x]='y'}
+  g=outline(g);
+  for(let y=24;y<=28;y++)g[y][32]='K';g[30][32]='K';
+  // 머리 위 불꽃
+  const fl=phase?[[9,3],[14,0],[19,2],[24,4]]:[[9,2],[14,1],[19,0],[24,3]];
+  for(const [cx,top] of fl)for(let y=top;y<=9;y++){const hw=Math.min(3,Math.floor((y-top)/2));for(let x=cx-hw;x<=cx+hw;x++){if(x<0||x>=38)continue;const e=Math.abs(x-cx)===hw||y===top;g[y][x]=e?'T':(y-top>3&&Math.abs(x-cx)<=hw-2?'Y':'F')}}
+  // 빨간 오류 셀 눈 (# 모양)
+  for(const x0 of [9,19])for(let y=12;y<=16;y++)for(let x=x0;x<x0+6;x++)g[y][x]=(y===12||y===16||x===x0||x===x0+5)?'K':'T';
+  for(const x0 of [10,20]){put(g,x0,13,'Y.Y.');put(g,x0,14,'YYYY');put(g,x0,15,'Y.Y.');g[13][x0+1]='T';g[13][x0+3]='T';g[15][x0+1]='T';g[15][x0+3]='T'}
+  // 비명 지르는 입
+  for(let y=19;y<=23;y++)for(let x=13;x<=20;x++)g[y][x]=(y===19||y===23||x===13||x===20)?'K':(y===20?'W':'B');
+  return g.map(r=>r.join(''));
+}
+// 레거시의 군주: 누렇게 바랜 구형 CRT 모니터 몸통 + 녹슨 왕관 + 화면 속 초록 눈 + 플로피 슬롯 (분식의 군주와 같은 크기)
+// 1·2 = 바랜 베이지 본색·그늘 (텍스처 만들 때 색 지정)
+function genLegacy(){
+  const g=outline(lord36('1','2','W'));
+  put(g,12,8,'O');put(g,18,8,'Q');put(g,24,8,'O');put(g,10,9,'O');put(g,25,7,'O');
+  // 화면: 검은 브라운관 + 주사선 + 초록 눈·입
+  for(let y=13;y<=25;y++)for(let x=9;x<=26;x++)g[y][x]=(y===13||y===25||x===9||x===26)?'X':(y%2?'B':'P');
+  put(g,11,16,'ZZ');put(g,13,17,'ZZ');put(g,23,16,'ZZ');put(g,21,17,'ZZ');
+  for(let x=12;x<=15;x++){g[18][x]='Z';g[19][x]='Z'}for(let x=20;x<=23;x++){g[18][x]='Z';g[19][x]='Z'}
+  put(g,12,22,'ZZ.ZZ.ZZ.ZZ');put(g,11,23,'Z..ZZ..ZZ..Z');
+  put(g,11,14,'g');
+  // 플로피 슬롯·전원 등·통풍구
+  put(g,17,28,'BBBBBBBB');put(g,17,29,'XXXXXXXX');g[28][26]='Q';
+  for(const y of [28,30,32])put(g,9,y,'KKKKK');
+  return g.map(r=>r.join(''));
+}
+// 디지털 전환의 심판: 하늘색 유령 + 회로 무늬 헬멧 + 빛나는 바이저 + 진행률 태블릿 + 거대한 마우스 (금감원 감리와 같은 몸 위치)
+function genTransform(phase){
+  const g=ghost42(phase,'u','U');
+  // 헬멧 (회로 무늬)
+  for(let y=0;y<=8;y++)for(let x=9;x<=32;x++){const dx=(x-20.5)/11.5;if(y>=6||dx*dx+((y-6)/6)**2<=1)g[y][x]=y>=7?'B':'t'}
+  for(let x=8;x<=33;x++)if(g[8][x]!=='.')g[8][x]='B';
+  for(let y=0;y<=8;y++)for(let x=8;x<=33;x++){if(g[y][x]!=='t')continue;for(const [dx,dy] of [[1,0],[-1,0],[0,-1]]){const c=g[y+dy]&&g[y+dy][x+dx];if(c==='.')g[y+dy][x+dx]='K'}}
+  put(g,13,4,'aaaa');put(g,16,3,'a');put(g,16,2,'aaz');put(g,22,5,'aaaaa');put(g,26,4,'a');put(g,26,3,'z');put(g,19,4,'z');
+  // 바이저 (검은 띠 + 빛나는 눈)
+  for(let y=11;y<=16;y++)for(let x=10;x<=31;x++)g[y][x]=(y===11||y===16)?'K':'B';
+  for(let x=11;x<=30;x++){g[13][x]='t';g[14][x]='t'}
+  put(g,13,13,'aaaa');put(g,13,14,'zzzz');put(g,24,13,'aaaa');put(g,24,14,'zzzz');
+  // 입 (디지털 파형)
+  put(g,16,19,'.K.KK.K.K');put(g,16,20,'K.K..K.K.');
+  // 진행률 태블릿 (왼쪽): 체크 표시 + 진행률 바
+  for(let y=16;y<=34;y++)for(let x=0;x<=9;x++)g[y][x]=(y===16||y===34||x===0||x===9)?'K':(y===17||y===33||x===1||x===8)?'x':'B';
+  for(const y of [20,23,26]){g[y+1][2]='Q';g[y+2][3]='Q';g[y+1][4]='Q';g[y][5]='Q';put(g,6,y+1,'a')}
+  put(g,2,30,'aaaa');put(g,6,30,'A');
+  // 거대한 마우스 (오른쪽): 선 + 몸통 + 버튼
+  for(let y=1;y<=11;y++)g[y][37+((y>>1)%2)]='K';
+  for(let y=12;y<=27;y++)for(let x=33;x<=41;x++){const dx=(x-37)/4.4,dy=(y-19.5)/7.6,d=dx*dx+dy*dy;if(d<=1)g[y][x]=d>.72?'K':(y<=17?(x===37?'K':'W'):'e')}
+  for(let x=34;x<=40;x++)if(g[17][x]!=='.')g[17][x]='K';
+  g[14][38]='a';
+  return g.map(r=>r.join(''));
+}
 function pixCanvas(map,px,over={}){
   const h=map.length,w=Math.max(...map.map(r=>r.length));
   const c=document.createElement('canvas');c.width=w*px;c.height=h*px;const x=c.getContext('2d');
@@ -1353,6 +1555,10 @@ function makeTextures(sc){
   add('fraudA',genFraud(0),3);add('fraudB',genFraud(1.6),3);add('audA',genAudit(0),3);add('audB',genAudit(1.6),3);
   add('omitA',addBills(genOmit(0),0),3);add('omitB',addBills(genOmit(1.6),1),3);add('evadeA',genEvade(0),3);add('evadeB',genEvade(1.6),3);
   add('haven',genHaven(),3);add('judgeA',genJudge(0),3);add('judgeB',genJudge(1.6),3);
+  add('unsoldA',genUnsold(0),3);add('unsoldB',genUnsold(1.6),3);add('ddA',genDiligence(0),3);add('ddB',genDiligence(1.6),3);
+  add('dealbreak',genDealbreak(),3);add('closingA',genClosing(0),3);add('closingB',genClosing(1.6),3);
+  add('manualA',genManual(0),3);add('manualB',genManual(1.6),3);add('excelA',genExcel(0),3);add('excelB',genExcel(1.6),3);
+  add('legacy',genLegacy(),3,{'1':'#d8cca6','2':'#a8996c'});add('transA',genTransform(0),3);add('transB',genTransform(1.6),3);
   add('fslip',["KKKKKKK","KWWWWTK","KWAAWWK","KWWWTTK","KKKKKKK"],3); // 위조 전표
   add('dslip',["KKKKKK","KWWWTK","KWAAWK","KWWWWK","KWAAWK","KKKKKK"],3); // 지적 서류
   add('chest',CHEST,3);add('chestG',CHEST,3,GOLD_OVER);
