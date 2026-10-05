@@ -294,6 +294,28 @@ kbd{font-family:var(--body);border:1px solid rgba(28,26,23,.3);border-radius:3px
   .sheet{padding:22px 18px}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+/* 랭킹 */
+.rank-entry{margin:0 0 16px;padding:14px 14px 12px;border:1px solid var(--pwc-line);border-radius:14px;background:var(--pwc-soft)}
+.rank-entry .eyebrow{margin:0 0 8px}
+.rank-entry .rank-time{font-variant-numeric:tabular-nums}
+.rank-form{display:flex;gap:8px}
+.rank-form input{flex:1;min-width:0;font:inherit;font-size:16px;padding:11px 16px;border:1px solid var(--hair);border-radius:999px;background:#fff;color:var(--ink)}
+.rank-form input:focus{outline:2px solid var(--pwc);outline-offset:1px}
+.rank-form button{background:var(--pwc);color:#fff;font-weight:700;font-size:15px;border-radius:999px;padding:0 20px;white-space:nowrap}
+.rank-form button:disabled{opacity:.5;cursor:default}
+.rank-msg{margin:8px 2px 0;font-size:14px;color:var(--ink);min-height:1.4em}
+.rank-msg.err{color:var(--red)}
+.rank-list{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:4px}
+.rank-list li{display:grid;grid-template-columns:2.4em 1fr auto;gap:8px;align-items:center;padding:8px 12px;border-radius:10px;background:#fff;border:1px solid var(--hair);font-size:14px}
+.rank-list li.me{border-color:var(--pwc);box-shadow:0 0 0 1px var(--pwc) inset}
+.rank-list .rk{font-weight:800;color:var(--pwc-ink);font-variant-numeric:tabular-nums}
+.rank-list .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rank-list .tm{font-weight:700;font-variant-numeric:tabular-nums}
+.rank-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:14px 0 6px}
+.rank-tabs button{padding:9px 0;border-radius:999px;border:1px solid var(--hair);background:#fff;color:var(--ink);font-weight:700;font-size:14px}
+.rank-tabs button[aria-selected="true"]{background:var(--pwc);border-color:var(--pwc);color:#fff}
+#rankModal .rank-list{max-height:min(46vh,420px);overflow:auto;margin-bottom:16px}
+#rankModal .rank-empty{margin:14px 0 18px}
 </style>
 <style>*,*::before,*::after{box-sizing:border-box}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}[hidden]{display:none!important}</style>
 </head>
@@ -338,6 +360,7 @@ kbd{font-family:var(--body);border:1px solid rgba(28,26,23,.3);border-radius:3px
       <div class="title-links">
         <button class="title-ghost" id="openCodex" type="button">도구 도감</button>
         <button class="title-ghost" id="openHelp" type="button">게임 설명</button>
+        <button class="title-ghost" id="openRank" type="button">랭킹</button>
       </div>
     </div>
     <div class="title-credit"><span>D-3조</span><img id="pwclogo" alt="PwC"></div>
@@ -366,6 +389,18 @@ kbd{font-family:var(--body);border:1px solid rgba(28,26,23,.3);border-radius:3px
       <h2>무기 + 짝 도구 = 진화</h2>
       <p class="muted">무기를 Lv5까지 올리고 짝 도구를 가진 채 전리품 상자 문제를 맞히면 진화합니다. 아이콘에 마우스를 올리거나 누르면 설명이 보여요.</p>
       <div class="codex" id="codex"></div>
+      <button class="primary" type="button" data-close>닫기</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="rankModal" hidden>
+    <div class="sheet">
+      <p class="eyebrow">랭킹</p>
+      <h2>본부별 최단 클리어 기록</h2>
+      <p class="muted">게임을 클리어하면 결과 화면에서 닉네임으로 등록할 수 있어요. 같은 닉네임은 가장 빠른 기록 하나만 남아요.</p>
+      <div class="rank-tabs" role="tablist" id="rankTabs" aria-label="본부"></div>
+      <ol class="rank-list" id="rankList"></ol>
+      <p class="muted rank-empty" id="rankEmpty" hidden></p>
       <button class="primary" type="button" data-close>닫기</button>
     </div>
   </div>
@@ -439,6 +474,15 @@ kbd{font-family:var(--body);border:1px solid rgba(28,26,23,.3);border-radius:3px
         <div class="stat"><b id="rboss"></b><span>처치한 보스</span></div>
         <div class="stat"><b id="rkill"></b><span>처치한 전표</span></div>
         <div class="stat"><b id="rq"></b><span>상자 정답 / 출제</span></div>
+      </div>
+      <div class="rank-entry" id="rankEntry" hidden>
+        <p class="eyebrow"><span id="rkPart"></span> 랭킹 등록 · 클리어 <span class="rank-time" id="rkTime"></span></p>
+        <div class="rank-form">
+          <input id="rkName" type="text" maxlength="12" autocomplete="nickname" enterkeyhint="done" placeholder="닉네임 (최대 12자)" aria-label="랭킹에 표시할 닉네임">
+          <button id="rkSubmit" type="button">등록</button>
+        </div>
+        <p class="rank-msg" id="rkMsg" aria-live="polite"></p>
+        <ol class="rank-list" id="rkList"></ol>
       </div>
       <p class="eyebrow">최종 업무 도구</p>
       <div class="build" id="rbuild"></div>
@@ -2305,7 +2349,7 @@ function showResult(S,won){
   if(!S.wrong.length){setText('rvhead',S.asked?'오답 없음':'풀어본 문제 없음');rv.appendChild(el('p','muted',S.asked?'모든 상자 문제를 맞혔다.':'다음 판에는 전리품 상자를 열어보자.'))}
   else{setText('rvhead',`오답 복습 ${S.wrong.length}문항`);
     for(const w of S.wrong){const d=el('div','rv');d.append(el('b','',w.q.q),el('div','','내 답: '+w.picked),el('div','a','정답: '+w.q.choices[w.q.answer]),...(w.q.exp?[el('div','e',w.q.exp)]:[]));rv.appendChild(d)}}
-  $('result').hidden=false;$('retry').focus();
+  $('result').hidden=false;rankSetup(S,won);(won?$('rkName'):$('retry')).focus();
 }
 
 // =====================================================================
@@ -2358,6 +2402,54 @@ document.querySelectorAll('.sel-gender button').forEach(x=>x.onclick=()=>{SEL.g=
 $('selBack').onclick=()=>{$('select').hidden=true;$('title').hidden=false;$('start').focus()};
 $('selGo').onclick=confirmSelect;
 $('changeChar').onclick=openSelect;
+// =====================================================================
+// 랭킹: 본부별 최단 클리어 기록 (서버: /api/rank → Upstash Redis)
+// =====================================================================
+const RANK_API='/api/rank', NICK_KEY='seasonNight.nick';
+const RANK_ERR={not_configured:'랭킹 서버가 아직 연결되지 않았어요.',rate_limited:'잠시 후 다시 시도해 주세요.',bad_name:'닉네임을 확인해 주세요.',bad_time:'이 기록은 등록할 수 없어요.'};
+let RANK_RUN=null, RANK_TAB='audit';
+const fmtRank=t=>{const m=Math.floor(t/60),s=t-m*60;return `${m}:${s<10?'0':''}${s.toFixed(1)}`};
+const partFull=id=>(PARTS.find(p=>p.id===id)||{}).full||id;
+const getNick=()=>{try{return localStorage.getItem(NICK_KEY)||''}catch(e){return ''}};
+const setNick=v=>{try{localStorage.setItem(NICK_KEY,v)}catch(e){}};
+async function rankFetch(part,limit){
+  const r=await fetch(`${RANK_API}?part=${encodeURIComponent(part)}&limit=${limit}`,{cache:'no-store'});
+  const d=await r.json().catch(()=>({}));if(!r.ok||!Array.isArray(d.top))throw new Error(d.error||'server');return d;
+}
+function rankRender(ol,rows,me){
+  ol.replaceChildren();
+  rows.forEach(r=>{const li=el('li',r.name===me?'me':'');li.append(el('span','rk',r.rank),el('span','nm',r.name),el('span','tm',fmtRank(r.t)));ol.appendChild(li)});
+}
+function rankMsg(txt,err){const m=$('rkMsg');m.textContent=txt;m.classList.toggle('err',!!err)}
+function rankSetup(S,won){
+  const box=$('rankEntry');box.hidden=!won;RANK_RUN=null;if(!won)return;
+  RANK_RUN={part:CHOICE.part,t:S.t,done:false};
+  $('rkPart').textContent=partFull(CHOICE.part);$('rkTime').textContent=fmtRank(S.t);
+  $('rkName').value=getNick();$('rkSubmit').disabled=false;rankMsg('');$('rkList').replaceChildren();
+}
+async function rankSubmit(){
+  const run=RANK_RUN;if(!run||run.done)return;
+  const name=$('rkName').value.trim();if(!name){rankMsg('닉네임을 입력해 주세요.',true);$('rkName').focus();return}
+  const btn=$('rkSubmit');btn.disabled=true;rankMsg('등록 중…');
+  try{
+    const r=await fetch(RANK_API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({part:run.part,name,t:run.t})});
+    const d=await r.json().catch(()=>({}));if(!r.ok||typeof d.rank!=='number')throw new Error(d.error||'server');
+    run.done=true;setNick(d.name);$('rkName').value=d.name;
+    rankMsg(d.improved?`${partFull(run.part)} ${d.rank}위로 등록했어요! (전체 ${d.total}명)`:`이전 최고 기록 ${fmtRank(d.best)}이 더 빨라서 그 기록으로 ${d.rank}위예요.`);
+    try{const top=await rankFetch(run.part,10);rankRender($('rkList'),top.top,d.name)}catch(e){}
+  }catch(e){btn.disabled=false;rankMsg(RANK_ERR[e.message]||'등록하지 못했어요. 다시 시도해 주세요.',true)}
+}
+function rankTab(part){
+  RANK_TAB=part;const tabs=$('rankTabs');tabs.replaceChildren();
+  PARTS.forEach(p=>{const b=el('button','',p.name);b.type='button';b.setAttribute('role','tab');b.setAttribute('aria-selected',String(p.id===part));b.onclick=()=>rankTab(p.id);tabs.appendChild(b)});
+  const ol=$('rankList'),em=$('rankEmpty');ol.replaceChildren();em.hidden=false;em.textContent='불러오는 중…';
+  rankFetch(part,30).then(d=>{if(RANK_TAB!==part)return;rankRender(ol,d.top,getNick());em.hidden=d.top.length>0;em.textContent='아직 등록된 기록이 없어요. 첫 클리어의 주인공이 되어보세요.'})
+    .catch(e=>{if(RANK_TAB!==part)return;em.hidden=false;em.textContent=RANK_ERR[e.message]==null?'랭킹을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.':RANK_ERR[e.message]});
+}
+$('rkSubmit').onclick=rankSubmit;
+['keydown','keyup','keypress'].forEach(ev=>$('rkName').addEventListener(ev,e=>{e.stopPropagation();if(ev==='keydown'&&e.key==='Enter'&&!e.isComposing){e.preventDefault();rankSubmit()}}));
+$('openRank').onclick=()=>{$('rankModal').hidden=false;rankTab(CHOICE.part);$('rankModal').querySelector('[data-close]').focus()};
+
 // 한 판이 끝나면 플레이 횟수를 세고, 새로 해금된 캐릭터를 결과 화면에 알림
 function recordPlay(){
   const before=PARTS.filter(p=>isUnlocked(p.id)).map(p=>p.id);
@@ -2368,7 +2460,7 @@ function recordPlay(){
 }
 
 let game;
-function startRun(){SFX.init();['title','select','result','levelup','chest','codexModal','helpModal','pauseModal'].forEach(id=>$(id).hidden=true);game.scene.getScene('Battle').scene.restart({demo:false})}
+function startRun(){SFX.init();['title','select','result','levelup','chest','codexModal','helpModal','pauseModal','rankModal'].forEach(id=>$(id).hidden=true);game.scene.getScene('Battle').scene.restart({demo:false})}
 if(window.Phaser){
   game=new Phaser.Game({type:Phaser.AUTO,parent:'game',backgroundColor:'#0b1020',scale:{mode:Phaser.Scale.RESIZE,width:'100%',height:'100%'},
     physics:{default:'arcade',arcade:{debug:false}},audio:{noAudio:true},banner:false,scene:[Battle]});
@@ -2386,8 +2478,8 @@ addEventListener('keydown',e=>{
   // 전투 중 P / Esc: 일시정지 전환 (다른 창이 떠 있을 때는 제외)
   const B=window.BATTLE;
   if((e.key==='p'||e.key==='P'||e.key==='ㅔ'||e.key==='Escape')&&B&&!B.demo&&!B.S.over&&!B.modalOpen&&!$('hud').hidden){e.preventDefault();B.togglePause();return}
-  if(e.key==='Escape'){['codexModal','helpModal'].forEach(id=>$(id).hidden=true)}
-  if(e.key==='Enter'&&!$('title').hidden&&$('codexModal').hidden&&$('helpModal').hidden&&document.activeElement===document.body){e.preventDefault();openSelect();return}
+  if(e.key==='Escape'){['codexModal','helpModal','rankModal'].forEach(id=>$(id).hidden=true)}
+  if(e.key==='Enter'&&!$('title').hidden&&$('codexModal').hidden&&$('helpModal').hidden&&$('rankModal').hidden&&document.activeElement===document.body){e.preventDefault();openSelect();return}
   if(!$('select').hidden){
     const i=PARTS.findIndex(p=>p.id===SEL.part);
     if(e.key==='ArrowRight'||e.key==='ArrowLeft'){e.preventDefault();SEL.part=PARTS[(i+(e.key==='ArrowRight'?1:PARTS.length-1))%PARTS.length].id;renderSelect();return}
