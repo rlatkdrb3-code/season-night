@@ -250,7 +250,7 @@ kbd{font-family:var(--body);border:1px solid rgba(28,26,23,.3);border-radius:3px
 .denied{position:absolute;right:14px;top:50%;font-family:var(--display);font-size:34px;color:var(--red);border:4px solid var(--red);border-radius:6px;padding:0 10px;transform:translateY(-50%) rotate(-14deg) scale(2.4);opacity:0;pointer-events:none;filter:none}
 .reward.lost .denied{opacity:1;transform:translateY(-50%) rotate(-14deg) scale(1);transition:transform .22s cubic-bezier(.3,1.6,.5,1),opacity .1s}
 .qmeta{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:12px;color:var(--ink-2);margin-bottom:10px}
-.qtext .cat{display:inline-block;vertical-align:3px;margin-right:8px;font-size:12px;line-height:1.6;color:var(--pwc-ink);background:var(--pwc-soft);font-weight:600;padding:3px 10px;border-radius:999px}
+.qmeta .cat{display:inline-block;vertical-align:1px;margin-right:8px;font-size:11px;line-height:1.5;color:var(--pwc-ink);background:var(--pwc-soft);font-weight:600;padding:3px 10px;border-radius:999px}
 .qtimer{display:grid;grid-template-columns:1fr auto;align-items:center;gap:10px;margin:-2px 0 12px}
 .qtimer .track{height:8px;border-radius:999px;background:var(--hair);overflow:hidden}
 .qtimer .track i{display:block;height:100%;width:100%;background:var(--pwc);border-radius:999px;transform-origin:left;transition:background .2s}
@@ -452,9 +452,9 @@ kbd{font-family:var(--body);border:1px solid rgba(28,26,23,.3);border-radius:3px
         <div class="rwbonus" id="rwbonus" hidden><img id="rwbicon" alt=""><span><span class="chip g">+ 보급품</span> <b id="rwbname"></b> · <span id="rwbdesc"></span></span></div>
         <div class="denied">반려</div>
       </div>
-      <div class="qmeta"><span>문제 <span id="qno"></span> · 전투 일시정지</span></div>
+      <div class="qmeta"><span><span class="cat" id="qcat"></span>문제 <span id="qno"></span> · 전투 일시정지</span></div>
       <div class="qtimer" id="qtimer" role="timer" aria-label="남은 시간"><div class="track"><i id="qtbar"></i></div><b id="qtsec">30s</b></div>
-      <p class="qtext"><span class="cat" id="qcat"></span><span id="qtext"></span></p>
+      <p class="qtext" id="qtext"></p>
       <div class="choices" id="choices"></div>
       <div class="verdict" id="verdict" hidden>
         <h3 id="vtitle"></h3>
