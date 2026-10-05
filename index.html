@@ -636,7 +636,7 @@ const ITEMS = {
   laser: {type:'w', name:'조회서 클리어', max:5, starter:true,
           lv:['조회처 1곳에 조회서 발송 → 회신이 오면 일직선으로 관통하며 클리어','조회처 회신 +1 (2곳)','회신 일치: 클리어 폭·사거리 증가','조회처 회신 +1 (3곳), 회신 대기 단축','모든 조회서 클리어: 피해·클리어 폭 증가, 발송 주기 단축']},
   hole:  {type:'w', name:'세무조정 폭탄', max:5, starter:true,
-          lv:['폭탄을 던져 주변 적을 끌어모은 뒤 폭발로 세무조정 완료 · 많이 모을수록 조정액이 커져 크게 폭발 · 보스에게 피해 3.5배','익금산입: 조정 범위·폭발 피해 증가, 투척 주기 단축','손금불산입: 도화선 시간·폭발 피해 증가, 투척 주기 단축','세무조정계산서 작성: 조정 범위 증가, 투척 주기 단축','소득금액조정합계표 완성: 범위·폭발 피해 증가, 투척 주기 단축']},
+          lv:['폭탄을 던져 주변 적을 끌어모은 뒤 폭발로 세무조정 완료 · 많이 모을수록 조정액이 커져 크게 폭발 · 보스에게 피해 1.3배','익금산입: 조정 범위·폭발 피해 증가, 투척 주기 단축','손금불산입: 도화선 시간·폭발 피해 증가, 투척 주기 단축','세무조정계산서 작성: 조정 범위 증가, 투척 주기 단축','소득금액조정합계표 완성: 범위·폭발 피해 증가, 투척 주기 단축']},
   comp:  {type:'w', name:'복리 동전', max:5, starter:true,
           lv:['동전이 적 사이를 튕겨 다니며 맞힐 때마다 커지고 강해짐 (복리) · 보스에게 피해 1.6배','튕김 +1','동전 +1 (2개)','튕김 +1, 복리율 증가','피해·복리율 증가, 연사 증가']},
   book:  {type:'p', name:'회계기준서', max:5, desc:'공격력 +10%'},
@@ -676,11 +676,11 @@ const W_STATS = {
   hl:   {cd:[1.5,1.4,1.4,1.3,1.1], len:[110,125,130,145,155], dmg:[16,20,24,28,34], back:[0,0,1,1,1], evo:{cd:1,len:195,dmg:46,back:1}},
   zap:  {cd:[1.15,1.1,1.05,1,.9], dmg:[10,12,15,17,20], jumps:[5,5,7,7,9], range:[320,320,330,340,350], hop:[150,155,160,165,175]},
   laser:{cd:[1.5,1.45,1.4,1.3,1.2], n:[1,2,2,3,3], dmg:[15,15,15,15,17], w:[12,12,15,15,18], len:[560,560,600,620,660], aim:[.45,.42,.4,.38,.34]},
-  hole: {cd:[2.6,2.4,2.2,2.0,1.8], rad:[85,95,105,115,125], dur:[1.0,1.0,1.1,1.1,1.2], tick:[1,1,1,1,1], boom:[2,3,5,5,6], pull:[230,240,250,260,280]},
+  hole: {cd:[2.6,2.4,2.2,2.0,1.8], rad:[70,78,86,95,105], dur:[1.0,1.0,1.1,1.1,1.2], tick:[1,1,1,1,1], boom:[8,10,14,16,20], pull:[230,240,250,260,280]},
   comp: {cd:[2.0,1.9,1.8,1.7,1.6], n:[1,1,2,2,2], dmg:[6,7,7,7,8], bounce:[4,5,5,6,6], rate:[1.15,1.15,1.15,1.18,1.2]}
 };
 // 보스 상대 피해 배수: 택스·딜 기본 무기는 범위형이라 보스 한 마리에 약해서 보정 (밸런스 측정 기준, 2026-10)
-const BOSS_MUL = {hole:3.5, comp:1.6};
+const BOSS_MUL = {hole:1.3, comp:1.6};
 const WEAPONS = Object.keys(ITEMS).filter(k=>ITEMS[k].type==='w'&&!ITEMS[k].starter); // 진화가 있는 일반 무기
 const STARTERS = Object.keys(ITEMS).filter(k=>ITEMS[k].starter);
 
@@ -1308,7 +1308,7 @@ function recalc(S){
   const mh=100+S.hpBonus+20*L('badge'); if(mh>S.maxhp)S.hp+=mh-S.maxhp; S.maxhp=mh; S.hp=Math.min(S.hp,S.maxhp); S.regen=.5*L('badge');
 }
 // 누진세율: 블랙홀이 빨아들인 적 수 → 세율 구간과 폭발 배수
-const TAX_BRACKETS=[[0,'6%',1],[3,'15%',1.25],[6,'24%',1.5],[10,'35%',1.8],[15,'45%',2.2]];
+const TAX_BRACKETS=[[0,'6%',1],[3,'15%',1.1],[6,'24%',1.2],[10,'35%',1.35],[15,'45%',1.5]];
 function taxRate(n){let i=0;for(let j=0;j<TAX_BRACKETS.length;j++)if(n>=TAX_BRACKETS[j][0])i=j;return{i,label:TAX_BRACKETS[i][1],mult:TAX_BRACKETS[i][2]}}
 function wstat(S,k){const it=S.items[k],t=W_STATS[k];if(it.evo)return Object.assign({},t.evo);const i=it.lv-1,o={};for(const p in t)if(p!=='evo')o[p]=t[p][i];return o}
 function evoReady(S,k){const it=S.items[k];return it&&ITEMS[k].type==='w'&&!!ITEMS[k].pair&&!it.evo&&it.lv>=5&&!!S.items[ITEMS[k].pair]}
@@ -1528,6 +1528,8 @@ class Battle extends Phaser.Scene{
   syncFloor(){const wv=this.cameras.main.worldView;const w=Math.ceil(wv.width)+4,h=Math.ceil(wv.height)+4;if(this.floor.width!==w||this.floor.height!==h)this.floor.setSize(w,h);this.floor.setPosition(wv.x-2,wv.y-2);this.floor.tilePositionX=wv.x;this.floor.tilePositionY=wv.y}
   targets(){const l=this.enemies.getChildren().filter(e=>e.active);if(this.boss&&this.boss.active)l.push(this.boss);for(const d of this.decoys.getChildren())if(d.active)l.push(d);return l}
   // los=true: 지형물에 가려진 적은 제외 (엄폐)
+  // 보스(와 보스 분신)가 사거리 안에 있으면 목록 맨 앞으로: 모든 조준형 무기가 보스를 먼저 노림
+  bossFirst(tg){const i=tg.findIndex(o=>o.e.isBoss||o.e.isDecoy);if(i>0)tg.unshift(tg.splice(i,1)[0]);return tg}
   nearest(range,los=false){const p=this.player,r2=range*range,o=[];for(const e of this.targets()){const d=(e.x-p.x)**2+(e.y-p.y)**2;if(d<r2&&(!los||this.los(p.x,p.y,e.x,e.y)))o.push({e,d})}return o.sort((a,b)=>a.d-b.d)}
 
   // ----- 지형물 -----
@@ -1730,8 +1732,7 @@ class Battle extends Phaser.Scene{
   killB(group,b){b.body.enable=false;group.killAndHide(b)}
   firePen(){
     const S=this.S,p=this.player,s=wstat(S,'pen'),evo=S.items.pen.evo;
-    const tg=this.nearest(470,true);if(!tg.length)return false;
-    const bi=tg.findIndex(o=>o.e.isBoss||o.e.isDecoy);if(bi>0)tg.unshift(tg.splice(bi,1)[0]);
+    const tg=this.bossFirst(this.nearest(470,true));if(!tg.length)return false;
     for(let i=0;i<s.n;i++){
       const t=tg[i%tg.length].e,rep=Math.floor(i/tg.length);
       const a=Math.atan2(t.y-p.y,t.x-p.x)+(rep?(rep%2?1:-1)*Math.ceil(rep/2)*.14:0);
@@ -1742,7 +1743,7 @@ class Battle extends Phaser.Scene{
   }
   // 디지털: 가장 가까운 적에게 번개 → 주변 적으로 연쇄
   fireZap(){
-    const S=this.S,p=this.player,s=wstat(S,'zap'),tg=this.nearest(s.range,true);if(!tg.length)return false;
+    const S=this.S,p=this.player,s=wstat(S,'zap'),tg=this.bossFirst(this.nearest(s.range,true));if(!tg.length)return false;
     const hit=new Set(),pts=[{x:p.x,y:p.y-8}];let cur=tg[0].e;const dmg=Math.round(s.dmg*S.might);
     for(let j=0;j<s.jumps&&cur;j++){
       hit.add(cur);pts.push({x:cur.x,y:cur.y});
@@ -1791,9 +1792,10 @@ class Battle extends Phaser.Scene{
   }
   // 택스: 세무조정 폭탄을 던짐. 도화선이 타는 동안 주변 적을 끌어모으고, 모은 수가 많을수록 세율(배수)이 올라 폭발이 커짐
   fireHole(){
-    const S=this.S,p=this.player,s=wstat(S,'hole'),tg=this.nearest(380);if(!tg.length)return false;
+    const S=this.S,p=this.player,s=wstat(S,'hole'),tg=this.nearest(260);if(!tg.length)return false;
     // 적이 가장 많이 모인 지점 근처를 노림: 가까운 적 몇 명 중 주변 밀도가 가장 높은 적
     let best=tg[0].e,bn=-1;for(const o of tg.slice(0,10)){let n=0;for(const q of tg)if((q.e.x-o.e.x)**2+(q.e.y-o.e.y)**2<s.rad*s.rad)n++;if(n>bn){bn=n;best=o.e}}
+    const bo=tg.find(o=>o.e.isBoss||o.e.isDecoy);if(bo)best=bo.e; // 보스가 있으면 보스 우선
     const h={x:p.x,y:p.y-6,tx:best.x,ty:best.y,fly:0,t:0,s,got:new Set(),tickT:0,spin:0,scale:0};
     this.holes.push(h);SFX.hole();return true;
   }
@@ -1851,7 +1853,7 @@ class Battle extends Phaser.Scene{
   }
   // 딜: 동전이 적 사이를 튕기며 맞힐 때마다 피해·크기가 복리로 불어남. 튕김을 다 쓰면 금빛 폭발
   fireComp(){
-    const S=this.S,p=this.player,s=wstat(S,'comp'),tg=this.nearest(360,true);if(!tg.length)return false;
+    const S=this.S,p=this.player,s=wstat(S,'comp'),tg=this.bossFirst(this.nearest(360,true));if(!tg.length)return false;
     for(let i=0;i<s.n;i++){const t=tg[Math.min(i,tg.length-1)].e,a=Math.atan2(t.y-p.y,t.x-p.x)+(i?(i%2?1:-1)*.25:0);
       const b=this.fireB(this.bullets,'coin',p.body.center.x,p.body.center.y,a,560);if(!b)continue;
       b.body.setCircle(11,2.5,2.5);b.life=.75;b.dmg=Math.round(s.dmg*S.might);b.pierce=0;b.hits=new Set();b.evo=false;b.coin=true;b.bounce=s.bounce;b.rate=s.rate;b.n=0;b.base=1}
@@ -1903,7 +1905,7 @@ class Battle extends Phaser.Scene{
       for(const e of list){if(!e.active||(e.calcCD||0)>S.t)continue;const rr=e.hitR*(e.baseScale||1)+9;if((e.x-k.x)**2+(e.y-k.y)**2<rr*rr){e.calcCD=S.t+.45;this.dmg(e,dmg,a+Math.PI/2,170,'#9fd8a8');SFX.tick()}}});
   }
   fireStamp(){
-    const S=this.S,s=wstat(S,'stamp'),evo=S.items.stamp.evo,tg=this.nearest(430);if(!tg.length)return false;
+    const S=this.S,s=wstat(S,'stamp'),evo=S.items.stamp.evo,tg=this.bossFirst(this.nearest(430));if(!tg.length)return false;
     for(let i=0;i<s.n;i++){const t=tg[Math.min(i*4,tg.length-1)].e;const x=t.x,y=t.y;this.time.delayedCall(i*130,()=>this.slam(x,y,s,evo))}
     return true;
   }
