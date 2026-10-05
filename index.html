@@ -102,6 +102,8 @@ img{image-rendering:pixelated}
 .ind{position:absolute;left:0;top:0;width:34px;height:34px;margin:-17px 0 0 -17px;pointer-events:none;display:grid;place-items:center}
 .ind img{width:28px;height:22px;filter:drop-shadow(0 0 6px rgba(228,184,74,.8));animation:bob .8s ease-in-out infinite}
 .ind i{position:absolute;inset:0;transform-origin:50% 50%}
+.ind.expiring{animation:indBlink .3s steps(2,start) infinite}
+@keyframes indBlink{to{visibility:hidden}}
 .ind i::after{content:"";position:absolute;right:-8px;top:50%;margin-top:-6px;border:6px solid transparent;border-left:9px solid var(--gold)}
 @keyframes bob{50%{transform:translateY(-3px)}}
 
@@ -653,7 +655,7 @@ const QUESTIONS = [{"cat": "삼일","q": "2026년 채용 공고상 신입 공인
 // 밸런스
 // =====================================================================
 const CFG = {
-  stageLen:45, totalStages:4, bossAt:20, maxEnemies:130, firstChest:8, chestEvery:19, eliteChest:.45,
+  stageLen:45, totalStages:4, bossAt:20, maxEnemies:130, firstChest:8, chestEvery:19, eliteChest:.45, chestLife:30, chestWarn:5, // chestLife: 일반 상자가 자동으로 사라지기까지(초, 게임 시간). 마지막 chestWarn초는 깜빡임
   bosses:{
     // 배열이면 등장할 때 그중 하나를 같은 확률로 고름 (2스테이지: 미수금의 그림자 / 부정 적발 50%)
     2:[{key:'boss1', name:'미수금의 그림자', hp:900, dmg:24, speed:72, r:38, ring:false, spread:true, frames:['boss1a','boss1b']},
@@ -790,11 +792,12 @@ const HERO_FRAMES = mkFrames(HERO_TOP,false), HERO_FRAMES_L = mkFrames(HERO_TOP_
 // 캐릭터 선택: 4개 본부 × 남/녀
 // cats = 이 본부로 플레이할 때 나오는 문제 분류 ('삼일'은 공통, 비어 있으면 전체 문제)
 // =====================================================================
+// clear·fail: 모든 스테이지를 클리어했을 때 / 실패했을 때 나오는 문구 (본부별)
 const PARTS = [
-  {id:'audit',   color:'#FD5108', starter:'laser',  name:'감사',   full:'감사본부',   role:'재무제표를 검증하는 감사인', cats:['감사본부']},
-  {id:'tax',     color:'#f3f0e8', starter:'hole',  name:'택스',   full:'택스본부',   role:'세무조정과 신고를 맡는 세무 전문가', cats:['택스본부']},
-  {id:'deal',    color:'#e4b84a', starter:'comp',  name:'딜',     full:'딜본부',     role:'M&A와 가치평가를 돕는 딜 전문가', cats:['딜본부']},
-  {id:'digital', color:'#3d6ad6', starter:'zap',  name:'디지털', full:'디지털',     role:'데이터와 IT로 일하는 디지털 전문가', cats:['디지털']}
+  {id:'audit',   color:'#FD5108', starter:'laser',  name:'감사',   full:'감사본부',   clear:'감사 마감', fail:'감사 실패',   role:'재무제표를 검증하는 감사인', cats:['감사본부']},
+  {id:'tax',     color:'#f3f0e8', starter:'hole',  name:'택스',   full:'택스본부',   clear:'절세성공', fail:'절세 실패',   role:'세무조정과 신고를 맡는 세무 전문가', cats:['택스본부']},
+  {id:'deal',    color:'#e4b84a', starter:'comp',  name:'딜',     full:'딜본부',     clear:'딜 클로징', fail:'딜 무산',     role:'M&A와 가치평가를 돕는 딜 전문가', cats:['딜본부']},
+  {id:'digital', color:'#3d6ad6', starter:'zap',  name:'디지털', full:'디지털',     clear:'업무혁신 완료', fail:'혁신 실패',     role:'데이터와 IT로 일하는 디지털 전문가', cats:['디지털']}
 ];
 const GENDERS = [{id:'m',name:'남'},{id:'f',name:'여'}];
 // 해금 조건 (나중에 여기만 바꾸면 됨): after 본부 캐릭터로 plays판 플레이하면 해금
@@ -963,9 +966,18 @@ const legsFor = (g,shoe,pants) => {const o={};for(const k in LEGS)o[k]=LEGS[k].m
 // 왼쪽 보기: 전체 좌우반전. 감사는 모자 글자(0~4행)가 거울상이 되지 않게 반전 없이 한 칸 당기고, 챙(5행)만 반전
 const leftTop = (top,part) => part!=='audit'?top.map(flipRow):top.map((r,j)=>j<5?r.slice(1)+'.':j===5?setCh(flipRow(r.replace('w','f')),4,'w'):flipRow(r));
 const mkFramesG=(top,fl,legs)=>{const L=k=>fl?legs[k].map(flipRow):legs[k];return [top.concat(L('a'),[PADROW]),[PADROW].concat(top,L('i')),top.concat(L('b'),[PADROW]),[PADROW].concat(top,L('i'))]};
+// 본부별 PwC 소품 (감사는 PwC 캡이 이미 있음): 기본 도트 위에 덧그림. 12~16행 = 몸통
+// 택스: 오른손에 PwC 텀블러(흰 몸통 + 주황 띠) / 딜: 목에 건 PwC 사원증(주황 목걸이 줄 + 주황 머리띠 흰 카드) / 디지털: 두 손으로 든 PwC 노트북(은색 뚜껑에 계단 모양 주황 로고)
+const HERO_PROPS = {
+  tax:{at:16, rows:{12:"KxxK",13:"KWWK",14:"KFFK",15:"KWWK",16:"KKKK"}},
+  digital:{at:6, rows:{13:"KKKKKKKKK",14:"KeeeeFFeK",15:"KeeFFeeeK",16:"KKKKKKKKK"}},
+  deal:{at:8, rows:{12:"F...F",13:".F.F.",14:".FFF.",15:".WeW."}}
+};
+const withProp=(map,part)=>{const pr=HERO_PROPS[part];if(!pr)return map;
+  return map.map((r,j)=>{const s=pr.rows[j];if(!s)return r;for(let i=0;i<s.length;i++)if(s[i]!=='.')r=putAt(r,pr.at+i,s[i]);return r})};
 const HERO_SET = {};
 for(const pt of PARTS)for(const g of GENDERS){
-  const k=pt.id+'_'+g.id, top=HERO_MAPS[k], legs=legsFor(g.id,HERO_SHOE[k],HERO_PANTS[pt.id]);
+  const k=pt.id+'_'+g.id, top=withProp(HERO_MAPS[k],pt.id), legs=legsFor(g.id,HERO_SHOE[k],HERO_PANTS[pt.id]);
   HERO_SET[k]={top, R:mkFramesG(top,false,legs), L:mkFramesG(leftTop(top,pt.id),true,legs), over:HERO_HAIR[k]};
 }
 const heroURLCache = {};
@@ -1010,7 +1022,8 @@ const DLEGS={i:["......KPPK.KPPK.....",".....KBBBK.KBBBK...."],
   bend:[".....KPPK...KPPK....","....KBBBK...KBBBK..."]};
 function dLegs(g,shoe,pants,key){return DLEGS[key].map(r=>r.replace(/B/g,shoe).replace(/P/g,g==='f'?'S':pants))}
 function buildPose(k,spec){
-  const [part,g]=k.split('_');let t=HERO_MAPS[k].slice();const sleeve=({B:'x',N:'C'})[t[13][6]]||t[13][6]; // 검정·남색 정장은 팔이 몸에 묻히지 않게 한 톤 밝게
+  // 춤출 때는 팔이 움직여서 손에 드는 소품(텀블러·노트북)은 빼고, 목에 건 사원증만 유지
+  const [part,g]=k.split('_');let t=(part==='deal'?withProp(HERO_MAPS[k],part):HERO_MAPS[k]).slice();const sleeve=({B:'x',N:'C'})[t[13][6]]||t[13][6]; // 검정·남색 정장은 팔이 몸에 묻히지 않게 한 톤 밝게
   for(const name of spec.arms||[]){const side=name.slice(-1);
     t=armOff(t,side);
     const st=POSE_STAMPS[name]?POSE_STAMPS[name]:mirrorStamp(POSE_STAMPS[name.slice(0,-1)+(side==='L'?'R':'L')]);
@@ -1807,7 +1820,7 @@ class Battle extends Phaser.Scene{
   }
   spawnChest(x,y,gold=false){
     ({x,y}=this.freeSpot(x,y,30));
-    const c=this.add.image(x,y,gold?'chestG':'chest').setDepth(3);c.gold=gold;
+    const c=this.add.image(x,y,gold?'chestG':'chest').setDepth(3);c.gold=gold;c.bornT=this.S.t;c.life=gold?Infinity:CFG.chestLife; // 보스 황금 상자는 사라지지 않음
     c.beam=this.add.image(x,y+8,'beam').setOrigin(.5,1).setDepth(2).setBlendMode('ADD').setTint(gold?0xffd86b:0xe4b84a).setAlpha(.7);
     this.tweens.add({targets:c,y:y-5,duration:600,yoyo:true,repeat:-1,ease:'Sine.easeInOut'});
     this.tweens.add({targets:c.beam,alpha:.3,duration:800,yoyo:true,repeat:-1});
@@ -2169,7 +2182,7 @@ class Battle extends Phaser.Scene{
   }
   gameOver(won){
     const S=this.S;if(S.over)return;S.over=true;this.joy=null;$('stick').hidden=true;
-    if(won){toast('감사 마감');this.cameras.main.flash(500,255,240,200);this.fxGold.explode(60,this.player.x,this.player.y)}
+    if(won){toast(partOf(CHOICE.part).clear);this.cameras.main.flash(500,255,240,200);this.fxGold.explode(60,this.player.x,this.player.y)}
     else{SFX.die();this.fxGold.explode(50,this.player.x,this.player.y);this.fxRed.explode(30,this.player.x,this.player.y);this.player.setVisible(false);this.shadow.setVisible(false);this.dust.emitting=false;this.calcKeys.forEach(k=>k.setVisible(false));this.cameras.main.shake(400,.02)}
     this.physics.pause();
     this.time.delayedCall(won?1200:1000,()=>{showResult(S,won);this.scene.pause()});
@@ -2241,6 +2254,10 @@ class Battle extends Phaser.Scene{
     // 상자
     for(const c of this.chests.slice()){
       if(Math.hypot(c.x-p.x,c.y-p.y)<36){this.chests.splice(this.chests.indexOf(c),1);c.ind.remove();this.tweens.killTweensOf([c,c.beam]);c.beam.destroy();this.fxGold.explode(30,c.x,c.y);SFX.chest();const gold=c.gold;c.destroy();this.openModal('chest',{gold});continue}
+      // 오래된 일반 상자: 마지막 몇 초 깜빡이다가 연기와 함께 사라짐
+      const left=c.life-(S.t-c.bornT);
+      if(left<=0){this.chests.splice(this.chests.indexOf(c),1);c.ind.remove();this.tweens.killTweensOf([c,c.beam]);this.fxSmoke.explode(14,c.x,c.y);c.beam.destroy();c.destroy();continue}
+      if(left<=CFG.chestWarn){const on=Math.floor(left*6)%2===0;c.setAlpha(on?1:.25);c.beam.setVisible(on);if(!c.warned){c.warned=true;c.ind.classList.add('expiring')}}
       this.placeInd(c);
     }
     // HUD
@@ -2428,7 +2445,7 @@ function answerChest(sc,i){
 function showResult(S,won){
   recordPlay();
   $('hud').hidden=true;$('vig').className='';$('inds').replaceChildren();
-  setText('rtag',won?'감사 마감':'감사 실패');setText('rtitle',won?'시즌의 밤을 넘겼다.':'미결 전표에 묻혔다.');
+  setText('rtag',won?partOf(CHOICE.part).clear:partOf(CHOICE.part).fail);setText('rtitle',won?'시즌의 밤을 넘겼다.':'미결 전표에 묻혔다.');
   setText('rtime',fmt(S.t));setText('rboss',S.bossKills);setText('rkill',S.kills);setText('rq',`${S.correct} / ${S.asked}`);
   const bd=$('rbuild');bd.replaceChildren();[...S.wOrder,...S.pOrder].forEach(k=>bd.appendChild(slotEl(S,k)));
   const rv=$('review');rv.replaceChildren();
