@@ -177,6 +177,12 @@ kbd{font-family:var(--body);border:1px solid rgba(28,26,23,.3);border-radius:3px
 .sel-card.locked b,.sel-card.locked .full{color:rgba(255,255,255,.4)}
 .sel-card .lock{position:absolute;top:10px;right:10px;font-size:11px;font-weight:700;color:rgba(255,255,255,.7);background:rgba(0,0,0,.45);border-radius:999px;padding:3px 8px}
 .sel-card .hint{margin-top:6px;font-size:11.5px;line-height:1.35;color:rgba(255,255,255,.55)}
+/* 캐릭터 선택: 본부별 춤 (움직임은 JS DANCE, 선택된 카드는 음표가 떠오름) */
+.sel-card .dancer{position:relative;display:block;width:96px;height:96px;margin-bottom:4px}
+.sel-card .dancer img{display:block;margin:0;transform-origin:50% 100%;will-change:transform}
+.sel-card[aria-pressed="true"]:not(.locked) .dancer::before,.sel-card[aria-pressed="true"]:not(.locked) .dancer::after{content:"\266A";position:absolute;top:14px;left:-4px;font-size:16px;font-weight:800;color:rgb(var(--acc));opacity:0;animation:noteUp 1.6s ease-out infinite;pointer-events:none}
+.sel-card[aria-pressed="true"]:not(.locked) .dancer::after{content:"\266B";left:auto;right:-6px;animation-delay:.8s}
+@keyframes noteUp{0%{transform:translateY(8px) scale(.6) rotate(-10deg);opacity:0}25%{opacity:1}100%{transform:translateY(-22px) scale(1) rotate(14deg);opacity:0}}
 .sel-note{margin:0;min-height:20px;font-size:14px;color:rgba(255,255,255,.75)}
 .sel-actions{display:flex;gap:12px;align-items:center}
 .sel-actions .title-start{width:220px;margin:0}
@@ -2385,13 +2391,41 @@ function showResult(S,won){
 // 캐릭터 선택 화면
 // =====================================================================
 const SEL = {part:CHOICE.part, g:CHOICE.g};
+// 본부별 춤: t(초) → 이동·회전·크기·프레임(0,2 = 발 내딛기, 1 = 서기)
+const DANCE = {
+  // 감사: 도장 쾅쾅 통통 점프 (착지할 때 납작)
+  audit(t){const T=.56,n=Math.floor(t/T),p=t/T-n;
+    if(p>.15&&p<.85)return {y:-14*Math.sin(Math.PI*(p-.15)/.7),f:n%2?0:2};
+    const s=p<=.15?Math.sin(Math.PI*p/.15):Math.sin(Math.PI*(p-.85)/.15);return {sx:1+.1*s,sy:1-.12*s,f:1}},
+  // 택스: 좌우로 살랑살랑 차차차
+  tax(t){const a=2*Math.PI*t/1.2;return {x:9*Math.sin(a),y:-4*Math.abs(Math.sin(2*a)),r:8*Math.sin(a),sx:Math.cos(a)>=0?1:-1,f:Math.floor(t/.3)%2?0:2}},
+  // 딜: 점프 한 바퀴 턴 → 리듬 타기
+  deal(t){const T=1.8,p=(t/T)%1;
+    if(p<.4){const q=p/.4;return {y:-16*Math.sin(Math.PI*q),sx:Math.cos(2*Math.PI*q),f:1}}
+    const q=(p-.4)/.6,b=Math.floor(q*4);return {y:-3*Math.abs(Math.sin(4*Math.PI*q)),r:b%2?5:-5,f:b%2?0:2}},
+  // 디지털: 끊어지는 로봇 춤
+  digital(t){const k=Math.floor(t/.3)%8,q=(t/.3)%1,P=[[0,0,0,1],[-6,0,-8,0],[-6,0,-8,1],[0,0,0,1],[6,0,8,2],[6,0,8,1],[0,-7,0,1],[0,0,0,1]][k],pop=q<.15?1.05:1;
+    return {x:P[0],y:P[1],r:P[2],sx:pop,sy:pop,f:P[3]}}
+};
+let DANCERS=[], danceRAF=0;
+const DANCE_OFF=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+function danceTick(now){
+  if($('select').hidden){danceRAF=0;return}
+  const t=now/1000;
+  for(const d of DANCERS){const m=DANCE[d.part](t),f=m.f??1;
+    d.img.style.transform=`translate(${(m.x||0).toFixed(1)}px,${(m.y||0).toFixed(1)}px) rotate(${(m.r||0).toFixed(1)}deg) scale(${(m.sx??1).toFixed(3)},${(m.sy??1).toFixed(3)})`;
+    if(d.f!==f){d.f=f;d.img.src=d.urls[f]}}
+  danceRAF=requestAnimationFrame(danceTick);
+}
+function danceStart(){if(!DANCE_OFF&&!danceRAF)danceRAF=requestAnimationFrame(danceTick)}
 function renderSelect(){
-  const box=$('selCards');box.replaceChildren();
+  const box=$('selCards');box.replaceChildren();DANCERS=[];
   PARTS.forEach(pt=>{
     const open=isUnlocked(pt.id), b=el('button','sel-card'+(open?'':' locked'));b.type='button';b.dataset.part=pt.id;
     b.setAttribute('aria-pressed',String(SEL.part===pt.id));
     const im=el('img');im.dataset.part=pt.id;im.src=heroURLs(pt.id,SEL.g)[1];im.alt=open?`${pt.full} ${SEL.g==='f'?'여자':'남자'} 캐릭터`:'잠긴 캐릭터';
-    b.append(im,el('b','',pt.name),el('span','full',pt.full));
+    const dz=el('span','dancer');dz.appendChild(im);if(open)DANCERS.push({part:pt.id,img:im,urls:heroURLs(pt.id,SEL.g),f:1});
+    b.append(dz,el('b','',pt.name),el('span','full',pt.full));
     if(open){b.appendChild(el('span','atk',starterLabel(pt)));b.appendChild(el('span','qs',poolLabel(pt)))}else{b.appendChild(el('span','lock','잠김'));b.appendChild(el('span','hint',unlockHint(pt.id)))}
     b.onclick=()=>{SEL.part=pt.id;renderSelect()};
     box.appendChild(b);
@@ -2400,6 +2434,7 @@ function renderSelect(){
   const pt=partOf(SEL.part),open=isUnlocked(SEL.part);
   setText('selNote',open?`${pt.full} · ${pt.role}`:unlockHint(SEL.part));
   $('selGo').disabled=!open;
+  danceStart();
 }
 function openSelect(){SFX.init();['title','result','codexModal','helpModal'].forEach(id=>$(id).hidden=true);SEL.part=CHOICE.part;SEL.g=CHOICE.g;renderSelect();$('select').hidden=false;$('selGo').focus()}
 function confirmSelect(){if(!isUnlocked(SEL.part))return;CHOICE.part=SEL.part;CHOICE.g=SEL.g;PROG.part=CHOICE.part;PROG.g=CHOICE.g;saveProg();startRun()}
