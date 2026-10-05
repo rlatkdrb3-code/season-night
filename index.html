@@ -182,6 +182,7 @@ kbd{font-family:var(--body);border:1px solid rgba(28,26,23,.3);border-radius:3px
 .sel-card .dancer img{display:block;margin:0;transform-origin:50% 100%;will-change:transform}
 .sel-card[aria-pressed="true"]:not(.locked) .dancer::before,.sel-card[aria-pressed="true"]:not(.locked) .dancer::after{content:"\266A";position:absolute;top:14px;left:-4px;font-size:16px;font-weight:800;color:rgb(var(--acc));opacity:0;animation:noteUp 1.6s ease-out infinite;pointer-events:none}
 .sel-card[aria-pressed="true"]:not(.locked) .dancer::after{content:"\266B";left:auto;right:-6px;animation-delay:.8s}
+.sel-card[aria-pressed="true"]:not(.locked) .dancer::before{content:"\D30C\B77C\D30C\B77C~";left:-36px;top:6px;font-size:13px;white-space:nowrap;color:#ff8fc8;text-shadow:0 1px 0 rgba(0,0,0,.5)}
 @keyframes noteUp{0%{transform:translateY(8px) scale(.6) rotate(-10deg);opacity:0}25%{opacity:1}100%{transform:translateY(-22px) scale(1) rotate(14deg);opacity:0}}
 .sel-note{margin:0;min-height:20px;font-size:14px;color:rgba(255,255,255,.75)}
 .sel-actions{display:flex;gap:12px;align-items:center}
@@ -970,14 +971,23 @@ for(const pt of PARTS)for(const g of GENDERS){
 const heroURLCache = {};
 // 캐릭터 선택 화면 춤 포즈: 기본 도트(top 17줄)에 팔·손 도장(@ = 소매색, _ = 지우기, . = 그대로)을 찍어 만든다
 const POSE_STAMPS = {
-  // 오른손(화면 오른쪽) 위로 찌르기 — 디스코 포인트
+  // 팔 자세는 모두 화면 오른쪽 팔 기준(…R). 왼팔(…L)은 좌우 반전해서 씀
+  // 위로 대각선 쭉
   pointR:[4,15,["...K.","..KSK","..KSK","..K@K",".K@K.",".K@K.","K@K..","K@K..","@K...","@K...","K....","._..."]],
-  // 손 허리에 짚기 (팔꿈치 바깥으로)
+  // 옆으로 비스듬히 위 (옆 → 위 사이)
+  sideHighR:[8,15,["...KK","..KSS",".K@KK","K@K..","@K...","K....","K....","._..."]],
+  // 옆으로 수평 쭉
+  sideR:[11,15,[".KKKK","@@@SS","@KKKK","K....","._..."]],
+  // 아래로 비스듬히 벌리기
+  downR:[13,15,["@K...","K@K..",".K@K.","..KSK","...K."]],
+  // 가슴 앞 (팔뚝이 몸 앞을 가로지름)
+  chestR:[12,10,[".KKKK.","KSS@@@",".KKKKK"]],
+  // 손 허리에 짚기
   hipR:[12,15,[".K...","@@K..","KK@K.","KSK..",".KK.."]],
-  // 주먹 앞으로 (팔 흔들기 앞)
-  fistDnR:[10,15,["..K..",".KSK.",".KSSK","@@SSK","KKKK.","._..."]],
-  // 팔 벌려 아래로 (팔 흔들기 뒤)
-  openR:[13,15,["@K...","K@K..",".K@K.","..KSK","...K."]],
+  // 얼굴 옆 손 (흔들기 안쪽)
+  faceR:[8,15,["..K..",".KSK.",".KSSK",".KSSK",".K@K.","@@@K.","KKK..","._..."]],
+  // 얼굴 옆 손 (흔들기 바깥쪽)
+  waveR:[8,15,["...K.","..KSK","..KSS","..KSS","..K@K","@@@K.","KKK..","._..."]],
 };
 const mirrorStamp=([r,c,rows])=>[r,0,rows.map(row=>{const full=Array(20).fill('.');for(let i=0;i<row.length;i++){const x=20-(c+i);if(x>=0&&x<20)full[x]=row[i]}return full.join('')})];
 function stampMap(top,st,sleeve){
@@ -995,12 +1005,12 @@ function eyes(top,kind){const t=top.slice();for(const x of [6,7,13,14]){if(!/[EW
   if(kind==='flat'){t[7]=putAt(t[7],x,'S');t[8]=putAt(t[8],x,'K')}else if(kind==='happy'){t[7]=putAt(t[7],x,'K');t[8]=putAt(t[8],x,'S')}}return t}
 // 다리: 기본 / 왼발 차기 / 오른발 차기 / 무릎 굽힘
 const DLEGS={i:["......KPPK.KPPK.....",".....KBBBK.KBBBK...."],
-  kl:["..KBBKKPK..KPPK.....","...KK......KBBBK...."],
-  kr:[".....KPPK..KPKKBBK..","....KBBBK......KK..."],
+  stepL:[".....KPPK..KPPK.....","....KBBBK..KBBBK...."],
+  stepR:["......KPPK..KPPK....",".....KBBBK..KBBBK..."],
   bend:[".....KPPK...KPPK....","....KBBBK...KBBBK..."]};
 function dLegs(g,shoe,pants,key){return DLEGS[key].map(r=>r.replace(/B/g,shoe).replace(/P/g,g==='f'?'S':pants))}
 function buildPose(k,spec){
-  const [part,g]=k.split('_');let t=HERO_MAPS[k].slice();const sleeve=t[13][6];
+  const [part,g]=k.split('_');let t=HERO_MAPS[k].slice();const sleeve=({B:'x',N:'C'})[t[13][6]]||t[13][6]; // 검정·남색 정장은 팔이 몸에 묻히지 않게 한 톤 밝게
   for(const name of spec.arms||[]){const side=name.slice(-1);
     t=armOff(t,side);
     const st=POSE_STAMPS[name]?POSE_STAMPS[name]:mirrorStamp(POSE_STAMPS[name.slice(0,-1)+(side==='L'?'R':'L')]);
@@ -1008,15 +1018,27 @@ function buildPose(k,spec){
   if(spec.eyes)t=eyes(t,spec.eyes);
   return [PADROW].concat(t,dLegs(g,HERO_SHOE[k],HERO_PANTS[part],spec.legs||'i'));
 }
-const DANCE_POSES={
-  // 다이너마이트 포인트 안무 느낌 (모든 본부 같은 춤)
-  dyPR:{arms:['pointR','hipL'],eyes:'happy',legs:'i'},
-  dyPL:{arms:['pointL','hipR'],eyes:'happy',legs:'i'},
-  dyHip:{arms:['hipR','hipL'],legs:'bend'},
-  dyHip2:{arms:['hipR','hipL'],legs:'i'},
-  dySA:{arms:['fistDnR','openL'],legs:'kl'},
-  dySB:{arms:['fistDnL','openR'],legs:'kr'},
-};
+// 파라파라 안무표: 한 칸 = 반 박자. [오른팔, 왼팔, 다리, 눈] (팔 이름은 POSE_STAMPS의 …R/…L)
+// 리센느 미나미 '파라파라나 춰야겠다' 밈의 팔 동작(옆으로 쭉·위로 대각선·아래로 벌리기·가슴 앞)을 유로비트 박자로
+const PARA_STEPS = (()=>{const S=[],add=(n,r,l,legs,eyes,lean)=>{for(let i=0;i<n;i++)S.push({r,l,legs,eyes:eyes||'flat',lean:lean||0})};
+  // A. 옆으로 쭉 뻗기 (반대손 가슴 앞) 좌우 번갈아 → T자 → 아래 → 비스듬히 위 → Y자
+  for(let k=0;k<2;k++){add(2,'sideR','chestL','stepR','',1);add(2,'chestR','sideL','stepL','',-1)}
+  add(2,'sideR','sideL','i');add(2,'downR','downL','bend');add(2,'sideHighR','sideHighL','i');add(2,'pointR','pointL','i');
+  // B. 위로 대각선 찌르기 (반대손 허리) → 빠르게 한 번씩 → Y자 → 사선 라인 좌우
+  add(2,'pointR','hipL','stepR','',1);add(2,'hipR','pointL','stepL','',-1);add(1,'pointR','hipL','stepR','',1);add(1,'hipR','pointL','stepL','',-1);add(2,'pointR','pointL','i');
+  for(let k=0;k<2;k++){add(2,'sideHighR','downL','stepR','',1);add(2,'downR','sideHighL','stepL','',-1)}
+  // C. 얼굴 옆에서 손 흔들기 (반 박자마다 안·밖) → 가슴 앞 손 좌우
+  for(let k=0;k<2;k++){add(1,'faceR','faceL','stepR');add(1,'waveR','waveL','stepR');add(1,'faceR','faceL','stepL');add(1,'waveR','waveL','stepL')}
+  for(let k=0;k<2;k++){add(2,'chestR','hipL','stepR','',1);add(2,'hipR','chestL','stepL','',-1)}
+  // D. 팔 쓸어 올리기: 아래 → 옆 → 비스듬히 위 → 위 (오른팔, 왼팔, 양팔) → 마무리 포즈
+  ['downR','sideR','sideHighR','pointR'].forEach(a=>add(1,a,'hipL','stepR','',1));
+  ['downL','sideL','sideHighL','pointL'].forEach(a=>add(1,'hipR',a,'stepL','',-1));
+  [['downR','downL'],['sideR','sideL'],['sideHighR','sideHighL'],['pointR','pointL']].forEach(([r,l])=>add(1,r,l,'i'));
+  add(2,'sideR','sideL','bend');add(2,'pointR','hipL','i','happy',1);
+  return S})();
+const paraKey=st=>st.r+'+'+st.l+'/'+st.legs+'/'+st.eyes;
+const DANCE_POSES={};
+for(const st of PARA_STEPS)DANCE_POSES[paraKey(st)]={arms:[st.r,st.l],legs:st.legs,eyes:st.eyes};
 const danceURLCache={};
 // 선택 화면 춤에 쓰는 그림: 0·1·2 = 걷기 프레임, 나머지 = DANCE_POSES 이름
 function danceURLs(part,g){const k=part+'_'+g;if(!danceURLCache[k]){const o=Object.assign({},heroURLs(part,g));
@@ -2444,14 +2466,13 @@ function showResult(S,won){
 // 캐릭터 선택 화면
 // =====================================================================
 const SEL = {part:CHOICE.part, g:CHOICE.g};
-// 선택 화면 춤: t(초) → 이동·회전·크기·그림(f: 0·1·2 걷기 프레임 또는 DANCE_POSES 이름)
-// 4개 본부가 같은 박자로 같이 춤 (114BPM 반 박자 = 0.263초, 16칸 반복)
-// 오른손 찌르기·허리 ×2 → 왼손 찌르기·허리 ×2 → 허리 짚고 골반 흔들기 → 팔 흔들며 발 차기 스텝
-function danceDynamite(t){const b=.263,n=Math.floor(t/b)%16,q=(t/b)%1,hop=-3*Math.sin(Math.PI*q);
-  if(n<8){const pt=n%2===0,f=pt?(n<4?'dyPR':'dyPL'):'dyHip',side=n<4?1:-1;return pt?{x:2*side,y:hop,r:5*side,f}:{y:2,sx:1.03,sy:.96,f}}
-  if(n<12){const s=n%2?1:-1;return {x:3*s,y:n%2?1:0,r:6*s,f:n%2?'dyHip':'dyHip2'}}
-  const s=n%2?1:-1;return {x:3*s,y:hop,r:-3*s,f:n%2?'dySB':'dySA'}}
-const DANCE = {audit:danceDynamite, tax:danceDynamite, deal:danceDynamite, digital:danceDynamite};
+// 선택 화면 춤: t(초) → 이동·회전·크기·그림(f: DANCE_POSES 이름)
+// 4개 본부가 같은 박자로 파라파라 (유로비트 약 158BPM → 반 박자 0.19초, PARA_STEPS 64칸 ≈ 12초 반복)
+// 팔은 박자에 딱딱 끊어서 바꾸고(파라파라 특유의 각 잡힌 동작), 다리는 제자리 좌우 스텝, 무표정
+function danceParaPara(t){const b=.19,i=Math.floor(t/b),q=t/b-i,st=PARA_STEPS[i%PARA_STEPS.length],prev=PARA_STEPS[(i+PARA_STEPS.length-1)%PARA_STEPS.length];
+  const step=st.legs==='stepR'?1:st.legs==='stepL'?-1:0,changed=paraKey(st)!==paraKey(prev),pop=changed&&q<.25?1.04:1;
+  return {x:2*step,y:q<.3?1:0,r:3*st.lean,sx:pop,sy:pop,f:paraKey(st)}}
+const DANCE = {audit:danceParaPara, tax:danceParaPara, deal:danceParaPara, digital:danceParaPara};
 let DANCERS=[], danceRAF=0;
 const DANCE_OFF=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
 function danceTick(now){
