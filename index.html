@@ -182,8 +182,6 @@ kbd{font-family:var(--body);border:1px solid rgba(28,26,23,.3);border-radius:3px
 .sel-card .dancer img{display:block;margin:0;transform-origin:50% 100%;will-change:transform}
 .sel-card[aria-pressed="true"]:not(.locked) .dancer::before,.sel-card[aria-pressed="true"]:not(.locked) .dancer::after{content:"\266A";position:absolute;top:14px;left:-4px;font-size:16px;font-weight:800;color:rgb(var(--acc));opacity:0;animation:noteUp 1.6s ease-out infinite;pointer-events:none}
 .sel-card[aria-pressed="true"]:not(.locked) .dancer::after{content:"\266B";left:auto;right:-6px;animation-delay:.8s}
-.sel-card[data-part="tax"][aria-pressed="true"]:not(.locked) .dancer::before,.sel-card[data-part="tax"][aria-pressed="true"]:not(.locked) .dancer::after{content:"\2661";color:#ff9ac8}
-.sel-card[data-part="deal"][aria-pressed="true"]:not(.locked) .dancer::before,.sel-card[data-part="deal"][aria-pressed="true"]:not(.locked) .dancer::after{content:"L";font:400 14px "Press Start 2P",ui-monospace,monospace}
 @keyframes noteUp{0%{transform:translateY(8px) scale(.6) rotate(-10deg);opacity:0}25%{opacity:1}100%{transform:translateY(-22px) scale(1) rotate(14deg);opacity:0}}
 .sel-note{margin:0;min-height:20px;font-size:14px;color:rgba(255,255,255,.75)}
 .sel-actions{display:flex;gap:12px;align-items:center}
@@ -970,20 +968,16 @@ for(const pt of PARTS)for(const g of GENDERS){
   HERO_SET[k]={top, R:mkFramesG(top,false,legs), L:mkFramesG(leftTop(top,pt.id),true,legs), over:HERO_HAIR[k]};
 }
 const heroURLCache = {};
-// 캐릭터 선택 화면 밈 춤 포즈: 기본 도트(top 17줄)에 팔·손 도장(@ = 소매색, _ = 지우기, . = 그대로)을 찍어 만든다
+// 캐릭터 선택 화면 춤 포즈: 기본 도트(top 17줄)에 팔·손 도장(@ = 소매색, _ = 지우기, . = 그대로)을 찍어 만든다
 const POSE_STAMPS = {
-  // 오른쪽(화면 기준) 주먹 엄지척 — 어깨 옆 위
-  fistUpR:[8,15,["..K..",".KSK.",".KSSK",".KSSK",".K@K.","@@@K.","KKK..","._..."]],
-  // 주먹 엄지척 — 아래 (어깨 높이)
+  // 오른손(화면 오른쪽) 위로 찌르기 — 디스코 포인트
+  pointR:[4,15,["...K.","..KSK","..KSK","..K@K",".K@K.",".K@K.","K@K..","K@K..","@K...","@K...","K....","._..."]],
+  // 손 허리에 짚기 (팔꿈치 바깥으로)
+  hipR:[12,15,[".K...","@@K..","KK@K.","KSK..",".KK.."]],
+  // 주먹 앞으로 (팔 흔들기 앞)
   fistDnR:[10,15,["..K..",".KSK.",".KSSK","@@SSK","KKKK.","._..."]],
-  // 팔 벌려 아래로 (삐끼삐끼 X 다음 펴기)
+  // 팔 벌려 아래로 (팔 흔들기 뒤)
   openR:[13,15,["@K...","K@K..",".K@K.","..KSK","...K."]],
-  // 가슴 앞 X자 (오른팔이 왼쪽으로)
-  crossR:[11,6,["KSK....","K@SK...",".K@@K..","..K@@K."]],
-  // 앙탈: 손가락 깨물기 (화면 왼쪽 손이 입으로)
-  biteL:[8,5,["....K..","...KSK.","..KSSSK","..KSSK.",".K@@K..","K@@K...","K_....."]],
-  // L을 가져가: 화면 왼쪽 손으로 이마에 L
-  lHandL:[1,2,["...K....","..KSK...","..KSK...","..KSK...","..KSKKK.",".KSSSSSK",".K@KKKKK",".K@K....",".K@K....",".K@K....",".K@K....",".K@K....",".K@@@...","..KKK...","..._...."]],
 };
 const mirrorStamp=([r,c,rows])=>[r,0,rows.map(row=>{const full=Array(20).fill('.');for(let i=0;i<row.length;i++){const x=20-(c+i);if(x>=0&&x<20)full[x]=row[i]}return full.join('')})];
 function stampMap(top,st,sleeve){
@@ -1015,18 +1009,13 @@ function buildPose(k,spec){
   return [PADROW].concat(t,dLegs(g,HERO_SHOE[k],HERO_PANTS[part],spec.legs||'i'));
 }
 const DANCE_POSES={
-  // 감사 = 삐끼삐끼
-  pkUp:{arms:['fistUpR','fistUpL'],eyes:'flat',legs:'i'},
-  pkDn:{arms:['fistDnR','fistDnL'],eyes:'flat',legs:'bend'},
-  pkX:{arms:['crossR','crossL'],eyes:'flat',legs:'bend'},
-  pkOpen:{arms:['openR','openL'],eyes:'flat',legs:'i'},
-  // 택스 = 앙탈
-  atA:{arms:['biteL'],eyes:'happy',legs:'i'},
-  atB:{arms:['biteL'],eyes:'happy',legs:'bend'},
-  // 딜 = L을 가져가
-  lA:{arms:['lHandL','openR'],legs:'kl'},
-  lB:{arms:['lHandL','openR'],legs:'kr'},
-  lI:{arms:['lHandL','openR'],legs:'i'},
+  // 다이너마이트 포인트 안무 느낌 (모든 본부 같은 춤)
+  dyPR:{arms:['pointR','hipL'],eyes:'happy',legs:'i'},
+  dyPL:{arms:['pointL','hipR'],eyes:'happy',legs:'i'},
+  dyHip:{arms:['hipR','hipL'],legs:'bend'},
+  dyHip2:{arms:['hipR','hipL'],legs:'i'},
+  dySA:{arms:['fistDnR','openL'],legs:'kl'},
+  dySB:{arms:['fistDnL','openR'],legs:'kr'},
 };
 const danceURLCache={};
 // 선택 화면 춤에 쓰는 그림: 0·1·2 = 걷기 프레임, 나머지 = DANCE_POSES 이름
@@ -2455,20 +2444,14 @@ function showResult(S,won){
 // 캐릭터 선택 화면
 // =====================================================================
 const SEL = {part:CHOICE.part, g:CHOICE.g};
-// 본부별 밈 춤: t(초) → 이동·회전·크기·그림(f: 0·1·2 걷기 프레임 또는 DANCE_POSES 이름)
-const DANCE = {
-  // 감사 = 삐끼삐끼: 엄지척 주먹 위아래 2번씩 왼쪽·오른쪽 → 가슴 앞 X자 교차·펴기 4번, 무릎 까딱, 심드렁한 눈
-  audit(t){const b=.22,n=Math.floor(t/b)%16;let f,x=0,r=0;
-    if(n<8){f=n%2?'pkDn':'pkUp';const side=n<4?-1:1;x=3*side;r=4*side}else f=n%2?'pkOpen':'pkX';
-    const sink=f==='pkDn'||f==='pkX';return {x,y:sink?2:0,r,sx:sink?1.03:1,sy:sink?.96:1,f}},
-  // 택스 = 앙탈 챌린지: 손가락 깨물고 어깨 흔들기
-  tax(t){const s=Math.floor(t/.16)%2,leg=Math.floor(t/.64)%2;return {x:s?1.5:-1.5,y:leg?1:0,r:(s?4:-4)+3*Math.sin(2*Math.PI*t/1.6),f:leg?'atB':'atA'}},
-  // 딜 = L을 가져가: 이마에 L, 왼발·오른발 번갈아 펼치기
-  deal(t){const b=.26,n=Math.floor(t/b)%4,q=(t/b)%1,k=n===0?-1:n===2?1:0;return {x:3*k,y:k?-4*Math.sin(Math.PI*q):0,r:-4*k,f:['lA','lI','lB','lI'][n]}},
-  // 디지털: 끊어지는 로봇 춤
-  digital(t){const k=Math.floor(t/.3)%8,q=(t/.3)%1,P=[[0,0,0,1],[-6,0,-8,0],[-6,0,-8,1],[0,0,0,1],[6,0,8,2],[6,0,8,1],[0,-7,0,1],[0,0,0,1]][k],pop=q<.15?1.05:1;
-    return {x:P[0],y:P[1],r:P[2],sx:pop,sy:pop,f:P[3]}}
-};
+// 선택 화면 춤: t(초) → 이동·회전·크기·그림(f: 0·1·2 걷기 프레임 또는 DANCE_POSES 이름)
+// 4개 본부가 같은 박자로 같이 춤 (114BPM 반 박자 = 0.263초, 16칸 반복)
+// 오른손 찌르기·허리 ×2 → 왼손 찌르기·허리 ×2 → 허리 짚고 골반 흔들기 → 팔 흔들며 발 차기 스텝
+function danceDynamite(t){const b=.263,n=Math.floor(t/b)%16,q=(t/b)%1,hop=-3*Math.sin(Math.PI*q);
+  if(n<8){const pt=n%2===0,f=pt?(n<4?'dyPR':'dyPL'):'dyHip',side=n<4?1:-1;return pt?{x:2*side,y:hop,r:5*side,f}:{y:2,sx:1.03,sy:.96,f}}
+  if(n<12){const s=n%2?1:-1;return {x:3*s,y:n%2?1:0,r:6*s,f:n%2?'dyHip':'dyHip2'}}
+  const s=n%2?1:-1;return {x:3*s,y:hop,r:-3*s,f:n%2?'dySB':'dySA'}}
+const DANCE = {audit:danceDynamite, tax:danceDynamite, deal:danceDynamite, digital:danceDynamite};
 let DANCERS=[], danceRAF=0;
 const DANCE_OFF=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
 function danceTick(now){
