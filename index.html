@@ -50,6 +50,9 @@ img{image-rendering:pixelated}
 .clock{text-align:center;display:grid;gap:4px}
 #timer{font-family:var(--pixel);font-size:18px;color:#fff;text-shadow:2px 2px 0 #000}
 #stagetag{font-family:var(--display);font-size:14px;color:var(--fg-2);letter-spacing:.04em}
+/* 보통(낮 거리): 밝은 바닥 위에서도 HUD 글씨가 보이게 위쪽에 어두운 그라데이션 */
+#hud.day .hudrow{background:linear-gradient(rgba(11,16,32,.62),rgba(11,16,32,0));padding-bottom:22px}
+#hud.day #stagetag,#hud.day #hptxt{text-shadow:1px 1px 0 #000,0 0 4px #000}
 .clock-row{display:flex;align-items:center;justify-content:center;gap:8px}
 #pauseBtn{pointer-events:auto;width:26px;height:26px;padding:0;display:grid;place-items:center;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.22);border-radius:6px}
 #pauseBtn::before{content:"";width:10px;height:11px;background:linear-gradient(90deg,var(--fg) 0 35%,transparent 35% 65%,var(--fg) 65%)}
@@ -395,7 +398,7 @@ kbd{font-family:var(--body);border:1px solid rgba(28,26,23,.3);border-radius:3px
         <button type="button" role="radio" data-g="m">남</button><button type="button" role="radio" data-g="f">여</button>
       </div>
       <div class="sel-gender sel-mode" role="radiogroup" aria-label="난이도">
-        <button type="button" role="radio" data-mode="normal">기본</button><button type="button" role="radio" data-mode="night">야근 모드 · 어려움</button>
+        <button type="button" role="radio" data-mode="normal">보통</button><button type="button" role="radio" data-mode="night">어려움</button>
       </div>
       <div class="sel-cards" id="selCards"></div>
       <p class="sel-note" id="selNote"></p>
@@ -673,8 +676,16 @@ const CFG = {
   stageLen:45, totalStages:4, bossAt:20, maxEnemies:200, firstChest:8, chestEvery:19, eliteChest:.45, chestMax:5, // chestMax: 화면에 동시에 있을 수 있는 일반 상자 수. 넘으면 가장 오래된 상자가 사라지고, 그 보상은 남은 상자에 합쳐짐(상자 하나에 보상 여러 개)
   // 잡몹 무리: swarm = 스테이지별 잡몹 등장 배수(엘리트·보급품 수는 그대로 유지), mobHp = 스테이지별 잡몹 기본 체력(1스테이지는 기본 무기 한 방), mobDmg = 잡몹 접촉 피해(영수증은 1 낮음), waveMul = 포위 웨이브 배수
   // xpScale = 레벨업에 필요한 경험치 배수(잡몹이 늘어난 만큼 레벨업 속도는 그대로), gemMax = 바닥 증빙 최대 수(넘으면 큰 증빙 하나에 합침)
-  // 야근 모드(어려움): 잡몹이 벽을 통과하는 야근 망령으로 바뀌고 체력·피해·속도·등장량, 보스 체력·피해가 아래 배수만큼 늘어남
-  night:{hp:1.5, dmg:1.4, spd:1.15, swarm:1.3, bossHp:1.4, bossDmg:1.3},
+  // 어려움 모드: 잡몹이 벽을 통과하는 망령 3종으로 바뀌고 체력·피해·속도·등장량, 보스 체력·피해가 아래 배수만큼 늘어남
+  // 참고: 브로테이토 최고 위험도(Danger 5) 적 체력·피해 +40%, 뱀서 저주(Curse)는 속도·체력·수·빈도를 같은 비율로, 뱀서 Hurry 모드는 경험치 +25%
+  // xp: 어려움 보상 — 경험치 배수 (어려워진 만큼 성장도 빠르게)
+  night:{hp:1.4, dmg:1.4, spd:1.1, swarm:1.3, bossHp:1.3, bossDmg:1.25, xp:1.25},
+  // 보스전 정리: 보스가 있는 동안 잡몹 등장 간격 bossSpawn배, 동시에 최대 bossCap마리, 포위 웨이브 없음.
+  // 보스가 나타날 때 bossCap을 넘는 잡몹은 먼 것부터 흩어지며 사라짐 → 잡몹에 막혀 보스에게 못 다가가는 일 방지
+  bossSpawn:2.5, bossCap:60,
+  // 어려움: 망령 행렬(뱀서 박쥐 떼처럼 화면을 일직선으로 가로지름). first: 첫 등장(초), every: 다음 등장까지(초) 범위,
+  // n: 마릿수, spd: 속도, band: 행렬 폭. 예고 없이 화면 밖에서 우르르 몰려와 내 근처를 지나감 (보스전에도 나옴)
+  stream:{first:25, every:[18,26], n:36, spd:300, band:120},
   swarm:[2.5,2,1.5,1.25], mobDmg:6, mobHp:[5,12,22,36], waveMul:1.5, xpScale:1.4, gemMax:220,
   bosses:{
     // 배열이면 등장할 때 그중 하나를 같은 확률로 고름 (2스테이지: 미수금의 그림자 / 부정 적발 50%)
@@ -1121,8 +1132,8 @@ try{PROG = Object.assign(PROG, JSON.parse(localStorage.getItem(PROG_KEY))||{})}c
 const saveProg = () => {try{localStorage.setItem(PROG_KEY, JSON.stringify(PROG))}catch(e){}};
 const isUnlocked = id => {if(UNLOCK_ALL)return true;const r=UNLOCK_RULES[id];return !r||(PROG.plays[r.after]||0)>=r.plays};
 const unlockHint = id => {const r=UNLOCK_RULES[id];return r?`${partOf(r.after).name} 캐릭터로 ${r.plays}판 플레이하면 해금`:''};
-let CHOICE = {part:isUnlocked(PROG.part)?PROG.part:'audit', g:PROG.g==='f'?'f':'m', mode:PROG.mode==='night'?'night':'normal'}; // mode: normal(기본) | night(야근 모드, 어려움)
-const stageText=n=>`STAGE ${n} / ${CFG.totalStages}`+(CHOICE.mode==='night'?' · 야근 모드':'');
+let CHOICE = {part:isUnlocked(PROG.part)?PROG.part:'audit', g:PROG.g==='f'?'f':'m', mode:PROG.mode==='night'?'night':'normal'}; // mode: normal(보통) | night(어려움) — 'night'는 내부 이름(랭킹 보드 id에도 쓰임)
+const stageText=n=>`STAGE ${n} / ${CFG.totalStages}`+(CHOICE.mode==='night'?' · 어려움':'');
 function questionPool(){
   const cats=partOf(CHOICE.part).cats;
   const idx=[...QUESTIONS.keys()].filter(i=>!cats.length||QUESTIONS[i].cat==='삼일'||cats.includes(QUESTIONS[i].cat));
@@ -1147,10 +1158,21 @@ const MOB0 = [
 ".KWKWWKWWKK.",
 "..K.KK.KK..."];
 const MOB1 = MOB0.slice(0,12).concat([".KKWWKWWKWK.","...KK.KK.K.."]);
+// 어려움 모드 망령 3종 (잡몹 → 야근 망령, 영수증 → 알림 망령, 엘리트 서류철 → 부장 망령)
 // 야근 망령: 퇴근 못 한 직원의 혼 (다크서클 + 한숨 쉬는 입, 아랫단이 하늘하늘)
 const GHOST0 = ["...KKKKKK...","..KWWWWWWK..",".KWWWWWWWWK.",".KWWEWWEWWK.",".KWWAWWAWWK.",".KWWWWWWWWK.",".KWWWKKWWWK.",".KWWWKKWWWK.",".KAWWWWWWAK.",".KAWWWWWWAK.",".KAAWWWWAAK.",".KAAAWWAAAK.",".KAKAAKAKAK.","..K.KK.K.K.."];
 const GHOST1 = GHOST0.slice(0,11).concat([".KAAAWWAAAK.",".KKAKAAKAKK.","...K..K..K.."]);
 const GHOST_OVER = {W:'#e6eeff',A:'#9fb0e0',E:'#1e2848'};
+// 알림 망령: 작고 빠른 메신저 알림의 혼 (머리 위 빨간 알림 점)
+const GHOSTS0 = ["......KKK.","..KKKKKTK.",".KWWWWKKK.","KWWEWWEWK.","KWWWWWWWK.","KWWWKWWWK.","KAWWWWWAK.","KAAWWWAAK.","KAKAKAKAK.",".K.K.K.K.."];
+const GHOSTS1 = GHOSTS0.slice(0,8).concat(["KKAKAKAKK.","..K.K.K..."]);
+const GHOSTS_OVER = {W:'#c8f0ff',A:'#6fc3e8',E:'#1e2848'};
+// 부장 망령: 크고 튼튼한 보라색 혼 (화난 눈, 빨간 넥타이)
+const GHOSTB0 = ["....KKKKKKKK....","...KWWWWWWWWK...","..KWWWWWWWWWWK..",".KWWWWWWWWWWWWK.",".KWWEEWWWWEEWWK.",".KWWWEWWWWEWWWK.",".KWWWWWWWWWWWWK.",".KWWWWKKKKWWWWK.",".KWWWKWWWWKWWWK.",".KAWWWWTTWWWWAK.",".KAWWWWTTWWWWAK.",".KAAWWWTTWWWAAK.",".KAAAWWWWWWAAAK.",".KAKAAKAAKAAKAK.","..K.KK.KK.KK.K.."];
+const GHOSTB1 = GHOSTB0.slice(0,12).concat([".KAAAWWWWWWAAAK.",".KKAAKAAKAAKAKK.","...K..KK..K..K.."]);
+const GHOSTB_OVER = {W:'#d6c8ff',A:'#9b82e6',E:'#1e2848'};
+// 어려움 모드에서 적 종류별 망령 그림 이름 (뒤에 0·1 프레임)
+const GHOST_TEX = {mob:'ghost', receipt:'ghostS', elite:'ghostB'};
 const ELITE = [
 "..KKKKK.........",
 ".KJJJJJKKKKKKKK.",
@@ -1589,8 +1611,8 @@ function makeTextures(sc){
   const add=(k,map,px,over)=>sc.textures.addCanvas(k,pixCanvas(map,px,over));
   for(const k in HERO_SET){const h=HERO_SET[k];h.R.forEach((f,i)=>add('hero_'+k+i,f,3,h.over));h.L.forEach((f,i)=>add('heroL_'+k+i,f,3,h.over))}
   add('mob0',MOB0,3);add('receipt',RECEIPT,3);add('mob1',MOB1,3);add('elite',ELITE,3);
-  add('ghost0',GHOST0,3,GHOST_OVER);add('ghost1',GHOST1,3,GHOST_OVER);
-  // 야근 모드 어둠: 가운데(내 주변)만 밝고 바깥으로 갈수록 어두워지는 원
+  add('ghost0',GHOST0,3,GHOST_OVER);add('ghost1',GHOST1,3,GHOST_OVER);add('ghostS0',GHOSTS0,3,GHOSTS_OVER);add('ghostS1',GHOSTS1,3,GHOSTS_OVER);add('ghostB0',GHOSTB0,3,GHOSTB_OVER);add('ghostB1',GHOSTB1,3,GHOSTB_OVER);
+  // 어려움 모드 어둠: 가운데(내 주변)만 밝고 바깥으로 갈수록 어두워지는 원
   // (그림 크기는 화면보다 훨씬 크게: 카메라가 나를 늦게 따라와도 가장자리가 보이지 않게)
   {const c=document.createElement('canvas');c.width=c.height=512;const x=c.getContext('2d'),g=x.createRadialGradient(256,256,0,256,256,122);
    g.addColorStop(0,'rgba(4,6,18,0)');g.addColorStop(.32,'rgba(4,6,18,0)');g.addColorStop(.62,'rgba(4,6,18,.55)');g.addColorStop(1,'rgba(4,6,18,.88)');x.fillStyle=g;x.fillRect(0,0,512,512);sc.textures.addCanvas('nightmask',c)}
@@ -1622,6 +1644,26 @@ function makeTextures(sc){
   fx.fillStyle='rgba(217,68,47,.22)';fx.fillRect(0,0,2,192);
   fx.fillStyle='#10172c';[[30,70],[33,73],[120,140],[150,30],[96,100]].forEach(([x,y])=>fx.fillRect(x,y,6,6));
   sc.textures.addCanvas('floor',f);
+  // 보통(낮의 용산 거리): 480px 한 칸 = 보도블록 + 위·왼쪽에 차도(가운데 노란 점선) + 교차로 옆 횡단보도 → 이어 붙이면 바둑판 도로망
+  {const N=480,R=110,c=document.createElement('canvas');c.width=c.height=N;const x=c.getContext('2d');let sd=7;const rn=()=>(sd=(sd*9301+49297)%233280)/233280;
+   x.fillStyle='#bdb6a6';x.fillRect(0,0,N,N);
+   for(let j=0;j<N;j+=30)for(let i=-15;i<N;i+=30){const o=(j/30)%2?15:0;x.fillStyle=['#d6d0c2','#cfc8b9','#dcd6c9','#d2ccbe'][Math.floor(rn()*4)];x.fillRect(i+o+1,j+1,28,28)}
+   x.fillStyle='#4b505b';x.fillRect(0,0,N,R);x.fillRect(0,0,R,N);
+   x.fillStyle='#555b66';for(let k=0;k<500;k++){const a=rn()*N,b=rn()*R;x.fillRect(a,b,2,2);x.fillRect(b,a,2,2)}
+   x.fillStyle='#9a948a';x.fillRect(R,R,N-R,5);x.fillRect(R,R,5,N-R);x.fillRect(R,0,N-R,0);
+   x.fillStyle='#e4b84a';for(let i=R+40;i<N-20;i+=40){x.fillRect(i,R/2-2,22,4);x.fillRect(R/2-2,i,4,22)}
+   x.fillStyle='#f1efe8';for(let j=8;j<R-8;j+=16){x.fillRect(R+12,j,34,9);x.fillRect(j,R+12,9,34)}
+   sc.textures.addCanvas('floorDay',c)}
+  // 어려움(아모레퍼시픽 사무실 야근): 짙은 남색 카펫 타일
+  {const N=192,c=document.createElement('canvas');c.width=c.height=N;const x=c.getContext('2d');let sd=3;const rn=()=>(sd=(sd*9301+49297)%233280)/233280;
+   for(let j=0;j<N;j+=48)for(let i=0;i<N;i+=48){x.fillStyle=(i+j)/48%2?'#1f2638':'#232b40';x.fillRect(i,j,48,48);
+     x.fillStyle='rgba(255,255,255,.035)';for(let k=0;k<6;k++)x.fillRect(i+4,j+5+k*7,40,2)}
+   x.fillStyle='#161c2b';for(let i=0;i<N;i+=48){x.fillRect(i,0,1,N);x.fillRect(0,i,N,1)}
+   x.fillStyle='#2a3450';for(let k=0;k<60;k++)x.fillRect(rn()*N,rn()*N,2,2);
+   sc.textures.addCanvas('floorOffice',c)}
+  // 모니터·스탠드 불빛 (어둠 위에 더해져 보임)
+  {const c=document.createElement('canvas');c.width=c.height=96;const x=c.getContext('2d'),g=x.createRadialGradient(48,48,0,48,48,48);
+   g.addColorStop(0,'rgba(170,205,255,.75)');g.addColorStop(.35,'rgba(120,160,255,.28)');g.addColorStop(1,'rgba(120,160,255,0)');x.fillStyle=g;x.fillRect(0,0,96,96);sc.textures.addCanvas('glowM',c)}
   // 그림자, 빛기둥
   const s=document.createElement('canvas');s.width=36;s.height=12;const sx=s.getContext('2d');sx.fillStyle='rgba(0,0,0,.45)';sx.beginPath();sx.ellipse(18,6,17,5,0,0,7);sx.fill();sc.textures.addCanvas('shadow',s);
   const b=document.createElement('canvas');b.width=30;b.height=140;const bx=b.getContext('2d');const gr=bx.createLinearGradient(0,0,0,140);gr.addColorStop(0,'rgba(255,241,194,0)');gr.addColorStop(1,'rgba(255,241,194,.55)');bx.fillStyle=gr;bx.fillRect(6,0,18,140);sc.textures.addCanvas('beam',b);
@@ -1661,6 +1703,10 @@ const SFX = {
   kill(){if(this.gate('kill',55)){this.tone(340,.09,{type:'triangle',vol:.1,slide:.4});this.noise(.06,{vol:.05,freq:900})}},
   stamp(){this.noise(.18,{vol:.2,freq:160});this.tone(90,.16,{type:'sine',vol:.25,slide:.6})},
   swish(){if(this.gate('sw',80))this.noise(.14,{vol:.08,freq:3200})},
+  stream(){this.noise(1.1,{vol:.07,freq:900});this.tone(300,.8,{type:'sine',vol:.05,slide:.6})},
+  mirror(){[880,660,990].forEach((f,i)=>this.tone(f,.1,{type:'square',vol:.04,delay:i*.07}))},
+  lzWarn(){[0,.18,.36].forEach(d=>this.tone(1250,.08,{type:'square',vol:.04,delay:d}))},
+  lzFire(){this.tone(180,.9,{type:'sawtooth',vol:.07,slide:1.4});this.noise(.5,{vol:.05,freq:4000})},
   song(){if(this.gate('song',250)){const sc=[523,587,659,784,880];[0,1,2].forEach(i=>this.tone(sc[Math.floor(Math.random()*5)]*(i===2?2:1),.14,{type:'triangle',vol:.06,delay:i*.09}))}},
   rain(){this.noise(.7,{vol:.05,freq:2600})},
   drip(){if(this.gate('drip',70))this.tone(700+Math.random()*500,.05,{type:'sine',vol:.03,slide:.5})},
@@ -1781,10 +1827,27 @@ const FILLERS=[
   {key:'f_partH',w:130,h:20,wt:3,draw:drawPartH},{key:'f_partV',w:20,h:130,wt:3,draw:drawPartV},
   {key:'f_water',w:32,h:38,wt:2,draw:drawWater},{key:'f_copier',w:66,h:48,wt:2,draw:drawCopier},{key:'f_cab',w:46,h:72,wt:2,draw:drawCabinet},
 ];
-const FILLER_BAG=FILLERS.flatMap(f=>Array(f.wt).fill(f));
+// 사무실 책상(모니터 불빛 glow: 책상 그림 안 불빛 위치)
+FILLERS.push({key:'f_desk',w:100,h:60,wt:4,draw:drawDesk,glow:[50,16]});
+// 거리 소품 (oval: 둥근 그림자, noBorder: 테두리 없이)
+const STREET=[
+  {key:'s_tree',w:56,h:64,wt:4,draw:drawTree,oval:1,noBorder:1},{key:'s_bench',w:72,h:30,wt:2,draw:drawBench},
+  {key:'s_bus',w:128,h:52,wt:1,draw:drawBusStop},{key:'s_plant',w:92,h:40,wt:2,draw:drawPlanter},
+  {key:'s_vend',w:40,h:58,wt:2,draw:drawVending},{key:'s_taxi',w:96,h:46,wt:2,draw:drawTaxi,oval:1,noBorder:1},
+];
+const FILLER_BAG=FILLERS.flatMap(f=>Array(f.wt).fill(f));   // 어려움: 사무실 가구
+const STREET_BAG=STREET.flatMap(f=>Array(f.wt).fill(f));    // 보통: 거리 소품
 const CHUNK=560;
 // 맵 크기: 시작 지점(0,0)을 중심으로 가로·세로 MAP_HALF*2. 경계 밖으로는 나갈 수 없음
-const MAP_HALF=2500,MAP={x:-MAP_HALF,y:-MAP_HALF,w:MAP_HALF*2,h:MAP_HALF*2};
+const MAP_HALF=2500,MAP_DAY={x:-MAP_HALF,y:-MAP_HALF,w:MAP_HALF*2,h:MAP_HALF*2};
+// 어려움 맵: 아모레퍼시픽 본사 한 층 평면을 참고 — 큰 정사각형(외벽) 안에 거리를 두고 작은 정사각형(중정)이 뻥 뚫려 있고,
+// 그 사이 ㅁ자 사무 공간을 돌며 싸움. 네 모서리에 엘리베이터 코어. 망령은 벽·중정을 그냥 통과해 날아옴
+// half: 외벽 반폭, court: 중정 반폭, core: 코어 한 변, start: 시작 위치(남쪽 사무 공간)
+const AP_FLOOR={half:2000,court:650,core:170,start:{x:0,y:1325}};
+const MAP_NIGHT={x:-AP_FLOOR.half,y:-AP_FLOOR.half,w:AP_FLOOR.half*2,h:AP_FLOOR.half*2};
+let MAP=MAP_DAY; // 판 시작 때 난이도에 맞춰 바꿈
+const AP_PARTS=[{key:'ap_core',w:AP_FLOOR.core,h:AP_FLOOR.core,draw:drawCore}]; // 어려움 맵 고정 구조물
+const OBS_DEF=Object.fromEntries(LANDMARKS.concat(FILLERS,STREET,AP_PARTS).map(d=>[d.key,d]));
 // 랜드마크 등장: 맵 로드 시 순서를 정해 두고(첫 번째는 아모레퍼시픽 고정, 나머지는 셔플) LM_TIMES(초)마다 1채씩 등장. 각 1회만
 // 플레이어가 가는 방향 화면 바로 바깥에 생겨, 계속 걸어가면 화면에 들어옴
 // 랜드마크끼리 최소 간격 LM_GAP (한 화면에 몰리지 않도록), 시작 지점 주변 비울 거리 LM_START
@@ -1801,9 +1864,9 @@ function segT(o,x,y,dx,dy){
   return t0;
 }
 function makeObsTextures(sc){
-  for(const d of LANDMARKS.concat(FILLERS)){
+  for(const d of LANDMARKS.concat(FILLERS,STREET,AP_PARTS)){
     const c=document.createElement('canvas');c.width=d.w;c.height=d.h;const x=c.getContext('2d');
-    d.draw(x,d.w,d.h);x.strokeStyle='#0b1020';x.lineWidth=3;x.strokeRect(1.5,1.5,d.w-3,d.h-3);
+    d.draw(x,d.w,d.h);if(!d.noBorder){x.strokeStyle='#0b1020';x.lineWidth=3;x.strokeRect(1.5,1.5,d.w-3,d.h-3)}
     sc.textures.addCanvas(d.key,c);
   }
 }
@@ -1866,6 +1929,43 @@ function drawWater(x,w,h){x.fillStyle='#e9edf3';x.fillRect(3,14,w-6,h-14);x.fill
 function drawCopier(x,w,h){x.fillStyle='#c9ccd6';x.fillRect(0,0,w,30);x.fillStyle='#9aa0b3';x.fillRect(5,5,40,19);
   x.fillStyle='#2a3245';x.fillRect(49,5,13,19);x.fillStyle='#5fe08a';x.fillRect(52,8,4,4);x.fillStyle='#e4b84a';x.fillRect(52,15,7,2);
   x.fillStyle='#a8adbd';x.fillRect(0,30,w,h-30);x.fillStyle='#f3ead8';x.fillRect(8,33,30,5);x.fillStyle='#7d8398';x.fillRect(4,40,w-8,2)}
+// 사무실 책상: 흰 책상 + 켜진 모니터 + 키보드·머그·서류, 앞쪽 의자
+function drawDesk(x,w,h){x.fillStyle='#c9ccd6';x.fillRect(0,0,w,h-14);x.fillStyle='#e9edf3';x.fillRect(0,0,w,5);
+  x.fillStyle='#1b1a24';x.fillRect(w/2-22,4,44,26);x.fillStyle='#7aa2ff';x.fillRect(w/2-19,7,38,20);x.fillStyle='#bfe2ff';x.fillRect(w/2-19,7,38,4);x.fillStyle='#3d6ad6';for(let j=14;j<26;j+=4)x.fillRect(w/2-15,j,22,2);
+  x.fillStyle='#1b1a24';x.fillRect(w/2-4,30,8,4);x.fillStyle='#4a5068';x.fillRect(w/2-16,36,32,6);
+  x.fillStyle='#f3ead8';x.fillRect(8,10,18,22);x.fillStyle='#9aa3b8';for(let j=14;j<30;j+=4)x.fillRect(11,j,12,1);
+  x.fillStyle='#d9442f';x.fillRect(w-20,14,9,10);x.fillStyle='#1b1a24';x.fillRect(w-18,16,5,2);
+  x.fillStyle='#2a3245';x.fillRect(w/2-14,h-14,28,14);x.fillStyle='#3a4766';x.fillRect(w/2-12,h-12,24,6)}
+// 엘리베이터 코어: 콘크리트 + 엘리베이터 문 2개 + EV 표지 + 비상계단 표시
+function drawCore(x,w,h){x.fillStyle='#3a4060';x.fillRect(0,0,w,h);x.fillStyle='#454c6e';for(let j=0;j<h;j+=20)x.fillRect(0,j,w,1);
+  x.fillStyle='#8a93ab';x.fillRect(w*.12,h*.52,w*.32,h*.4);x.fillRect(w*.56,h*.52,w*.32,h*.4);x.fillStyle='#c9ccd6';x.fillRect(w*.28-1,h*.52,2,h*.4);x.fillRect(w*.72-1,h*.52,2,h*.4);
+  x.fillStyle='#5fe08a';x.fillRect(w*.26,h*.46,6,4);x.fillRect(w*.7,h*.46,6,4);
+  signBox(x,'EV',w/2,h*.22,22,'#f3ead8','#1d2433');x.fillStyle='#45c08a';x.fillRect(w-26,6,20,12);x.fillStyle='#fff';x.fillRect(w-22,9,4,6)}
+// 가로수: 둥근 초록 잎 + 줄기 + 나무 보호 덮개
+function drawTree(x,w,h){x.fillStyle='#7d776c';x.fillRect(w/2-15,h-12,30,10);x.fillStyle='#5f5a51';for(let i=0;i<5;i++)x.fillRect(w/2-13+i*6,h-10,2,6);
+  x.fillStyle='#6b4a2b';x.fillRect(w/2-4,h-28,8,18);
+  const blob=(cx,cy,r,c)=>{x.fillStyle=c;x.beginPath();x.arc(cx,cy,r,0,7);x.fill()};
+  blob(w/2,24,23,'#1d2433');blob(w/2,23,21,'#2f6339');blob(w/2-9,20,12,'#3f7f4a');blob(w/2+8,18,12,'#3f7f4a');blob(w/2,13,11,'#57a05e');blob(w/2-10,12,5,'#7cc47f')}
+// 벤치
+function drawBench(x,w,h){x.fillStyle='#5f6472';x.fillRect(6,h-8,6,8);x.fillRect(w-12,h-8,6,8);x.fillStyle='#a0703f';for(let j=2;j<h-8;j+=7)x.fillRect(2,j,w-4,5);x.fillStyle='#7a5230';for(let j=6;j<h-8;j+=7)x.fillRect(2,j,w-4,1)}
+// 버스정류장: 파란 지붕 + 유리 칸막이 + 노선 표지판
+function drawBusStop(x,w,h){x.fillStyle='#3d6ad6';x.fillRect(0,0,w-20,12);x.fillStyle='#2c4fa8';x.fillRect(0,10,w-20,3);
+  x.fillStyle='rgba(191,226,255,.7)';x.fillRect(4,14,w-28,h-22);x.fillStyle='#9aa3b8';x.fillRect(4,14,2,h-22);x.fillRect(w-26,14,2,h-22);
+  x.fillStyle='#a0703f';x.fillRect(10,h-16,w-40,6);x.fillStyle='#5f6472';x.fillRect(w-12,8,4,h-8);
+  x.fillStyle='#3d6ad6';x.fillRect(w-19,2,18,18);signBox(x,'버스',w-10,11,7,'#ffffff');signBox(x,'421',w/2-10,30,11,'#1d2433','rgba(255,255,255,.85)')}
+// 화단: 콘크리트 + 꽃
+function drawPlanter(x,w,h){x.fillStyle='#b9b3a6';x.fillRect(0,0,w,h);x.fillStyle='#9a948a';x.fillRect(0,h-6,w,6);x.fillStyle='#6b4a2b';x.fillRect(5,5,w-10,h-14);
+  let sd=5;const rn=()=>(sd=(sd*9301+49297)%233280)/233280;
+  for(let k=0;k<26;k++){const a=8+rn()*(w-16),b=7+rn()*(h-18);x.fillStyle='#3f7f4a';x.fillRect(a,b,4,4);x.fillStyle=['#ff7ab8','#e4b84a','#d9442f','#f3ead8'][k%4];x.fillRect(a+1,b-2,3,3)}}
+// 음료 자판기
+function drawVending(x,w,h){x.fillStyle='#d9442f';x.fillRect(0,0,w,h);x.fillStyle='#f3ead8';x.fillRect(4,4,w-8,h*.5);
+  const cols=['#3d6ad6','#e4b84a','#45c08a','#ff7ab8','#8a5a3a'];for(let j=0;j<3;j++)for(let i=0;i<4;i++){x.fillStyle=cols[(i+j*2)%5];x.fillRect(7+i*7,7+j*9,5,7)}
+  x.fillStyle='#1b1a24';x.fillRect(6,h-14,w-12,8);x.fillStyle='#9aa3b8';x.fillRect(w-12,h*.5+8,5,10)}
+// 택시
+function drawTaxi(x,w,h){x.fillStyle='#1b1a24';x.fillRect(12,h-10,16,10);x.fillRect(w-28,h-10,16,10);
+  x.fillStyle='#1d2433';x.fillRect(2,12,w-4,h-20);x.fillStyle='#f2a83a';x.fillRect(4,14,w-8,h-24);x.fillStyle='#e08a1e';x.fillRect(4,h-16,w-8,4);
+  x.fillStyle='#1d2433';x.fillRect(22,4,w-44,12);x.fillStyle='#9fc4e8';x.fillRect(25,6,(w-50)/2-2,9);x.fillRect(w/2+1,6,(w-50)/2-2,9);
+  x.fillStyle='#f3ead8';x.fillRect(w/2-10,0,20,6);signBox(x,'TAXI',w/2,3,6,'#1d2433');x.fillStyle='#fff1c2';x.fillRect(w-8,18,4,5);x.fillStyle='#d9442f';x.fillRect(4,18,4,5)}
 function drawCabinet(x,w,h){x.fillStyle='#8a93ab';x.fillRect(0,0,w,12);x.fillStyle='#6b7489';x.fillRect(0,12,w,h-12);
   for(let j=12;j<h-4;j+=15){x.fillStyle='#4c5568';x.fillRect(3,j+13,w-6,2);x.fillStyle='#c9ccd6';x.fillRect(w/2-7,j+5,14,3);x.fillStyle='#f3ead8';x.fillRect(6,j+4,8,5)}}
 
@@ -1879,15 +1979,19 @@ class Battle extends Phaser.Scene{
     window.BATTLE=this;makeTextures(this);
     const cam=this.cameras.main;cam.setBackgroundColor('#0b1020');
     this.S=newState();this.night=!this.demo&&CHOICE.mode==='night';this.paused=false;this.modalOpen=false;this.modalQ=[];this.chests=[];this.supplies=[];this.calcKeys=[];this.textPool=[];this.stopping=false;
-    this.floor=this.add.tileSprite(0,0,64,64,'floor').setOrigin(0).setDepth(-10);
+    // 맵 연출: 보통 = 낮의 용산 거리(보도블록·차도, 랜드마크 + 거리 소품), 어려움 = 아모레퍼시픽 사무실 야근(카펫, 사무실 가구만)
+    this.fillerBag=this.night?FILLER_BAG:this.demo?FILLER_BAG:STREET_BAG;
+    if(!this.demo&&!this.night)cam.setBackgroundColor('#d6d0c2');
+    this.floor=this.add.tileSprite(0,0,64,64,this.demo?'floor':this.night?'floorOffice':'floorDay').setOrigin(0).setDepth(-10);
     this.physics.world.setBounds(-1e5,-1e5,2e5,2e5);
     this.applyZoom();this.scale.on('resize',this.applyZoom,this);
     this.events.once('shutdown',()=>{this.scale.off('resize',this.applyZoom,this);$('inds').replaceChildren();$('buffs').replaceChildren();hc.buff='';stopQuizTimer();$('pauseModal').hidden=true;for(const k of 'NSWE'){$('edge'+k).style.opacity=0;hc['edge'+k]=''}});
+    MAP=this.night?MAP_NIGHT:MAP_DAY;this.start=this.night?AP_FLOOR.start:{x:0,y:0};
     this.buildObstacles();this.physics.world.on('worldstep',this.resolveObs,this);
 
-    this.shadow=this.add.image(0,0,'shadow').setDepth(1);
+    this.shadow=this.add.image(this.start.x,this.start.y,'shadow').setDepth(1);
     this.heroKey='_'+CHOICE.part+'_'+CHOICE.g;
-    this.player=this.physics.add.image(0,0,'hero'+this.heroKey+'1').setDepth(6);
+    this.player=this.physics.add.image(this.start.x,this.start.y,'hero'+this.heroKey+'1').setDepth(6);
     this.player.body.setCircle(13,17,28);
     this.enemies=this.physics.add.group();
     this.bullets=this.physics.add.group({maxSize:260});
@@ -1908,11 +2012,12 @@ class Battle extends Phaser.Scene{
     this.fxInk=P('spark',{lifespan:260,speed:{min:5,max:30},scale:{start:.7,end:0},alpha:{start:.7,end:0},tint:0x7aa2ff,blendMode:'ADD'}).setDepth(5);
     this.fxTrail=P('spark',{lifespan:350,speed:{min:5,max:25},scale:{start:1.6,end:0},alpha:{start:.5,end:0},blendMode:'ADD',tint:0xb44bea,frequency:18}).setDepth(3);
     this.dust=P('spark',{lifespan:420,speed:{min:5,max:20},scale:{start:.8,end:0},alpha:{start:.3,end:0},tint:0x9aa3b8,frequency:80,follow:this.player,followOffset:{x:0,y:28}}).setDepth(2);
-    this.tele=this.add.graphics().setDepth(2);
+    this.tele=this.add.graphics().setDepth(2);this.bossLzG=this.add.graphics().setDepth(15.5).setBlendMode('ADD'); // 보스 레이저: 어둠 위에 보이게
     this.decoys=this.physics.add.group();this.spots=[];this.spotG=this.add.graphics().setDepth(1.5);
     this.physics.add.overlap(this.bullets,this.decoys,this.onInk,null,this);
     this.physics.add.overlap(this.player,this.decoys,(p,d)=>{if(!(d.stunT>0))this.hurt(d.dmg)},null,this);
     this.fxSmoke=P('spark',{lifespan:{min:500,max:900},speed:{min:15,max:70},scale:{start:2.4,end:4.5},alpha:{start:.45,end:0},tint:[0x9aa3b8,0xc9ccd6,0x6b7189]}).setDepth(7);
+    this.mirror=null; // 어려움 보스 복사본 (판마다 초기화)
     this.songs=[];this.notes=[];this.songG=this.add.graphics().setDepth(3.5).setBlendMode('ADD');this.rains=[];this.drops=[];this.splashG=this.add.graphics().setDepth(1.6);this.rainG=this.add.graphics().setDepth(8);
     this.fxCoffee=P('bit',{lifespan:{min:200,max:420},speed:{min:40,max:150},gravityY:420,scale:{start:1,end:.2},alpha:{start:1,end:0},tint:[0x3b2416,0x6b4226,0xc89b6a]}).setDepth(7);
     this.holes=[];this.holeG=this.add.graphics().setDepth(5);this.laserG=this.add.graphics().setDepth(8).setBlendMode('ADD');this.aims=[];
@@ -1927,7 +2032,7 @@ class Battle extends Phaser.Scene{
 
     $('hud').hidden=this.demo;$('vig').className='';$('boss').hidden=true;
     if(this.demo){for(let i=0;i<30;i++)this.spawnMob(true);this.player.setVisible(false);this.shadow.setVisible(false)}
-    else{setText('stagetag',stageText(1));if(this.night){this.nightMask=this.add.image(0,0,'nightmask').setDepth(15);this.floor.setTint(0x9aa6d8);this.flickT=3;this.flick=0}else this.nightMask=null;renderSlots(this.S);toast('STAGE 1');$('portrait').src=portraitURL(CHOICE.part,CHOICE.g);$('portrait').style.borderColor=partOf(CHOICE.part).color}
+    else{setText('stagetag',stageText(1));if(this.night){this.nightMask=this.add.image(0,0,'nightmask').setDepth(15);this.flickT=3;this.flick=0}else this.nightMask=null;renderSlots(this.S);toast('STAGE 1');this.time.delayedCall(1500,()=>{if(!this.S.over)toast(this.night?'아모레퍼시픽 본사 · 밤 11:47':'용산 거리 · 외근 중',false,1800)});$('hud').classList.toggle('day',!this.night);$('portrait').src=portraitURL(CHOICE.part,CHOICE.g);$('portrait').style.borderColor=partOf(CHOICE.part).color}
   }
   viewMax(){const c=this.cameras.main;return Math.max(c.worldView.width,c.worldView.height,this.scale.width/c.zoom,this.scale.height/c.zoom)}
   applyZoom(){const w=this.scale.width,h=this.scale.height;this.cameras.main.setZoom(Phaser.Math.Clamp(Math.min(w,h)/720,.62,1))}
@@ -1943,6 +2048,12 @@ class Battle extends Phaser.Scene{
   buildObstacles(){
     // 맵 경계: 바깥을 두꺼운 벽 4개로 막아 지형물과 같은 충돌·미끄러짐·엄폐 처리를 받게 함
     const T=4000;this.walls=[{x:MAP.x-T,y:MAP.y-T,w:MAP.w+T*2,h:T},{x:MAP.x-T,y:MAP.y+MAP.h,w:MAP.w+T*2,h:T},{x:MAP.x-T,y:MAP.y,w:T,h:MAP.h},{x:MAP.x+MAP.w,y:MAP.y,w:T,h:MAP.h}];
+    if(this.night){ // 아모레퍼시픽 층: 가운데 뚫린 중정(지나갈 수 없음) + 네 모서리 엘리베이터 코어
+      const C=AP_FLOOR.court,K=AP_FLOOR.core,m=(AP_FLOOR.half+C)/2;
+      this.court={x:-C,y:-C,w:C*2,h:C*2,court:true};this.walls.push(this.court);
+      this.cores=[[-1,-1],[1,-1],[-1,1],[1,1]].map(([a,b])=>({x:Math.round(a*m-K/2),y:Math.round(b*m-K/2),w:K,h:K,key:'ap_core'}));
+      this.walls.push(...this.cores);this.cores.forEach(r=>this.addObsSprite(r,'ap_core'));this.drawCourt();
+    }else this.court=null;
     this.drawBounds();
     this.obs=[];this.chunks=new Map();this.chunkKey='';this.landmarks=[];
     // 유니크 목록: 앞에서부터 하나씩 꺼내 쓰므로 중복 없음. 첫 번째는 아모레퍼시픽
@@ -1972,12 +2083,24 @@ class Battle extends Phaser.Scene{
     if(Math.hypot(qx,qy)<LM_START||this.landmarks.some(o=>rectGap(o,r)<gap))return false;
     if(this.chests&&this.chests.some(c=>c.x>r.x-40&&c.x<r.x+r.w+40&&c.y>r.y-40&&c.y<r.y+r.h+40))return false;
     // 자리에 있던 가구는 치움 (나중에 다시 와도 생기지 않게 청크 기록에서도 제거)
-    for(const c of this.chunks.values())c.rects=c.rects.filter(f=>{if(rectGap(f,r)>=130)return true;if(c.live){f.img.destroy();f.sh.destroy()}return false});
+    for(const c of this.chunks.values())c.rects=c.rects.filter(f=>{if(rectGap(f,r)>=130)return true;if(c.live){f.img.destroy();f.sh.destroy();if(f.gl)f.gl.destroy()}return false});
     this.landmarks.push(r);this.addObsSprite(r,r.key);this.refreshObs();return true;
   }
   refreshObs(){this.obs=this.walls.concat(this.landmarks);for(const c of this.chunks.values())if(c.live)this.obs.push(...c.rects)}
   // 경계 표시: 밖은 어둡게 + 바깥쪽 주황 사선 띠 + 경계선(주황 실선·빛)
+  // 중정: 아래층 바닥이 겹겹이 내려다보이는 뻥 뚫린 공간 + 맨 아래 정원 + 유리 난간, 위에서 달빛
+  drawCourt(){
+    const g=this.add.graphics().setDepth(2.5),{x,y,w,h}=this.court;
+    g.fillStyle(0x04060d,1);g.fillRect(x,y,w,h);
+    for(let k=1;k<=7;k++){const i=k*44;g.lineStyle(10,Phaser.Display.Color.GetColor(42-k*4,52-k*5,80-k*7),1);g.strokeRect(x+i,y+i,w-i*2,h-i*2)}
+    const gi=8*44,gx=x+gi,gy=y+gi,gw=w-gi*2,gh=h-gi*2;g.fillStyle(0x0e2a1a,1);g.fillRect(gx,gy,gw,gh);
+    let sd=11;const rn=()=>(sd=(sd*9301+49297)%233280)/233280;
+    for(let k=0;k<22;k++){const cx=gx+12+rn()*(gw-24),cy=gy+12+rn()*(gh-24),r=8+rn()*12;g.fillStyle(0x1d4a2a,1);g.fillCircle(cx,cy,r);g.fillStyle(0x2f6339,1);g.fillCircle(cx-2,cy-2,r*.6)}
+    g.lineStyle(8,0x9fd0ff,.45);g.strokeRect(x,y,w,h);g.lineStyle(2,0xffffff,.7);g.strokeRect(x+4,y+4,w-8,h-8);
+    this.add.image(0,0,'glowM').setDepth(16).setBlendMode('ADD').setAlpha(.22).setScale(w/96*1.1); // 중정 위로 들어오는 달빛
+  }
   drawBounds(){
+    if(this.night){this.drawFacade();return}
     const g=this.add.graphics().setDepth(2.8),T=6000,B=36,{x,y,w,h}=MAP;
     g.fillStyle(0x03050c,.72);g.fillRect(x-T,y-T,w+T*2,T);g.fillRect(x-T,y+h,w+T*2,T);g.fillRect(x-T,y,T,h);g.fillRect(x+w,y,T,h);
     g.fillStyle(0x2a1206,.9);g.fillRect(x-B,y-B,w+B*2,B);g.fillRect(x-B,y+h,w+B*2,B);g.fillRect(x-B,y,B,h);g.fillRect(x+w,y,B,h);
@@ -1985,6 +2108,21 @@ class Battle extends Phaser.Scene{
     for(let i=-B;i<w+B;i+=32){g.fillPoints([{x:x+i,y:y-B},{x:x+i+14,y:y-B},{x:x+i+14+B,y:y},{x:x+i+B,y:y}],true);g.fillPoints([{x:x+i,y:y+h},{x:x+i+14,y:y+h},{x:x+i+14+B,y:y+h+B},{x:x+i+B,y:y+h+B}],true)}
     for(let j=-B;j<h+B;j+=32){g.fillPoints([{x:x-B,y:y+j},{x:x-B,y:y+j+14},{x:x,y:y+j+14+B},{x:x,y:y+j+B}],true);g.fillPoints([{x:x+w,y:y+j},{x:x+w,y:y+j+14},{x:x+w+B,y:y+j+14+B},{x:x+w+B,y:y+j+B}],true)}
     g.lineStyle(14,0xfd5108,.22);g.strokeRect(x,y,w,h);g.lineStyle(4,0xfd5108,1);g.strokeRect(x,y,w,h);
+  }
+  // 어려움 맵 외벽: 아모레퍼시픽의 흰 세로 루버(핀) + 바깥은 밤의 용산 불빛, 북쪽 가운데는 루프 가든
+  drawFacade(){
+    const g=this.add.graphics().setDepth(2.8),T=6000,B=46,{x,y,w,h}=MAP;
+    g.fillStyle(0x03050c,.92);g.fillRect(x-T,y-T,w+T*2,T);g.fillRect(x-T,y+h,w+T*2,T);g.fillRect(x-T,y,T,h);g.fillRect(x+w,y,T,h);
+    let sd=17;const rn=()=>(sd=(sd*9301+49297)%233280)/233280;
+    for(let k=0;k<420;k++){const a=rn(),b=rn(),side=k%4,d=B+20+rn()*900,along=(a-.5)*(w+1800);g.fillStyle([0xffd86b,0xfff1c2,0x9fc4e8][k%3],.25+b*.5);
+      const px=side===0?along:side===1?along:side===2?x-d:x+w+d,py=side===0?y-d:side===1?y+h+d:along;g.fillRect(px,py,3,3)}
+    g.fillStyle(0x1b2233,1);g.fillRect(x-B,y-B,w+B*2,B);g.fillRect(x-B,y+h,w+B*2,B);g.fillRect(x-B,y,B,h);g.fillRect(x+w,y,B,h);
+    const gw=560,gx=-gw/2;g.fillStyle(0x16331f,1);g.fillRect(gx,y-B,gw,B);
+    for(let i=gx+20;i<gx+gw-10;i+=34){g.fillStyle(0x2f6339,1);g.fillCircle(i,y-B/2,12);g.fillStyle(0x57a05e,1);g.fillCircle(i-3,y-B/2-3,6)}
+    g.fillStyle(0xe9eef5,.92);
+    for(let i=-B;i<w+B;i+=14){if(!(x+i>gx&&x+i<gx+gw))g.fillRect(x+i,y-B,4,B);g.fillRect(x+i,y+h,4,B)}
+    for(let j=-B;j<h+B;j+=14){g.fillRect(x-B,y+j,B,4);g.fillRect(x+w,y+j,B,4)}
+    g.lineStyle(4,0x9fd0ff,.6);g.strokeRect(x,y,w,h);
   }
   // 맵 안으로 좌표 당기기 (pad: 경계에서 띄울 거리)
   inMap(x,y,pad=40){return{x:Phaser.Math.Clamp(x,MAP.x+pad,MAP.x+MAP.w-pad),y:Phaser.Math.Clamp(y,MAP.y+pad,MAP.y+MAP.h-pad)}}
@@ -1994,7 +2132,10 @@ class Battle extends Phaser.Scene{
     const v={N:f(p.y-MAP.y),S:f(MAP.y+MAP.h-p.y),W:f(p.x-MAP.x),E:f(MAP.x+MAP.w-p.x)};
     for(const k in v)if(hc['edge'+k]!==v[k]){hc['edge'+k]=v[k];$('edge'+k).style.opacity=v[k]}
   }
-  addObsSprite(r,key){r.sh=this.add.rectangle(r.x+7,r.y+9,r.w,r.h,0x000000,.35).setOrigin(0).setDepth(.5);r.img=this.add.image(r.x,r.y,key).setOrigin(0).setDepth(2.6)}
+  addObsSprite(r,key){const d=OBS_DEF[key]||{};
+    r.sh=d.oval?this.add.ellipse(r.x+r.w/2+6,r.y+r.h-6,r.w*.95,r.h*.4,0x000000,.3).setDepth(.5):this.add.rectangle(r.x+7,r.y+9,r.w,r.h,0x000000,.35).setOrigin(0).setDepth(.5);
+    if(d.glow&&this.night)r.gl=this.add.image(r.x+d.glow[0],r.y+d.glow[1],'glowM').setDepth(16).setBlendMode('ADD').setAlpha(.55); // 켜진 모니터 불빛은 어둠 위에
+r.img=this.add.image(r.x,r.y,key).setOrigin(0).setDepth(2.6)}
   // 필러 가구: 랜드마크를 피해 남은 빈 공간에 확률적으로 채움. 무한맵이라 플레이어 주변 청크 단위로 생성
   // (맵 로드 시 시작 지점 주변을 먼저 채우고, 이동하면 새 청크를 채움. 한 번 만든 청크는 기억해 같은 배치 유지)
   updChunks(){
@@ -2003,14 +2144,15 @@ class Battle extends Phaser.Scene{
       if(!c){c={rects:this.genChunk(cx+i,cy+j),live:false};this.chunks.set(key,c)}
       if(!c.live){c.live=true;c.rects.forEach(r=>this.addObsSprite(r,r.key))}}
     for(const [key,c] of this.chunks){if(!c.live)continue;const [x,y]=key.split(',').map(Number);
-      if(Math.abs(x-cx)>3||Math.abs(y-cy)>3){c.live=false;c.rects.forEach(r=>{r.img.destroy();r.sh.destroy()})}}
+      if(Math.abs(x-cx)>3||Math.abs(y-cy)>3){c.live=false;c.rects.forEach(r=>{r.img.destroy();r.sh.destroy();if(r.gl)r.gl.destroy()})}}
     this.refreshObs();
   }
   genChunk(cx,cy){
     const out=[],n=pick([0,1,1,1,2,2]),x0=cx*CHUNK,y0=cy*CHUNK;
     for(let t=0;t<n*5&&out.length<n;t++){
-      const f=pick(FILLER_BAG),r={x:Math.round(x0+rnd(40,CHUNK-40-f.w)),y:Math.round(y0+rnd(40,CHUNK-40-f.h)),w:f.w,h:f.h,key:f.key};
-      if(Math.hypot(r.x+r.w/2,r.y+r.h/2)<260)continue; // 시작 지점은 비워 둠
+      const f=pick(this.fillerBag||FILLER_BAG),r={x:Math.round(x0+rnd(40,CHUNK-40-f.w)),y:Math.round(y0+rnd(40,CHUNK-40-f.h)),w:f.w,h:f.h,key:f.key};
+      if(Math.hypot(r.x+r.w/2-this.start.x,r.y+r.h/2-this.start.y)<260)continue; // 시작 지점은 비워 둠
+      if(this.night&&this.walls.some(o=>rectGap(o,r)<40))continue; // 중정·코어와 겹치지 않게
       if(r.x<MAP.x+60||r.y<MAP.y+60||r.x+r.w>MAP.x+MAP.w-60||r.y+r.h>MAP.y+MAP.h-60)continue; // 맵 밖 제외
       if(this.landmarks.some(o=>rectGap(o,r)<130)||out.some(o=>rectGap(o,r)<90))continue;
       out.push(r)}
@@ -2033,7 +2175,7 @@ class Battle extends Phaser.Scene{
         if(dy&&(R=hitAt(x,y,w,h))){y=dy>0?R.y-h:R.y+R.h;if(v.y*dy>0)v.y=0;if(mob){o.wallN={x:0,y:dy>0?-1:1};o.wallR=R;o.wallT=.15}}
       }
       if(x!==b.position.x||y!==b.position.y){b.position.x=x;b.position.y=y;b.updateCenter()}};
-    // 야근 망령(e.ghost)은 벽을 통과
+    // 망령(e.ghost)은 벽을 통과
     one(this.player,false);for(const e of this.enemies.getChildren())if(!e.ghost)one(e,true);if(this.boss&&this.boss.active)one(this.boss,true);for(const d of this.decoys.getChildren())one(d,true);
   }
   // 적 추적 보정: 벽에 막히면 벽면 방향으로 속도를 돌려 계속 이동. 정면으로 막히면 가까운 모서리 쪽으로 돌아감
@@ -2061,8 +2203,8 @@ class Battle extends Phaser.Scene{
     if(m===l)x=o.x-pad;else if(m===r)x=o.x+o.w+pad;else if(m===t)y=o.y-pad;else y=o.y+o.h+pad}}return{x,y}}
 
   // ----- 스폰 -----
-  spawnMob(demo=false,pos=null,force=null){
-    if(this.enemies.countActive()>=CFG.maxEnemies)return;
+  spawnMob(demo=false,pos=null,force=null,noCap=false){ // noCap: 망령 행렬은 마릿수 제한과 상관없이 나옴
+    if(!noCap&&this.enemies.countActive()>=(!demo&&this.boss?CFG.bossCap:CFG.maxEnemies))return;
     const S=this.S,s=S.stage,p=this.player,V=this.viewMax();
     const a=rnd(0,TAU),d=demo?rnd(110,V*.6):V*.62+40;
     let type=force||'mob';
@@ -2073,13 +2215,14 @@ class Battle extends Phaser.Scene{
              elite:{tex:'elite',r:18,hp:95+15*s,dmg:18,xp:3,spd:58+s*6}}[type];
     const diff=1+S.t/170,dd=1+S.t/240;
     const {x,y}=this.inMap(pos?pos.x:p.x+Math.cos(a)*d,pos?pos.y:p.y+Math.sin(a)*d);
-    const N=this.night?CFG.night:null,ghost=!!N&&type!=='elite'; // 야근 모드: 엘리트 서류철 말고는 전부 망령
-    const e=this.enemies.create(x,y,ghost?'ghost0':T.tex).setDepth(4);
+    const N=this.night?CFG.night:null,ghost=!!N; // 어려움 모드: 모든 잡몹이 망령(종류별 그림은 GHOST_TEX)
+    const e=this.enemies.create(x,y,ghost?GHOST_TEX[type]+'0':T.tex).setDepth(4);
     e.body.setCircle(T.r,e.width/2-T.r,e.height/2-T.r);
     Object.assign(e,{hp:Math.round(T.hp*diff*(N?N.hp:1)),dmg:Math.round(T.dmg*dd*(N?N.dmg:1)),xp:T.xp,speed:(T.spd+rnd(-8,8))*(N?N.spd:1),ghost,kb:0,flashT:0,seed:rnd(0,10),elite:type==='elite',type,hitR:T.r,f:0});
     e.maxhp=e.hp;
     if(demo)e.setVelocity(rnd(-22,22),rnd(-22,22));
-    else{e.setScale(0);this.tweens.add({targets:e,scale:ghost&&type==='receipt'?.8:1,duration:220,ease:'Back.easeOut'})}
+    else{e.setScale(0);this.tweens.add({targets:e,scale:1,duration:220,ease:'Back.easeOut'})}
+    return e;
   }
   wave(){
     // 멀리서(r) 원형으로 포위하되 GAPS곳에 GAP_W(라디안)만큼 빈틈을 남김. 각도로 비운 틈이라 좁혀와도 유지됨
@@ -2091,20 +2234,21 @@ class Battle extends Phaser.Scene{
   }
   // 상자 치우기 (연기와 함께 사라짐): 개수 초과로 가장 오래된 상자를 없앨 때
   removeChest(c){const i=this.chests.indexOf(c);if(i<0)return;this.chests.splice(i,1);c.ind.remove();this.tweens.killTweensOf([c,c.beam]);this.fxSmoke.explode(14,c.x,c.y);c.beam.destroy();if(c.tag)c.tag.destroy();c.destroy()}
-  // 사라지는 상자의 보상을 다른 상자로 합침: 금빛 조각이 날아가고 받는 상자 위에 x2·x3 표시
-  mergeChest(from,to){
-    to.stack+=from.stack;
+  // 사라지는 상자의 보상 1개를 다른 상자로 옮김: 금빛 조각이 날아가고 받는 상자 위에 x2·x3 표시 (k: 여러 개일 때 차례로 날아가게)
+  mergeChest(from,to,k=0){
+    to.stack++;
     const bit=this.add.image(from.x,from.y,'gem2').setDepth(9).setScale(1.4);
-    this.tweens.add({targets:bit,x:to.x,y:to.y,duration:420,ease:'Cubic.easeIn',onComplete:()=>{bit.destroy();if(to.active)this.fxGold.explode(18,to.x,to.y)}});
+    this.tweens.add({targets:bit,x:to.x,y:to.y,duration:420,delay:k*90,ease:'Cubic.easeIn',onComplete:()=>{bit.destroy();if(to.active)this.fxGold.explode(18,to.x,to.y)}});
     if(!to.tag)to.tag=this.add.text(to.x,to.y-30,'',{fontFamily:'"Press Start 2P",monospace',fontSize:'14px',color:'#ffd86b',stroke:'#0b1020',strokeThickness:4}).setOrigin(.5).setDepth(9);
     to.tag.setText('x'+to.stack).setScale(1.6);this.tweens.add({targets:to.tag,scale:1,duration:300,delay:420,ease:'Back.easeOut'});
     to.setScale(Math.min(1.35,1+.1*(to.stack-1)));to.ind.dataset.n='x'+to.stack;
   }
   spawnChest(x,y,gold=false){
     // 일반 상자는 최대 CFG.chestMax개: 새 상자가 생기면 가장 오래된 일반 상자를 치우고,
-    // 그 보상은 다음으로 오래된 상자에 합침 (보스 황금 상자는 제외)
+    // 그 보상은 남은 상자들에 하나씩 나눠 줌: 매번 보상이 가장 적은 상자(같으면 오래된 상자)에 1개씩 → 한 상자에 몰리지 않음 (보스 황금 상자는 제외)
     if(!gold){const normal=this.chests.filter(c=>!c.gold);while(normal.length>=CFG.chestMax){const old=normal.shift();
-      if(normal.length)this.mergeChest(old,normal[0]);this.removeChest(old)}}
+      for(let k=0;k<old.stack&&normal.length;k++)this.mergeChest(old,normal.reduce((a,b)=>b.stack<a.stack?b:a),k);
+      this.removeChest(old)}}
     ({x,y}=this.freeSpot(x,y,30));
     const c=this.add.image(x,y,gold?'chestG':'chest').setDepth(3);c.gold=gold;c.stack=1; // stack: 이 상자에 담긴 보상 수
     c.beam=this.add.image(x,y+8,'beam').setOrigin(.5,1).setDepth(2).setBlendMode('ADD').setTint(gold?0xffd86b:0xe4b84a).setAlpha(.7);
@@ -2113,6 +2257,12 @@ class Battle extends Phaser.Scene{
     const ind=el('div','ind');const im=el('img');im.src=gold?CHESTG_URL:CHEST_URL;im.alt='';ind.append(im,el('i'));$('inds').appendChild(ind);c.ind=ind;
     this.chests.push(c);
     this.fxGold.explode(16,x,y);
+  }
+  // 잡몹을 n마리까지 줄임: 나에게서 먼 것부터 연기와 함께 흩어지며 사라짐 (처치로 치지 않음, 증빙·상자 없음)
+  thinMobs(n){
+    const p=this.player,en=this.enemies.getChildren().filter(e=>e.active&&!e.elite);
+    const extra=this.enemies.countActive()-n;if(extra<=0)return;
+    en.sort((a,b)=>Math.hypot(b.x-p.x,b.y-p.y)-Math.hypot(a.x-p.x,a.y-p.y)).slice(0,extra).forEach(e=>{this.fxSmoke.explode(4,e.x,e.y);e.destroy()});
   }
   spawnBoss(def){
     const skin=PART_BOSSES[CHOICE.part]&&PART_BOSSES[CHOICE.part][def.key];if(skin)def=Object.assign({},def,skin);
@@ -2128,7 +2278,7 @@ class Battle extends Phaser.Scene{
     this.physics.add.overlap(b,this.bullets,(bo,bu)=>this.onInk(bu,bo));
     const bar=def.bar||['#c9b6ff','#8f6cf0','#5b3fb0'];
     b.label=this.add.text(b.x,b.y,def.name,{fontFamily:'"Do Hyeon",sans-serif',fontSize:'15px',color:bar[0],stroke:'#0b1020',strokeThickness:4}).setOrigin(.5,0).setDepth(9);
-    this.boss=b;const bx=$('boss').style;bar.forEach((c,i)=>bx.setProperty('--b'+(i+1),c));$('boss').hidden=false;setText('bossname',def.name);
+    this.boss=b;this.thinMobs(CFG.bossCap);const bx=$('boss').style;bar.forEach((c,i)=>bx.setProperty('--b'+(i+1),c));$('boss').hidden=false;setText('bossname',def.name);
     toast('WARNING · '+def.name,true,1800);SFX.warn();this.cameras.main.shake(500,.006);this.fxViolet.explode(40,b.x,b.y);
   }
 
@@ -2153,7 +2303,7 @@ class Battle extends Phaser.Scene{
   }
 
   // ----- 무기 -----
-  fireB(group,tex,x,y,a,spd){const b=group.get(x,y,tex);if(!b)return null;b.px=x;b.py=y;b.setActive(true).setVisible(true).setDepth(6).setScale(1);b.coin=false;b.hits=null;b.spin=0;b.body.enable=true;b.body.reset(x,y);b.setVelocity(Math.cos(a)*spd,Math.sin(a)*spd);b.rotation=a;return b}
+  fireB(group,tex,x,y,a,spd){const b=group.get(x,y,tex);if(!b)return null;b.px=x;b.py=y;b.setActive(true).setVisible(true).setDepth(6).setScale(1).clearTint();b.coin=false;b.hits=null;b.spin=0;b.body.enable=true;b.body.reset(x,y);b.setVelocity(Math.cos(a)*spd,Math.sin(a)*spd);b.rotation=a;return b}
   killB(group,b){b.body.enable=false;group.killAndHide(b)}
   firePen(){
     const S=this.S,p=this.player,s=wstat(S,'pen'),evo=S.items.pen.evo;
@@ -2505,10 +2655,12 @@ class Battle extends Phaser.Scene{
         if(Math.random()<.5)this.fxSpark.emitParticleAt(p.x+rnd(-14,14),p.y+rnd(-20,24),1)}}
   }
   dropGem(x,y,v){
+    if(this.court){const c=this.court,m=18;if(x>c.x-m&&x<c.x+c.w+m&&y>c.y-m&&y<c.y+c.h+m){const l=x-c.x,r=c.x+c.w-x,t=y-c.y,b=c.y+c.h-y,k=Math.min(l,r,t,b);if(k===l)x=c.x-m;else if(k===r)x=c.x+c.w+m;else if(k===t)y=c.y-m;else y=c.y+c.h+m}} // 중정에 떨어진 증빙은 난간 앞으로
     // 바닥 증빙이 CFG.gemMax개 이상이면 새로 만들지 않고 큰 증빙 하나에 경험치를 모음
     if(this.gems.countActive()>=CFG.gemMax){let b=this.bigGem;if(!b||!b.active){b=this.gems.getChildren().find(g=>g.active&&!g.pull);if(b){b.setTexture('gem2');this.bigGem=b}}if(b){b.v+=v;return}}
     const g=this.gems.create(x,y,v>1?'gem2':'gem').setDepth(3);g.v=v;g.setScale(0);this.tweens.add({targets:g,scale:1,duration:180,ease:'Back.easeOut'})}
   bossDie(b){
+    this.bossLzG.clear();if(this.mirror){this.mirror.img.destroy();this.mirror.tag.destroy();this.mirror=null}
     const S=this.S;S.bossKills++;this.hitstop(220);SFX.bossDie();
     const cam=this.cameras.main;cam.shake(600,.02);cam.flash(300,255,240,220);
     this.tweens.add({targets:cam,zoom:cam.zoom*1.1,duration:140,yoyo:true,ease:'Quad.easeOut'});
@@ -2564,7 +2716,7 @@ class Battle extends Phaser.Scene{
       return;
     }
     if(S.over)return;
-    S.t+=dt;S.stageT+=dt;this.updLandmarks();
+    S.t+=dt;S.stageT+=dt;if(!this.night)this.updLandmarks(); // 어려움(사무실 안)에는 바깥 건물이 없음
     // 보스 & 스테이지
     const bdef=CFG.bosses[S.stage];
     if(bdef&&S.bossSpawnedFor!==S.stage&&S.stageT>=CFG.bossAt){S.bossSpawnedFor=S.stage;this.spawnBoss(Array.isArray(bdef)?pick(bdef):bdef)}
@@ -2581,8 +2733,9 @@ class Battle extends Phaser.Scene{
     this.dust.emitting=l>.1;
     if(S.iframe>0){S.iframe-=dt;p.setAlpha(Math.floor(time/60)%2?.4:1)}else p.setAlpha(1);
     // 스폰
-    S.spawnT-=dt;if(S.spawnT<=0){S.spawnT=Math.max(.18,1.15-S.stage*.13-S.t/700)*(this.boss?1.5:1)/(swarmOf(S.stage)*(this.night?CFG.night.swarm:1));const n=1+(S.stage>=2&&Math.random()<.6?1:0)+(S.stage>=3?1:0)+(S.stage>=4?1:0);for(let i=0;i<n;i++)this.spawnMob()}
-    if(S.stage>=2){S.waveT-=dt;if(S.waveT<=0){S.waveT=30;this.wave()}}
+    S.spawnT-=dt;if(S.spawnT<=0){S.spawnT=Math.max(.18,1.15-S.stage*.13-S.t/700)*(this.boss?CFG.bossSpawn:1)/(swarmOf(S.stage)*(this.night?CFG.night.swarm:1));const n=1+(S.stage>=2&&Math.random()<.6?1:0)+(S.stage>=3?1:0)+(S.stage>=4?1:0);for(let i=0;i<n;i++)this.spawnMob()}
+    if(this.night){S.streamT=(S.streamT??CFG.stream.first)-dt;if(S.streamT<=0){S.streamT=rnd(...CFG.stream.every);this.ghostStream()}}
+    if(S.stage>=2){S.waveT-=dt;if(S.waveT<=0){S.waveT=30;if(!this.boss)this.wave()}} // 보스전 중에는 포위 웨이브 없음
     S.chestT-=dt;if(S.chestT<=0){S.chestT=CFG.chestEvery;const a=rnd(0,TAU),d=rnd(240,360);this.spawnChest(p.x+Math.cos(a)*d,p.y+Math.sin(a)*d)}
     // 무기
     const cd=(k,f)=>{if(!S.items[k])return;S.wt[k]-=dt;if(S.wt[k]<=0)S.wt[k]=f()?wstat(S,k).cd*S.cdm:.12};
@@ -2596,13 +2749,17 @@ class Battle extends Phaser.Scene{
     for(const b of this.ebullets.getChildren()){if(!b.active)continue;b.life-=dt;if(b.spin)b.rotation+=b.spin*dt;if(b.life<=0)this.killB(this.ebullets,b);else if(this.projHit(b)){this.fxViolet.explode(4,b.x,b.y);this.killB(this.ebullets,b)}else{b.px=b.x;b.py=b.y}}
     // 적
     const V=this.viewMax(),far=V*1.25;
+    const gone=[];
     for(const e of this.enemies.getChildren()){
       if(e.flashT>0){e.flashT-=dt;if(e.flashT<=0)e.clearTint()}
+      if(e.stream){if(e.flashT<=0)e.setTint(0xd6c8ff);if(!(e.stunT>0))e.setVelocity(e.vx,e.vy);else{e.stunT-=dt;e.setVelocity(0,0)}this.animMob(e,time);e.setFlipX(e.vx<0);
+        if(Math.hypot(e.x-p.x,e.y-p.y)>far*1.3&&(e.x-p.x)*e.vx+(e.y-p.y)*e.vy>0)gone.push(e);continue} // 행렬 망령: 직진만, 지나가면 사라짐
       if(e.stunT>0){e.stunT-=dt;e.setVelocity(0,0);if(e.flashT<=0)e.stunT>0?e.setTint(0xbfe8ff):e.clearTint();continue}
       if(e.kb>0)e.kb-=dt;else{const sp=e.slowT>S.t?e.speed*.55:e.speed;this.physics.moveToObject(e,p,sp);this.slide(e,sp,dt)}
       this.animMob(e,time);e.setFlipX(e.x>p.x);
       if(Math.abs(e.x-p.x)>far||Math.abs(e.y-p.y)>far){const a=rnd(0,TAU),d=V*.62;const q=this.inMap(p.x+Math.cos(a)*d,p.y+Math.sin(a)*d);e.setPosition(q.x,q.y)}
     }
+    gone.forEach(e=>e.destroy());
     if(this.boss)this.updBoss(dt,time);
     for(const d of this.decoys.getChildren().slice())this.updFraud(d,dt,time);
     this.updSpots(dt);
@@ -2610,7 +2767,7 @@ class Battle extends Phaser.Scene{
     if(S.pickT>0){S.pickT-=dt;if(S.pickT<=0)S.pickStep=0}
     for(const g of this.gems.getChildren().slice()){
       const d=Math.hypot(g.x-p.x,g.y-p.y);
-      if(d<22){S.xp+=g.v;S.pickT=.5;SFX.pickup(S.pickStep++);g.destroy();
+      if(d<22){S.xp+=g.v*(this.night?CFG.night.xp:1);S.pickT=.5;SFX.pickup(S.pickStep++);g.destroy();
         while(S.xp>=S.xpNext){S.xp-=S.xpNext;S.lv++;S.xpNext=Math.round(S.xpNext*1.15+2*CFG.xpScale);SFX.level();this.fxGold.explode(30,p.x,p.y);this.ring(p.x,p.y,0xe4b84a,160,true);this.openModal('level',{lv:S.lv})}
         continue}
       if(d<S.magnet||g.pull){g.pull=true;this.physics.moveToObject(g,p,480)}
@@ -2629,7 +2786,7 @@ class Battle extends Phaser.Scene{
     $('vig').className=S.hp/S.maxhp<.3?'low':'';
   }
   animMob(e,time){
-    if(e.ghost){const f=Math.floor(time/260+e.seed)%2;if(e.f!==f){e.f=f;e.setTexture(f?'ghost1':'ghost0')}e.rotation=Math.sin(time*.004+e.seed)*.1;e.setAlpha(.62+.25*Math.sin(time*.005+e.seed*3));return}
+    if(e.ghost){const f=Math.floor(time/(e.type==='receipt'?180:260)+e.seed)%2;if(e.f!==f){e.f=f;e.setTexture(GHOST_TEX[e.type]+f)}e.rotation=Math.sin(time*.004+e.seed)*(e.elite?.06:.1);return}
     if(e.type==='receipt'){e.rotation=Math.sin(time*.02+e.seed)*.35;return}if(e.elite){e.rotation=Math.sin(time*.006+e.seed)*.12;return}const f=Math.floor(time/220+e.seed)%2;if(e.f!==f){e.f=f;e.setTexture(f?'mob1':'mob0')}e.rotation=Math.sin(time*.008+e.seed)*.14}
   placeInd(c){
     const cam=this.cameras.main,wv=cam.worldView,z=cam.zoom,W=this.scale.width,H=this.scale.height;
@@ -2716,10 +2873,60 @@ class Battle extends Phaser.Scene{
       if(!this.S.over&&Math.hypot(c.x-s.x,c.y-s.y)<s.r+8){this.S.iframe=0;this.hurt(s.dmg);this.float(this.player.x,this.player.y-70,'지적 사항!','#ff6a52',18,'"Do Hyeon",sans-serif')}
     }});
   }
+  // ----- 어려움: 망령 행렬 -----
+  // 방향을 정해 내 근처(±80px)를 지나는 직선을 고르고, 화면 밖에서 망령 n마리가 그 선을 따라 우르르 지나감 (예고 표시 없음)
+  ghostStream(){
+    const p=this.player,V=this.viewMax(),C=CFG.stream,a=rnd(0,TAU),ux=Math.cos(a),uy=Math.sin(a),nx=-uy,ny=ux,off=rnd(-80,80);
+    const cx=p.x+nx*off,cy=p.y+ny*off,d=V*.75,sx=cx-ux*d,sy=cy-uy*d;SFX.stream();
+    for(let i=0;i<C.n;i++){const back=i*20+rnd(0,16),side=rnd(-C.band/2,C.band/2),sp=C.spd*rnd(.92,1.08);
+      const e=this.spawnMob(false,{x:sx,y:sy},'receipt',true);if(!e)break;
+      e.setPosition(sx-ux*back+nx*side,sy-uy*back+ny*side);
+      Object.assign(e,{stream:true,vx:ux*sp,vy:uy*sp});e.setScale(1)}
+  }
+  // ----- 어려움 보스 패턴: 거울 복사기 -----
+  // 보스 옆에 내 모습의 복사본이 나타나 6초 동안 '보스 기준 좌우 반전'으로 내 움직임을 따라 하며 0.9초마다 나에게 3갈래 탄을 쏨
+  // (내가 왼쪽으로 가면 복사본은 오른쪽으로). 레이저 중이 아닐 때 12초 뒤부터 14~18초마다. 복사본은 공격할 수 없음
+  updMirror(b,dt,time){
+    const p=this.player;
+    if(!this.mirror){b.mirT=(b.mirT??12)-dt;if(b.mirT>0||b.lz)return;
+      const img=this.add.image(b.x,b.y,p.texture.key).setDepth(6).setTint(0x9fe8ff).setAlpha(.8).setScale(0);
+      const tag=this.add.text(b.x,b.y,'복사본',{fontFamily:'"Do Hyeon",sans-serif',fontSize:'13px',color:'#bfe8ff',stroke:'#0b1020',strokeThickness:4}).setOrigin(.5).setDepth(6.1);
+      this.tweens.add({targets:img,scale:1,duration:300,ease:'Back.easeOut'});this.mirror={t:0,dur:6,shotT:1,img,tag};SFX.mirror();this.fxZap.explode(20,b.x,b.y)}
+    const M=this.mirror;M.t+=dt;
+    const mx=2*b.x-p.x,my=p.y;M.img.setPosition(mx,my).setTexture(p.texture.key).setFlipX(!p.flipX);M.tag.setPosition(mx,my-40);
+    if((M.shotT-=dt)<=0&&M.t<M.dur-.3&&Math.hypot(p.x-mx,p.y-my)>140){M.shotT=.9; // 복사본이 나와 너무 가까우면(보스와 같은 세로줄) 쏘지 않음
+      const a0=Math.atan2(p.y-my,p.x-mx);
+      for(const da of [-.22,0,.22]){const eb=this.fireB(this.ebullets,'ebullet',mx,my,a0+da,240);if(!eb)continue;eb.body.setCircle(6,1.5,1.5);eb.setBlendMode('ADD');eb.setTint(0x9fe8ff);eb.life=4;eb.dmg=Math.round(12*this.S.bossBuff.dmg)}}
+    if(M.t>=M.dur){this.fxZap.explode(20,mx,my);M.img.destroy();M.tag.destroy();this.mirror=null;b.mirT=rnd(14,18)}
+  }
+  // ----- 어려움 보스 패턴: 프레젠테이션 레이저 -----
+  // 보스가 멈춰 서서 레이저 포인터 빔 n줄(2·3·4스테이지 보스 = 2·3·4줄)을 겨눔 → 1.1초 동안 분홍 점선 예고 →
+  // 굵은 빔이 2.6초 동안 천천히 회전하며 휩쓺(초당 약 26°, 방향은 무작위). 빔에 닿으면 피해. 7~10초마다
+  updBossLaser(b,dt,time){
+    const p=this.player,g=this.bossLzG;
+    if(!b.lz){b.lzT=(b.lzT??5)-dt;if(b.lzT>0||b.state!=='chase'||this.mirror)return false;
+      const n=({boss1:2,fraud:2,boss2:3,audit:4})[b.def.key]||3;
+      b.lz={t:0,warn:1.1,dur:2.6,n,base:Math.atan2(p.y-b.y,p.x-b.x)+Math.PI/n,dir:Math.random()<.5?1:-1,spd:.45};SFX.lzWarn()}
+    const L=b.lz,len=1200,fire=L.t>=L.warn;L.t+=dt;b.setVelocity(0,0);g.clear();
+    if(!fire)b.x+=rnd(-1.2,1.2);else if(!L.on){L.on=true;SFX.lzFire();this.cameras.main.shake(140,.005)}
+    const rot=fire?(L.t-L.warn)*L.spd*L.dir:0;
+    for(let i=0;i<L.n;i++){const a=L.base+i*TAU/L.n+rot,cx=Math.cos(a),cy=Math.sin(a),x2=b.x+cx*len,y2=b.y+cy*len;
+      if(!fire){const bl=.35+.4*Math.abs(Math.sin(time*.025));g.lineStyle(3,0xff4a8a,bl);for(let d=40;d<len;d+=38)g.lineBetween(b.x+cx*d,b.y+cy*d,b.x+cx*(d+20),b.y+cy*(d+20))}
+      else{g.lineStyle(26,0xff2a6a,.3);g.lineBetween(b.x,b.y,x2,y2);g.lineStyle(11,0xff7ab8,.75);g.lineBetween(b.x,b.y,x2,y2);g.lineStyle(3,0xffffff,.95);g.lineBetween(b.x,b.y,x2,y2);
+        // 플레이어가 빔(선분)에 닿았는지: 선분까지 거리 < 빔 반폭 + 몸 반지름
+        const t=Math.max(0,Math.min(len,(p.x-b.x)*cx+(p.y-b.y)*cy)),dx=p.x-(b.x+cx*t),dy=p.y-(b.y+cy*t);
+        if(dx*dx+dy*dy<24*24)this.hurt(Math.round(b.dmg*.7))}}
+    if(fire)g.fillStyle(0xff7ab8,.8).fillCircle(b.x,b.y,10+3*Math.sin(time*.04));
+    if(L.t>=L.warn+L.dur){b.lz=null;b.lzT=rnd(7,10);g.clear()}
+    b.label.setPosition(b.x,b.y+b.def.r*b.baseScale+10);setW('bossfill',b.hp/b.maxhp*100);
+    return true;
+  }
   updBoss(dt,time){
     const b=this.boss,p=this.player,def=b.def;
     if(b.flashT>0){b.flashT-=dt;if(b.flashT<=0)b.clearTint()}
     if(b.stunT>0){b.stunT-=dt;b.setVelocity(0,0);if(b.flashT<=0)b.stunT>0?b.setTint(0xbfe8ff):b.clearTint();b.label.setPosition(b.x,b.y+def.r*b.baseScale+10);setW('bossfill',b.hp/b.maxhp*100);return}
+    if(this.night)this.updMirror(b,dt,time); // 어려움: 거울 복사기 (보스는 계속 움직임)
+    if(this.night&&this.updBossLaser(b,dt,time))return; // 어려움: 회전 레이저를 쏘는 동안 다른 행동은 멈춤
     if(def.key==='fraud'){this.updFraud(b,dt,time);return}
     if(def.key==='audit'){this.updAudit(b,dt,time);return}
     if(def.key==='boss1'){const f=Math.floor(time/250)%2;if(b.f!==f){b.f=f;b.setTexture(def.frames[f])}}
@@ -2816,7 +3023,7 @@ function showResult(S,won){
   recordPlay();
   $('hud').hidden=true;$('vig').className='';$('inds').replaceChildren();
   const nt=CHOICE.mode==='night';
-  setText('rtag',(won?partOf(CHOICE.part).clear:partOf(CHOICE.part).fail)+(nt?' · 야근 모드':''));setText('rtitle',won?(nt?'야근 망령을 모두 퇴근시켰다.':'시즌의 밤을 넘겼다.'):(nt?'야근 망령에게 붙잡혔다.':partOf(CHOICE.part).dead));
+  setText('rtag',(won?partOf(CHOICE.part).clear:partOf(CHOICE.part).fail)+(nt?' · 어려움':''));setText('rtitle',won?(nt?'야근 망령을 모두 퇴근시켰다.':'시즌의 밤을 넘겼다.'):(nt?'야근 망령에게 붙잡혔다.':partOf(CHOICE.part).dead));
   $('rkill').nextElementSibling.textContent=nt?'퇴근시킨 망령':'처치한 전표';
   setText('rtime',fmt(S.t));setText('rboss',S.bossKills);setText('rkill',S.kills);setText('rq',`${S.correct} / ${S.asked}`);
   const bd=$('rbuild');bd.replaceChildren();[...S.wOrder,...S.pOrder].forEach(k=>bd.appendChild(slotEl(S,k)));
@@ -3086,7 +3293,7 @@ function renderSelect(){
   document.querySelectorAll('.sel-gender button[data-g]').forEach(x=>x.setAttribute('aria-checked',String(x.dataset.g===SEL.g)));
   document.querySelectorAll('.sel-mode button').forEach(x=>x.setAttribute('aria-checked',String(x.dataset.mode===SEL.mode)));
   const pt=partOf(SEL.part),open=isUnlocked(SEL.part);
-  setText('selNote',!open?unlockHint(SEL.part):SEL.mode==='night'?'야근 모드: 불 꺼진 사무실, 벽을 통과하는 야근 망령이 더 세고 빠르게 몰려와요. 랭킹도 따로 집계돼요.':`${pt.full} · ${pt.role}`);
+  setText('selNote',!open?unlockHint(SEL.part):SEL.mode==='night'?'어려움: 불 꺼진 사무실에서 벽을 통과하는 망령 3종이 더 세고 빠르게 몰려와요. 랭킹은 따로 집계돼요.':`${pt.full} · ${pt.role}`);
   $('selGo').disabled=!open;
   danceStart();
 }
@@ -3105,10 +3312,10 @@ const RANK_API='/api/rank', NICK_KEY='seasonNight.nick';
 const RANK_TIMEOUT=5000; // 랭킹 서버가 이 시간(ms) 안에 답하지 않으면 실패로 처리 (게임은 그대로 진행)
 const RANK_ERR={timeout:'랭킹 서버 응답이 늦어요. 잠시 후 다시 시도해 주세요.',not_configured:'랭킹 서버가 아직 연결되지 않았어요.',rate_limited:'잠시 후 다시 시도해 주세요.',bad_name:'닉네임을 확인해 주세요.',bad_time:'이 기록은 등록할 수 없어요.'};
 let RANK_RUN=null, RANK_TAB='audit', RANK_MODE='normal';
-// 랭킹 보드 id: 기본은 본부 id, 야근 모드는 본부 id + '_night'
+// 랭킹 보드 id: 보통은 본부 id, 어려움은 본부 id + '_night'
 const rankBoard=(part,mode)=>part+(mode==='night'?'_night':'');
 const fmtRank=t=>{const m=Math.floor(t/60),s=t-m*60;return `${m}:${s<10?'0':''}${s.toFixed(1)}`};
-const partFull=id=>{const n=/_night$/.test(id),b=n?id.slice(0,-6):id;return((PARTS.find(p=>p.id===b)||{}).full||b)+(n?' 야근 모드':'')};
+const partFull=id=>{const n=/_night$/.test(id),b=n?id.slice(0,-6):id;return((PARTS.find(p=>p.id===b)||{}).full||b)+(n?' 어려움':'')};
 const getNick=()=>{try{return localStorage.getItem(NICK_KEY)||''}catch(e){return ''}};
 const setNick=v=>{try{localStorage.setItem(NICK_KEY,v)}catch(e){}};
 // 시간 제한이 있는 fetch: RANK_TIMEOUT 안에 응답·본문이 다 오지 않으면 'timeout' 오류
@@ -3152,7 +3359,7 @@ async function rankSubmit(){
 function rankTab(part){
   RANK_TAB=part;const tabs=$('rankTabs');tabs.replaceChildren();
   const md=$('rankMode');md.replaceChildren();
-  [['normal','기본'],['night','야근 모드']].forEach(([m,t])=>{const b=el('button','',t);b.type='button';b.setAttribute('role','tab');b.setAttribute('aria-selected',String(m===RANK_MODE));b.onclick=()=>{RANK_MODE=m;rankTab(RANK_TAB)};md.appendChild(b)});
+  [['normal','보통'],['night','어려움']].forEach(([m,t])=>{const b=el('button','',t);b.type='button';b.setAttribute('role','tab');b.setAttribute('aria-selected',String(m===RANK_MODE));b.onclick=()=>{RANK_MODE=m;rankTab(RANK_TAB)};md.appendChild(b)});
   PARTS.forEach(p=>{const b=el('button','',p.name);b.type='button';b.setAttribute('role','tab');b.setAttribute('aria-selected',String(p.id===part));b.onclick=()=>rankTab(p.id);tabs.appendChild(b)});
   const board=rankBoard(part,RANK_MODE);
   const ol=$('rankList'),em=$('rankEmpty');ol.replaceChildren();em.hidden=false;em.textContent='불러오는 중…';
