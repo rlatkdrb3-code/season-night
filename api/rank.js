@@ -1,10 +1,11 @@
 // 시즌의 밤 — 본부별 최단 클리어 랭킹 API (Vercel Serverless Function + Upstash Redis REST)
-// GET  /api/rank?part=audit&limit=20  → { part, total, top:[{rank,name,t,d}] }
+// GET  /api/rank?part=audit&limit=20  → { part, total, top:[{rank,name,t,d}] }   (야근 모드는 part=audit_night 처럼 '_night'를 붙인 보드)
 // POST /api/rank {part,name,t}        → { part, name, rank, best, improved, total }
 // 안정성: Redis 요청은 REDIS_TIMEOUT 안에 끝나지 않으면 실패 처리(무한 대기 방지),
 //         GET 결과는 Vercel CDN이 10초 캐시 → 동시 접속이 많아도 Redis 호출은 10초에 한 번꼴 (POST는 캐시 안 함)
 // 환경변수: Vercel에서 Upstash(Redis)를 연결하면 KV_REST_API_URL / KV_REST_API_TOKEN (또는 UPSTASH_REDIS_REST_URL / _TOKEN)이 자동으로 들어옵니다.
 const PARTS = ['audit', 'tax', 'deal', 'digital'];
+const BOARDS = PARTS.concat(PARTS.map(p => p + '_night')); // 기본 + 야근 모드(어려움) 랭킹을 따로 집계
 const MIN_T = 60, MAX_T = 7200;          // 클리어 시간 허용 범위(초)
 const NAME_MAX = 12;                     // 닉네임 최대 글자 수
 const REDIS_TIMEOUT = 3000;              // Redis 요청 1번의 최대 대기 시간(ms)
@@ -58,7 +59,7 @@ module.exports = async (req, res) => {
   try {
     if (req.method === 'GET') {
       const part = String(req.query.part || '');
-      if (!PARTS.includes(part)) return res.status(400).json({ error: 'bad_part' });
+      if (!BOARDS.includes(part)) return res.status(400).json({ error: 'bad_part' });
       const n = Math.min(50, Math.max(1, parseInt(req.query.limit, 10) || 20));
       const [top, [total]] = await Promise.all([topOf(part, n), redis([['ZCARD', zkey(part)]])]);
       // 성공한 조회만 Vercel CDN에 10초 캐시 (브라우저는 캐시하지 않음). 만료 뒤 60초까지는 이전 결과를 주면서 뒤에서 갱신
@@ -68,7 +69,7 @@ module.exports = async (req, res) => {
     if (req.method === 'POST') {
       const b = readBody(req);
       const part = String(b.part || ''), name = cleanName(b.name), t = Number(b.t);
-      if (!PARTS.includes(part)) return res.status(400).json({ error: 'bad_part' });
+      if (!BOARDS.includes(part)) return res.status(400).json({ error: 'bad_part' });
       if (!name) return res.status(400).json({ error: 'bad_name' });
       if (!Number.isFinite(t) || t < MIN_T || t > MAX_T) return res.status(400).json({ error: 'bad_time' });
       const score = Math.round(t * 100);
