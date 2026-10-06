@@ -658,7 +658,7 @@ const QUESTIONS = [{"cat": "삼일","q": "2026년 채용 공고상 신입 공인
 // 밸런스
 // =====================================================================
 const CFG = {
-  stageLen:45, totalStages:4, bossAt:20, maxEnemies:130, firstChest:8, chestEvery:19, eliteChest:.45, chestLife:30, chestWarn:5, chestMax:2, // chestLife: 일반 상자가 자동으로 사라지기까지(초, 게임 시간). 마지막 chestWarn초는 깜빡임 · chestMax: 화면에 동시에 있을 수 있는 일반 상자 수(넘으면 가장 오래된 상자가 사라짐)
+  stageLen:45, totalStages:4, bossAt:20, maxEnemies:130, firstChest:8, chestEvery:19, eliteChest:.45, chestLife:30, chestWarn:5, chestMax:4, // chestLife: 일반 상자가 자동으로 사라지기까지(초, 게임 시간). 마지막 chestWarn초는 깜빡임 · chestMax: 화면에 동시에 있을 수 있는 일반 상자 수(넘으면 가장 오래된 상자가 사라짐)
   bosses:{
     // 배열이면 등장할 때 그중 하나를 같은 확률로 고름 (2스테이지: 미수금의 그림자 / 부정 적발 50%)
     2:[{key:'boss1', name:'미수금의 그림자', hp:900, dmg:24, speed:72, r:38, ring:false, spread:true, frames:['boss1a','boss1b'], bar:['#c9b6ff','#8f6cf0','#5b3fb0']},
