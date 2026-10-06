@@ -99,12 +99,15 @@ img{image-rendering:pixelated}
 #toast{position:absolute;left:50%;top:36%;transform:translate(-50%,-50%);font-family:var(--display);font-size:clamp(26px,6vw,46px);letter-spacing:.04em;color:var(--fg);text-shadow:0 3px 0 #000,0 0 24px rgba(0,0,0,.7);opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;text-align:center;width:90%;text-wrap:balance}
 #toast.show{opacity:1;transform:translate(-50%,-50%) scale(1.04)}
 #toast.warn{color:#ff8a76}
+#toast small{display:block;margin-top:12px;font-size:.48em;letter-spacing:.02em;color:#ffd86b}
 #stick{position:absolute;width:104px;height:104px;margin:-52px 0 0 -52px;border-radius:50%;border:2px solid rgba(233,228,214,.25);pointer-events:none}
 #stick[hidden]{display:none}
 #stick>i{position:absolute;left:50%;top:50%;width:44px;height:44px;margin:-22px;border-radius:50%;background:var(--pwc-glow)}
 .ind{position:absolute;left:0;top:0;width:34px;height:34px;margin:-17px 0 0 -17px;pointer-events:none;display:grid;place-items:center}
 .ind img{width:28px;height:22px;filter:drop-shadow(0 0 6px rgba(228,184,74,.8));animation:bob .8s ease-in-out infinite}
 .ind i{position:absolute;inset:0;transform-origin:50% 50%}
+.ind.vac img{width:26px;height:26px;filter:drop-shadow(0 0 7px rgba(159,232,255,.95))}
+.ind.vac i::after{border-left-color:#9fe8ff}
 /* 보상이 합쳐진 상자: 화면 밖 표시에도 x2·x3 */
 .ind[data-n]::before{content:attr(data-n);position:absolute;top:-8px;right:-12px;font:10px "Press Start 2P",monospace;color:#ffd86b;text-shadow:0 0 3px #000,0 0 3px #000}
 .ind i::after{content:"";position:absolute;right:-8px;top:50%;margin-top:-6px;border:6px solid transparent;border-left:9px solid var(--gold)}
@@ -424,7 +427,7 @@ kbd{font-family:var(--body);border:1px solid rgba(28,26,23,.3);border-radius:3px
     <div class="sheet">
       <p class="eyebrow">랭킹</p>
       <h2>본부별 최단 클리어 기록</h2>
-      <p class="muted">게임을 클리어하면 결과 화면에서 닉네임으로 등록할 수 있어요. 같은 닉네임은 가장 빠른 기록 하나만 남아요.</p>
+      <p class="muted" id="rankDesc">게임을 클리어하면 결과 화면에서 닉네임으로 등록할 수 있어요. 같은 닉네임은 가장 빠른 기록 하나만 남아요.</p>
       <div class="rank-tabs rank-mode" role="tablist" id="rankMode" aria-label="난이도"></div>
       <div class="rank-tabs" role="tablist" id="rankTabs" aria-label="본부"></div>
       <ol class="rank-list" id="rankList"></ol>
@@ -500,7 +503,7 @@ kbd{font-family:var(--body);border:1px solid rgba(28,26,23,.3);border-radius:3px
         <div class="stat"><b id="rq"></b><span>상자 정답 / 출제</span></div>
       </div>
       <div class="rank-entry" id="rankEntry" hidden>
-        <p class="eyebrow"><span id="rkPart"></span> 랭킹 등록 · 클리어 <span class="rank-time" id="rkTime"></span></p>
+        <p class="eyebrow"><span id="rkPart"></span> 랭킹 등록 · <span id="rkLabel">클리어</span> <span class="rank-time" id="rkTime"></span></p>
         <div class="rank-form">
           <input id="rkName" type="text" maxlength="12" autocomplete="nickname" enterkeyhint="done" placeholder="닉네임 (최대 12자)" aria-label="랭킹에 표시할 닉네임">
           <button id="rkSubmit" type="button">등록</button>
@@ -673,7 +676,7 @@ const QUESTIONS = [{"cat": "삼일","q": "2026년 채용 공고상 신입 공인
 // 밸런스
 // =====================================================================
 const CFG = {
-  stageLen:45, totalStages:4, bossAt:20, maxEnemies:200, firstChest:8, chestEvery:19, eliteChest:.45, chestMax:5, // chestMax: 화면에 동시에 있을 수 있는 일반 상자 수. 넘으면 가장 오래된 상자가 사라지고, 그 보상은 남은 상자에 합쳐짐(상자 하나에 보상 여러 개)
+  stageLen:45, totalStages:4, bossAt:20, maxEnemies:200, firstChest:8, chestEvery:10, chestMax:5, // chestEvery: 상자가 떨어지는 간격(초, 모든 스테이지 동일). 몹 처치와 상관없이 시간으로만 떨어짐 · chestMax: 화면에 동시에 있을 수 있는 일반 상자 수. 넘으면 가장 오래된 상자가 사라지고, 그 보상은 남은 상자에 합쳐짐(상자 하나에 보상 여러 개)
   // 잡몹 무리: swarm = 스테이지별 잡몹 등장 배수(엘리트·보급품 수는 그대로 유지), mobHp = 스테이지별 잡몹 기본 체력(1스테이지는 기본 무기 한 방), mobDmg = 잡몹 접촉 피해(영수증은 1 낮음), waveMul = 포위 웨이브 배수
   // xpScale = 레벨업에 필요한 경험치 배수(잡몹이 늘어난 만큼 레벨업 속도는 그대로), gemMax = 바닥 증빙 최대 수(넘으면 큰 증빙 하나에 합침)
   // 어려움 모드: 잡몹이 벽을 통과하는 망령 3종으로 바뀌고 체력·피해·속도·등장량, 보스 체력·피해가 아래 배수만큼 늘어남
@@ -686,6 +689,15 @@ const CFG = {
   // 어려움: 망령 행렬(뱀서 박쥐 떼처럼 화면을 일직선으로 가로지름). first: 첫 등장(초), every: 다음 등장까지(초) 범위,
   // n: 마릿수, spd: 속도, band: 행렬 폭. 예고 없이 화면 밖에서 우르르 몰려와 내 근처를 지나감 (보스전에도 나옴)
   stream:{first:25, every:[18,26], n:36, spd:300, band:120},
+  // 증빙 일괄수집(뱀서 '진공청소기'): 보스를 잡으면 bossChance 확률로 보스 자리에 떨어짐(맵에는 하나만). 보통 마지막 보스는 게임이 끝나서 제외
+  // pull: 일괄수집으로 끌려오는 증빙 속도(평소 480)
+  vac:{bossChance:.5, pull:900},
+  // 어려움 = 최대 10분 버티기: len초를 버티면 승리. 잡몹 세기(스테이지)는 stageEvery초마다 한 단계씩 오름(최대 4)
+  // bosses: [등장 시각(초), 보스] — 앞 보스가 아직 살아 있으면 그 보스를 잡은 직후 등장
+  // enrage: 보스가 나온 뒤 이 시간(초) 안에 못 잡으면 격노. 이후 rageStep초마다 한 단계씩 더 강해짐
+  // 격노 단계당: 이동 속도 +rageSpd, 피해 +rageDmg, 공격 빈도 +rageTempo, 잡몹 등장 +rageSwarm (보스전 잡몹 상한도 풀림), 단계가 오를 때마다 망령 행렬 한 번
+  // rampHp·rampDmg·rampBoss: 2분 이후 1분마다 잡몹 체력·잡몹 피해·(나올 때의) 보스 체력에 곱해지는 배수 → 오래 버틸수록 계속 강해져서 10분 생존은 잘하는 사람만
+  surv:{len:600, stageEvery:120, rampHp:1.3, rampDmg:1.1, rampBoss:1.25, bosses:[[120,'boss1'],[240,'fraud'],[360,'boss2'],[480,'audit']], enrage:120, rageStep:15, rageSpd:.4, rageDmg:.5, rageTempo:.6, rageSwarm:.8},
   swarm:[2.5,2,1.5,1.25], mobDmg:6, mobHp:[5,12,22,36], waveMul:1.5, xpScale:1.4, gemMax:220,
   bosses:{
     // 배열이면 등장할 때 그중 하나를 같은 확률로 고름 (2스테이지: 미수금의 그림자 / 부정 적발 50%)
@@ -696,6 +708,7 @@ const CFG = {
     4:{key:'audit', name:'금감원 감리',     hp:4200, dmg:36, speed:60, r:42, frames:['audA','audB'], shot:14, slam:55, bar:['#a8c4ff','#4f7fe0','#3559b8']}
   }
 };
+const BOSS_BY_KEY=Object.fromEntries(Object.values(CFG.bosses).flat().map(d=>[d.key,d])); // 어려움 버티기 모드에서 보스를 key로 찾음
 const swarmOf=s=>CFG.swarm[Math.min(s,CFG.swarm.length)-1]; // 스테이지별 잡몹 등장 배수
 // 본부별 보스 외형: 해당 본부로 플레이할 때 이름·그림·상단 HP 바 색만 바꿈 (공격 패턴·체력·크기는 원래 보스 그대로)
 // bar: 상단 보스 HP 바 색 [밝은색(이름·윗부분), 본색, 어두운색(아랫부분)] — 보스 몸 색에 맞춤
@@ -743,7 +756,7 @@ const ITEMS = {
           lv:['동전이 적 사이를 튕겨 다니며 맞힐 때마다 커지고 강해짐 (복리) · 보스에게 피해 1.6배','튕김 +1','동전 +1 (2개)','튕김 +1, 복리율 증가','피해·복리율 증가, 연사 증가']},
   book:  {type:'p', name:'회계기준서', max:5, desc:'공격력 +10%'},
   coffee:{type:'p', name:'아메리카노', max:5, desc:'공격 속도 +8% (모든 쿨타임 -8%)'},
-  card:  {type:'p', name:'법인카드',   max:5, desc:'증빙 흡수 범위 +35%'},
+  card:  {type:'p', name:'법인카드',   max:5, desc:'획득 경험치 +5%'},
   badge: {type:'p', name:'사원증',     max:5, desc:'최대 HP +20, 초당 HP 0.5 회복'},
   shoes: {type:'p', name:'운동화',     max:5, desc:'이동 속도 +10%'}
 };
@@ -850,7 +863,7 @@ const HERO_FRAMES = mkFrames(HERO_TOP,false), HERO_FRAMES_L = mkFrames(HERO_TOP_
 // clear·fail: 모든 스테이지를 클리어했을 때 / 실패했을 때 나오는 문구 (본부별)
 const PARTS = [
   {id:'audit',   color:'#FD5108', starter:'laser',  name:'감사',   full:'감사본부',   clear:'감사 마감', fail:'감사 실패', dead:'미결 전표에 묻혔다.',   role:'재무제표를 검증하는 감사인', cats:['감사본부']},
-  {id:'tax',     color:'#f3f0e8', starter:'hole',  name:'택스',   full:'택스본부',   clear:'절세성공', fail:'절세 실패', dead:'세무조정에 파묻혔다.',   role:'세무조정과 신고를 맡는 세무 전문가', cats:['택스본부']},
+  {id:'tax',     color:'#f3f0e8', starter:'pen',  name:'택스',   full:'택스본부',   clear:'절세성공', fail:'절세 실패', dead:'세무조정에 파묻혔다.',   role:'세무조정과 신고를 맡는 세무 전문가', cats:['택스본부']},
   {id:'deal',    color:'#e4b84a', starter:'comp',  name:'딜',     full:'딜본부',     clear:'딜 클로징', fail:'딜 무산', dead:'DD자료에 깔렸다.',     role:'M&A와 가치평가를 돕는 딜 전문가', cats:['딜본부']},
   {id:'digital', color:'#3d6ad6', starter:'zap',  name:'디지털', full:'디지털',     clear:'업무혁신 완료', fail:'혁신 실패', dead:'레거시에 먹혔다.',     role:'데이터와 IT로 일하는 디지털 전문가', cats:['디지털']}
 ];
@@ -1133,7 +1146,7 @@ const saveProg = () => {try{localStorage.setItem(PROG_KEY, JSON.stringify(PROG))
 const isUnlocked = id => {if(UNLOCK_ALL)return true;const r=UNLOCK_RULES[id];return !r||(PROG.plays[r.after]||0)>=r.plays};
 const unlockHint = id => {const r=UNLOCK_RULES[id];return r?`${partOf(r.after).name} 캐릭터로 ${r.plays}판 플레이하면 해금`:''};
 let CHOICE = {part:isUnlocked(PROG.part)?PROG.part:'audit', g:PROG.g==='f'?'f':'m', mode:PROG.mode==='night'?'night':'normal'}; // mode: normal(보통) | night(어려움) — 'night'는 내부 이름(랭킹 보드 id에도 쓰임)
-const stageText=n=>`STAGE ${n} / ${CFG.totalStages}`+(CHOICE.mode==='night'?' · 어려움':'');
+const stageText=n=>CHOICE.mode==='night'?'10분 버티기 · 어려움':`STAGE ${n} / ${CFG.totalStages}`;
 function questionPool(){
   const cats=partOf(CHOICE.part).cats;
   const idx=[...QUESTIONS.keys()].filter(i=>!cats.length||QUESTIONS[i].cat==='삼일'||cats.includes(QUESTIONS[i].cat));
@@ -1605,6 +1618,9 @@ function pixCanvas(map,px,over={}){
 const URL_ = {};
 function iconURL(key,evo=false){const id=key+(evo?'_e':'');if(!URL_[id])URL_[id]=pixCanvas(ICONS[key],4,evo?EVO_OVER[key]:{}).toDataURL();return URL_[id]}
 const CHEST_URL = pixCanvas(CHEST,4).toDataURL(), CHESTG_URL = pixCanvas(CHEST,4,GOLD_OVER).toDataURL();
+// 증빙 일괄수집: 무지개빛 큰 보석 (먹으면 맵의 모든 증빙을 한 번에 수집)
+const VAC=["....K....","...KWK...","..KuWvK..",".KuuWvvK.","KggWWWIIK",".KggYIIK.","..KgYIK..","...KYK...","....K...."];
+const VAC_URL=pixCanvas(VAC,4).toDataURL();
 
 function makeTextures(sc){
   if(sc.textures.exists('hero_audit_m0'))return;
@@ -1626,7 +1642,7 @@ function makeTextures(sc){
   add('legacy',genLegacy(),3,{'1':'#d8cca6','2':'#a8996c'});add('transA',genTransform(0),3);add('transB',genTransform(1.6),3);
   add('fslip',["KKKKKKK","KWWWWTK","KWAAWWK","KWWWTTK","KKKKKKK"],3); // 위조 전표
   add('dslip',["KKKKKK","KWWWTK","KWAAWK","KWWWWK","KWAAWK","KKKKKK"],3); // 지적 서류
-  add('chest',CHEST,3);add('chestG',CHEST,3,GOLD_OVER);
+  add('chest',CHEST,3);add('chestG',CHEST,3,GOLD_OVER);add('vac',VAC,4);
   add('coin',['..KKKKK..','.KYYYLLK.','KYYLLLLjK','KYLLYLLjK','KLLYYYLjK','KLLLYLjjK','KLLLLjjjK','.KLjjjjK.','..KKKKK..'],3);add('ink',INK,3);add('inkE',INK,3,{U:'#e4b84a',L:'#d9442f'});
   add('key',KEY,3);add('keyE',KEY,3,{W:'#9fd8a8',E:'#2a2f45'});
   add('note',NOTE,3);
@@ -1634,6 +1650,11 @@ function makeTextures(sc){
   add('gem',["..K..",".KLK.","KLYLK",".KLK.","..K.."],3);
   add('gem2',["...K...","..KLK..",".KLYLK.","KLYYYLK",".KLYLK.","..KLK..","...K..."],3);
   add('ebullet',[".KKK.","KvVvK","KVYVK","KvVvK",".KKK."],3);
+  // 낮 맵(밝은 바닥)용 보스 탄: 어두운 색으로 잘 보이게
+  // (가운데는 어둡게, 바깥 테두리만 밝게 → 밝은 보도와 어두운 차도 둘 다에서 보임)
+  add('ebulletD',["..www..",".wKKKw.","wKRRRKw","wKRTRKw","wKRRRKw",".wKKKw.","..www.."],3);
+  add('fslipD',["wwwwwwwww","wKKKKKKKw","wKXXXXTKw","wKXccXXKw","wKXXXTTKw","wKKKKKKKw","wwwwwwwww"],3);
+  add('dslipD',["wwwwwwww","wKKKKKKw","wKXXXTKw","wKXccXKw","wKXXXXKw","wKXccXKw","wKKKKKKw","wwwwwwww"],3);
   for(const k in SUPPLY)add('sup_'+k,ICONS[k],3);
   const sg=document.createElement('canvas');sg.width=sg.height=64;const sgx=sg.getContext('2d'),rg=sgx.createRadialGradient(32,32,2,32,32,32);rg.addColorStop(0,'rgba(255,241,194,.75)');rg.addColorStop(1,'rgba(255,241,194,0)');sgx.fillStyle=rg;sgx.fillRect(0,0,64,64);sc.textures.addCanvas('supglow',sg);
   add('spark',["WW","WW"],3);add('bit',["WWW","WWW"],2);
@@ -1737,7 +1758,8 @@ const pick=a=>a[Math.floor(Math.random()*a.length)];
 const TAU=Math.PI*2;
 const fmt=s=>`${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`;
 let toastTimer=0;
-function toast(msg,warn=false,ms=1500){const t=$('toast');t.textContent=msg;t.className='show'+(warn?' warn':'');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.className='',ms)}
+// msg에 줄바꿈(\n)이 있으면 둘째 줄은 작은 노란 글씨로
+function toast(msg,warn=false,ms=1500){const t=$('toast'),[m1,m2]=String(msg).split('\n');t.textContent=m1;if(m2){const sm=document.createElement('small');sm.textContent=m2;t.appendChild(sm)}t.className='show'+(warn?' warn':'');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.className='',ms)}
 const hc={};
 function setText(id,v){v=String(v);if(hc[id]!==v){hc[id]=v;$(id).textContent=v}}
 function setW(id,pct){const v=Math.max(0,Math.min(100,pct)).toFixed(1)+'%';if(hc[id+'w']!==v){hc[id+'w']=v;$(id).style.width=v}}
@@ -1753,7 +1775,7 @@ function newState(){
 }
 function recalc(S){
   const L=k=>S.items[k]?S.items[k].lv:0;
-  S.might=1+.1*L('book')+S.bonus; S.speed=170*(1+.1*L('shoes')+S.spdBonus); S.cdm=1-.08*L('coffee'); S.magnet=110*(1+.35*L('card'));
+  S.might=1+.1*L('book')+S.bonus; S.speed=170*(1+.1*L('shoes')+S.spdBonus); S.cdm=1-.08*L('coffee'); S.magnet=110;S.xpMul=1+0.05*L('card'); // 법인카드: 증빙 흡수 범위 대신 획득 경험치 증가 (증빙 일괄수집이 생겨서 범위는 고정)
   if(S.buff){if(S.buff.kind==='spd')S.speed*=1.6;else S.cdm*=.625} // 출출박스 버프 (공격 속도 +60% = 쿨타임 ×1/1.6)
   const mh=100+S.hpBonus+20*L('badge'); if(mh>S.maxhp)S.hp+=mh-S.maxhp; S.maxhp=mh; S.hp=Math.min(S.hp,S.maxhp); S.regen=.5*L('badge');
 }
@@ -1978,9 +2000,10 @@ class Battle extends Phaser.Scene{
   create(){
     window.BATTLE=this;makeTextures(this);
     const cam=this.cameras.main;cam.setBackgroundColor('#0b1020');
-    this.S=newState();this.night=!this.demo&&CHOICE.mode==='night';this.paused=false;this.modalOpen=false;this.modalQ=[];this.chests=[];this.supplies=[];this.calcKeys=[];this.textPool=[];this.stopping=false;
+    this.S=newState();this.night=!this.demo&&CHOICE.mode==='night';this.surv=this.night;this.paused=false;this.modalOpen=false;this.modalQ=[];this.chests=[];this.supplies=[];this.calcKeys=[];this.textPool=[];this.stopping=false;
     // 맵 연출: 보통 = 낮의 용산 거리(보도블록·차도, 랜드마크 + 거리 소품), 어려움 = 아모레퍼시픽 사무실 야근(카펫, 사무실 가구만)
     this.fillerBag=this.night?FILLER_BAG:this.demo?FILLER_BAG:STREET_BAG;
+    this.dayMap=!this.demo&&!this.night; // 낮 맵: 보스 탄을 어두운 그림(…D)으로
     if(!this.demo&&!this.night)cam.setBackgroundColor('#d6d0c2');
     this.floor=this.add.tileSprite(0,0,64,64,this.demo?'floor':this.night?'floorOffice':'floorDay').setOrigin(0).setDepth(-10);
     this.physics.world.setBounds(-1e5,-1e5,2e5,2e5);
@@ -2017,7 +2040,7 @@ class Battle extends Phaser.Scene{
     this.physics.add.overlap(this.bullets,this.decoys,this.onInk,null,this);
     this.physics.add.overlap(this.player,this.decoys,(p,d)=>{if(!(d.stunT>0))this.hurt(d.dmg)},null,this);
     this.fxSmoke=P('spark',{lifespan:{min:500,max:900},speed:{min:15,max:70},scale:{start:2.4,end:4.5},alpha:{start:.45,end:0},tint:[0x9aa3b8,0xc9ccd6,0x6b7189]}).setDepth(7);
-    this.mirror=null; // 어려움 보스 복사본 (판마다 초기화)
+    this.mirror=null;this.vac=null; // 어려움 보스 복사본·증빙 일괄수집 (판마다 초기화)
     this.songs=[];this.notes=[];this.songG=this.add.graphics().setDepth(3.5).setBlendMode('ADD');this.rains=[];this.drops=[];this.splashG=this.add.graphics().setDepth(1.6);this.rainG=this.add.graphics().setDepth(8);
     this.fxCoffee=P('bit',{lifespan:{min:200,max:420},speed:{min:40,max:150},gravityY:420,scale:{start:1,end:.2},alpha:{start:1,end:0},tint:[0x3b2416,0x6b4226,0xc89b6a]}).setDepth(7);
     this.holes=[];this.holeG=this.add.graphics().setDepth(5);this.laserG=this.add.graphics().setDepth(8).setBlendMode('ADD');this.aims=[];
@@ -2032,7 +2055,7 @@ class Battle extends Phaser.Scene{
 
     $('hud').hidden=this.demo;$('vig').className='';$('boss').hidden=true;
     if(this.demo){for(let i=0;i<30;i++)this.spawnMob(true);this.player.setVisible(false);this.shadow.setVisible(false)}
-    else{setText('stagetag',stageText(1));if(this.night){this.nightMask=this.add.image(0,0,'nightmask').setDepth(15);this.flickT=3;this.flick=0}else this.nightMask=null;renderSlots(this.S);toast('STAGE 1');this.time.delayedCall(1500,()=>{if(!this.S.over)toast(this.night?'아모레퍼시픽 본사 · 밤 11:47':'용산 거리 · 외근 중',false,1800)});$('hud').classList.toggle('day',!this.night);$('portrait').src=portraitURL(CHOICE.part,CHOICE.g);$('portrait').style.borderColor=partOf(CHOICE.part).color}
+    else{setText('stagetag',stageText(1));if(this.night){this.nightMask=this.add.image(0,0,'nightmask').setDepth(15);this.flickT=3;this.flick=0}else this.nightMask=null;renderSlots(this.S);toast('STAGE 1');this.time.delayedCall(1500,()=>{if(!this.S.over)toast(this.night?'아모레퍼시픽 본사 · 밤 11:47\n10분 버티면 퇴근! 2분마다 보스가 찾아와요':'용산 거리 · 외근 중',false,this.night?3200:1800)});$('hud').classList.toggle('day',!this.night);$('portrait').src=portraitURL(CHOICE.part,CHOICE.g);$('portrait').style.borderColor=partOf(CHOICE.part).color}
   }
   viewMax(){const c=this.cameras.main;return Math.max(c.worldView.width,c.worldView.height,this.scale.width/c.zoom,this.scale.height/c.zoom)}
   applyZoom(){const w=this.scale.width,h=this.scale.height;this.cameras.main.setZoom(Phaser.Math.Clamp(Math.min(w,h)/720,.62,1))}
@@ -2204,7 +2227,7 @@ r.img=this.add.image(r.x,r.y,key).setOrigin(0).setDepth(2.6)}
 
   // ----- 스폰 -----
   spawnMob(demo=false,pos=null,force=null,noCap=false){ // noCap: 망령 행렬은 마릿수 제한과 상관없이 나옴
-    if(!noCap&&this.enemies.countActive()>=(!demo&&this.boss?CFG.bossCap:CFG.maxEnemies))return;
+    if(!noCap&&this.enemies.countActive()>=(!demo&&this.boss&&!this.boss.rage?CFG.bossCap:CFG.maxEnemies))return;
     const S=this.S,s=S.stage,p=this.player,V=this.viewMax();
     const a=rnd(0,TAU),d=demo?rnd(110,V*.6):V*.62+40;
     let type=force||'mob';
@@ -2213,7 +2236,7 @@ r.img=this.add.image(r.x,r.y,key).setOrigin(0).setDepth(2.6)}
     const T={mob:{tex:'mob0',r:13,hp:mh,dmg:CFG.mobDmg,xp:1,spd:78+s*8},
              receipt:{tex:'receipt',r:10,hp:Math.max(1,Math.round(mh*.75)),dmg:CFG.mobDmg-1,xp:1,spd:128+s*8},
              elite:{tex:'elite',r:18,hp:95+15*s,dmg:18,xp:3,spd:58+s*6}}[type];
-    const diff=1+S.t/170,dd=1+S.t/240;
+    const sr=this.surv?Math.max(0,S.t-120)/60:0,diff=(1+S.t/170)*CFG.surv.rampHp**sr,dd=(1+S.t/240)*CFG.surv.rampDmg**sr;
     const {x,y}=this.inMap(pos?pos.x:p.x+Math.cos(a)*d,pos?pos.y:p.y+Math.sin(a)*d);
     const N=this.night?CFG.night:null,ghost=!!N; // 어려움 모드: 모든 잡몹이 망령(종류별 그림은 GHOST_TEX)
     const e=this.enemies.create(x,y,ghost?GHOST_TEX[type]+'0':T.tex).setDepth(4);
@@ -2270,7 +2293,7 @@ r.img=this.add.image(r.x,r.y,key).setOrigin(0).setDepth(2.6)}
     const at=this.inMap(this.player.x+Math.cos(a)*d,this.player.y+Math.sin(a)*d,def.r+20);
     const b=this.physics.add.image(at.x,at.y,def.frames[0]).setDepth(5);
     b.body.setCircle(def.r,(def.cx??b.width/2)-def.r,(def.cy??b.height/2)-def.r); // cx·cy: 소품(돈가방 등) 때문에 몸 중심이 그림 중앙이 아닐 때
-    const hp=Math.round(def.hp*S.bossBuff.hp*(this.night?CFG.night.bossHp:1));
+    const hp=Math.round(def.hp*S.bossBuff.hp*(this.night?CFG.night.bossHp:1)*(this.surv?CFG.surv.rampBoss**(Math.max(0,S.t-120)/60):1));
     Object.assign(b,{def,hp,maxhp:hp,isBoss:true,dmg:Math.round(def.dmg*S.bossBuff.dmg*(this.night?CFG.night.bossDmg:1)),state:'chase',stateT:2.4,ringT:3,spreadT:1.6,flashT:0,baseScale:1+(S.bossBuff.hp-1)*.25,hitR:def.r,
       splitT:3.5,volleyT:2,burst:0,burstT:0,spotT:2.5,fanT:1.6});
     b.setScale(0);this.tweens.add({targets:b,scale:b.baseScale,duration:700,ease:'Back.easeOut'});
@@ -2303,7 +2326,7 @@ r.img=this.add.image(r.x,r.y,key).setOrigin(0).setDepth(2.6)}
   }
 
   // ----- 무기 -----
-  fireB(group,tex,x,y,a,spd){const b=group.get(x,y,tex);if(!b)return null;b.px=x;b.py=y;b.setActive(true).setVisible(true).setDepth(6).setScale(1).clearTint();b.coin=false;b.hits=null;b.spin=0;b.body.enable=true;b.body.reset(x,y);b.setVelocity(Math.cos(a)*spd,Math.sin(a)*spd);b.rotation=a;return b}
+  fireB(group,tex,x,y,a,spd){if(this.dayMap&&group===this.ebullets)tex+='D';const b=group.get(x,y,tex);if(!b)return null;b.px=x;b.py=y;b.setActive(true).setVisible(true).setDepth(6).setScale(1).clearTint();b.coin=false;b.hits=null;b.spin=0;b.body.enable=true;b.body.reset(x,y);b.setVelocity(Math.cos(a)*spd,Math.sin(a)*spd);b.rotation=a;return b}
   killB(group,b){b.body.enable=false;group.killAndHide(b)}
   firePen(){
     const S=this.S,p=this.player,s=wstat(S,'pen'),evo=S.items.pen.evo;
@@ -2598,7 +2621,7 @@ r.img=this.add.image(r.x,r.y,key).setOrigin(0).setDepth(2.6)}
   killEnemy(e){
     const S=this.S;S.kills++;this.fxRed.explode(e.elite?22:11,e.x,e.y);SFX.kill();
     this.dropGem(e.x,e.y,e.xp);
-    if(e.elite){this.cameras.main.shake(90,.004);if(Math.random()<CFG.eliteChest)this.spawnChest(e.x,e.y)}
+    if(e.elite)this.cameras.main.shake(90,.004);
     if(Math.random()<(e.elite?SUPPLY_CFG.eliteDrop:SUPPLY_CFG.mobDrop/swarmOf(S.stage)))this.dropSupply(e.x,e.y);
     // 처치 연출: 하얗게 번쩍이며 부풀었다 사라짐
     const pop=this.add.image(e.x,e.y,e.texture.key,e.frame.name).setDepth(4).setFlipX(e.flipX).setTintFill(0xffffff).setScale(e.scaleX);
@@ -2666,12 +2689,13 @@ r.img=this.add.image(r.x,r.y,key).setOrigin(0).setDepth(2.6)}
     this.tweens.add({targets:cam,zoom:cam.zoom*1.1,duration:140,yoyo:true,ease:'Quad.easeOut'});
     this.fxViolet.explode(90,b.x,b.y);
     for(let i=0;i<8;i++)this.dropGem(b.x+rnd(-40,40),b.y+rnd(-40,40),3);
-    const final=S.stage>=CFG.totalStages;
+    const final=!this.surv&&S.stage>=CFG.totalStages;S.bossBuff.dmg=1; // 버티기 모드는 마지막 보스를 잡아도 10분까지 계속
     if(!final)this.spawnChest(b.x,b.y,true);
     toast(b.def.name+' 처치');
     for(const d of this.decoys.getChildren().slice())this.popDecoy(d,true);this.spots=[];this.spotG.clear();
     b.label.destroy();b.destroy();this.boss=null;this.tele.clear();this.fxTrail.stopFollow();this.fxTrail.emitting=false;$('boss').hidden=true;
     if(!final)this.dropSupply(b.x+50,b.y,'swith');
+    if(!final&&!this.vac&&Math.random()<CFG.vac.bossChance)this.spawnVac(b.x-50,b.y);
     if(final)this.time.delayedCall(1600,()=>this.gameOver(true));
   }
   hurt(d){
@@ -2718,9 +2742,12 @@ r.img=this.add.image(r.x,r.y,key).setOrigin(0).setDepth(2.6)}
     if(S.over)return;
     S.t+=dt;S.stageT+=dt;if(!this.night)this.updLandmarks(); // 어려움(사무실 안)에는 바깥 건물이 없음
     // 보스 & 스테이지
+    // 어려움: 10분 버티기 (시간으로 스테이지·보스 진행)
+    if(this.surv){if(this.updSurv())return}else{
     const bdef=CFG.bosses[S.stage];
     if(bdef&&S.bossSpawnedFor!==S.stage&&S.stageT>=CFG.bossAt){S.bossSpawnedFor=S.stage;this.spawnBoss(Array.isArray(bdef)?pick(bdef):bdef)}
     if(S.stageT>=CFG.stageLen&&!this.boss&&S.stage<CFG.totalStages){S.stage++;S.stageT=0;setText('stagetag',stageText(S.stage));toast('STAGE '+S.stage)}
+    }
     // 회복
     if(S.regen)S.hp=Math.min(S.maxhp,S.hp+S.regen*dt);
     // 이동
@@ -2733,7 +2760,7 @@ r.img=this.add.image(r.x,r.y,key).setOrigin(0).setDepth(2.6)}
     this.dust.emitting=l>.1;
     if(S.iframe>0){S.iframe-=dt;p.setAlpha(Math.floor(time/60)%2?.4:1)}else p.setAlpha(1);
     // 스폰
-    S.spawnT-=dt;if(S.spawnT<=0){S.spawnT=Math.max(.18,1.15-S.stage*.13-S.t/700)*(this.boss?CFG.bossSpawn:1)/(swarmOf(S.stage)*(this.night?CFG.night.swarm:1));const n=1+(S.stage>=2&&Math.random()<.6?1:0)+(S.stage>=3?1:0)+(S.stage>=4?1:0);for(let i=0;i<n;i++)this.spawnMob()}
+    S.spawnT-=dt;if(S.spawnT<=0){S.spawnT=Math.max(.18,1.15-S.stage*.13-S.t/700)*(this.boss?(this.boss.rage?1/(1+CFG.surv.rageSwarm*this.boss.rage):CFG.bossSpawn):1)/(swarmOf(S.stage)*(this.night?CFG.night.swarm:1));const n=1+(S.stage>=2&&Math.random()<.6?1:0)+(S.stage>=3?1:0)+(S.stage>=4?1:0);for(let i=0;i<n;i++)this.spawnMob()}
     if(this.night){S.streamT=(S.streamT??CFG.stream.first)-dt;if(S.streamT<=0){S.streamT=rnd(...CFG.stream.every);this.ghostStream()}}
     if(S.stage>=2){S.waveT-=dt;if(S.waveT<=0){S.waveT=30;if(!this.boss)this.wave()}} // 보스전 중에는 포위 웨이브 없음
     S.chestT-=dt;if(S.chestT<=0){S.chestT=CFG.chestEvery;const a=rnd(0,TAU),d=rnd(240,360);this.spawnChest(p.x+Math.cos(a)*d,p.y+Math.sin(a)*d)}
@@ -2760,19 +2787,20 @@ r.img=this.add.image(r.x,r.y,key).setOrigin(0).setDepth(2.6)}
       if(Math.abs(e.x-p.x)>far||Math.abs(e.y-p.y)>far){const a=rnd(0,TAU),d=V*.62;const q=this.inMap(p.x+Math.cos(a)*d,p.y+Math.sin(a)*d);e.setPosition(q.x,q.y)}
     }
     gone.forEach(e=>e.destroy());
-    if(this.boss)this.updBoss(dt,time);
+    // 격노한 보스는 공격 타이머가 빨리 돎(dt를 키워서 넘김)
+    if(this.boss){if(this.surv)this.updRage(dt);this.updBoss(dt*(this.boss.rage?1+CFG.surv.rageTempo*this.boss.rage:1),time)}
     for(const d of this.decoys.getChildren().slice())this.updFraud(d,dt,time);
     this.updSpots(dt);
     // 증빙
     if(S.pickT>0){S.pickT-=dt;if(S.pickT<=0)S.pickStep=0}
     for(const g of this.gems.getChildren().slice()){
       const d=Math.hypot(g.x-p.x,g.y-p.y);
-      if(d<22){S.xp+=g.v*(this.night?CFG.night.xp:1);S.pickT=.5;SFX.pickup(S.pickStep++);g.destroy();
+      if(d<22){S.xp+=g.v*(this.night?CFG.night.xp:1)*(S.xpMul||1);S.pickT=.5;SFX.pickup(S.pickStep++);g.destroy();
         while(S.xp>=S.xpNext){S.xp-=S.xpNext;S.lv++;S.xpNext=Math.round(S.xpNext*1.15+2*CFG.xpScale);SFX.level();this.fxGold.explode(30,p.x,p.y);this.ring(p.x,p.y,0xe4b84a,160,true);this.openModal('level',{lv:S.lv})}
         continue}
-      if(d<S.magnet||g.pull){g.pull=true;this.physics.moveToObject(g,p,480)}
+      if(d<S.magnet||g.pull){g.pull=true;this.physics.moveToObject(g,p,g.vac?CFG.vac.pull:480)}
     }
-    this.updSupplies(dt);this.updEdges();
+    this.updSupplies(dt);this.updVac(time);this.updEdges();
     // 상자
     for(const c of this.chests.slice()){
       if(Math.hypot(c.x-p.x,c.y-p.y)<36){this.chests.splice(this.chests.indexOf(c),1);c.ind.remove();this.tweens.killTweensOf([c,c.beam]);c.beam.destroy();if(c.tag)c.tag.destroy();this.fxGold.explode(30,c.x,c.y);SFX.chest();const gold=c.gold,stack=c.stack;c.destroy();this.openModal('chest',{gold,stack});continue}
@@ -2788,6 +2816,28 @@ r.img=this.add.image(r.x,r.y,key).setOrigin(0).setDepth(2.6)}
   animMob(e,time){
     if(e.ghost){const f=Math.floor(time/(e.type==='receipt'?180:260)+e.seed)%2;if(e.f!==f){e.f=f;e.setTexture(GHOST_TEX[e.type]+f)}e.rotation=Math.sin(time*.004+e.seed)*(e.elite?.06:.1);return}
     if(e.type==='receipt'){e.rotation=Math.sin(time*.02+e.seed)*.35;return}if(e.elite){e.rotation=Math.sin(time*.006+e.seed)*.12;return}const f=Math.floor(time/220+e.seed)%2;if(e.f!==f){e.f=f;e.setTexture(f?'mob1':'mob0')}e.rotation=Math.sin(time*.008+e.seed)*.14}
+  // ----- 증빙 일괄수집 (뱀서의 '진공청소기'): 먹으면 맵에 떨어진 모든 증빙이 나에게 날아옴 -----
+  spawnVac(x,y){
+    ({x,y}=this.freeSpot(x,y,30));
+    const v=this.add.image(x,y,'vac').setDepth(3);
+    v.glow=this.add.image(x,y,'glowM').setDepth(2.9).setBlendMode('ADD').setAlpha(.8).setScale(.9);
+    v.beam=this.add.image(x,y+8,'beam').setOrigin(.5,1).setDepth(2).setBlendMode('ADD').setTint(0x9fe8ff).setAlpha(.6);
+    this.tweens.add({targets:v,y:y-6,duration:700,yoyo:true,repeat:-1,ease:'Sine.easeInOut'});
+    const ind=el('div','ind vac'),im=el('img');im.src=VAC_URL;im.alt='';ind.append(im,el('i'));$('inds').appendChild(ind);v.ind=ind;
+    this.vac=v;this.fxZap.explode(14,x,y);
+  }
+  // 무지개빛으로 반짝이다가, 닿으면 모든 증빙에 '빨리 끌려옴' 표시(g.vac) → 아래 증빙 루프에서 CFG.vac.pull 속도로 날아옴
+  updVac(time){
+    const v=this.vac;if(!v)return;const p=this.player;
+    v.glow.setTint(Phaser.Display.Color.HSVToRGB((time/1600)%1,.55,1).color).setPosition(v.x,v.y).setScale(.85+.12*Math.sin(time*.006));
+    if(Math.random()<.08)this.fxSpark.emitParticleAt(v.x+rnd(-12,12),v.y+rnd(-14,10),1);
+    if(Math.hypot(v.x-p.x,v.y-p.y)<34){
+      v.ind.remove();this.tweens.killTweensOf(v);v.glow.destroy();v.beam.destroy();v.destroy();this.vac=null;
+      let n=0;for(const g of this.gems.getChildren())if(g.active){g.pull=true;g.vac=true;n++}
+      SFX.level();this.ring(p.x,p.y,0x9fe8ff,220,false);this.fxZap.explode(30,p.x,p.y);this.cameras.main.flash(200,160,230,255);
+      toast('증빙 일괄수집!\n맵에 떨어진 증빙 '+n+'개가 모두 날아와요',false,1600);return}
+    this.placeInd(v);
+  }
   placeInd(c){
     const cam=this.cameras.main,wv=cam.worldView,z=cam.zoom,W=this.scale.width,H=this.scale.height;
     const sx=(c.x-wv.x)*z,sy=(c.y-wv.y)*z,m=34;
@@ -2921,6 +2971,28 @@ r.img=this.add.image(r.x,r.y,key).setOrigin(0).setDepth(2.6)}
     b.label.setPosition(b.x,b.y+b.def.r*b.baseScale+10);setW('bossfill',b.hp/b.maxhp*100);
     return true;
   }
+  // ----- 어려움: 10분 버티기 -----
+  // 잡몹 세기는 시간으로 오르고, CFG.surv.bosses 시각에 보스 등장. 10분을 버티면 승리. 상단 문구로 다음 보스·격노까지 남은 시간을 알려 줌
+  updSurv(){
+    const S=this.S,C=CFG.surv;
+    if(S.t>=C.len){S.t=C.len;this.gameOver(true);return true}
+    S.stage=Math.min(CFG.totalStages,1+Math.floor(S.t/C.stageEvery));
+    S.survI=S.survI||0;const nb=C.bosses[S.survI];
+    if(nb&&S.t>=nb[0]&&!this.boss){S.survI++;this.spawnBoss(BOSS_BY_KEY[nb[1]])}
+    const b=this.boss,nx=C.bosses[S.survI];
+    setText('stagetag',b?(b.rage?`보스 격노 ${b.rage}단계!`:`격노까지 ${fmt(Math.max(0,C.enrage-(b.age||0)))}`):nx?`다음 보스 ${fmt(Math.max(0,nx[0]-S.t))}`:`퇴근까지 ${fmt(Math.max(0,C.len-S.t))}`);
+    return false;
+  }
+  // 격노: 보스가 나온 뒤 CFG.surv.enrage초 안에 못 잡으면 시작, rageStep초마다 한 단계씩 강해짐(이동 속도·피해·공격 빈도·잡몹)
+  updRage(dt){
+    const b=this.boss,C=CFG.surv;b.age=(b.age||0)+dt;
+    const lv=b.age<C.enrage?0:1+Math.floor((b.age-C.enrage)/C.rageStep);
+    if(lv!==(b.rage||0)){b.rage=lv;if(!b.baseDef){b.baseDef=b.def;b.baseDmg=b.dmg}
+      b.def=Object.assign({},b.baseDef,{speed:b.baseDef.speed*(1+C.rageSpd*lv)});b.dmg=Math.round(b.baseDmg*(1+C.rageDmg*lv));this.S.bossBuff.dmg=1+C.rageDmg*lv;
+      setText('bossname',b.baseDef.name+' · 격노 '+lv);b.label.setColor('#ff6a52');
+      toast(lv===1?'보스 격노! 빨리 처치하세요':'격노 '+lv+'단계',true,1500);SFX.warn();this.cameras.main.shake(300,.008);this.fxRed.explode(40,b.x,b.y);this.ghostStream()}
+    if(b.rage&&Math.random()<.35)this.fxRed.emitParticleAt(b.x+rnd(-30,30),b.y+rnd(-30,30),1);
+  }
   updBoss(dt,time){
     const b=this.boss,p=this.player,def=b.def;
     if(b.flashT>0){b.flashT-=dt;if(b.flashT<=0)b.clearTint()}
@@ -2941,7 +3013,7 @@ r.img=this.add.image(r.x,r.y,key).setOrigin(0).setDepth(2.6)}
       this.tele.lineBetween(b.x,b.y,b.x+Math.cos(b.dashA)*len,b.y+Math.sin(b.dashA)*len);
       if(b.stateT<=0){b.state='dash';b.stateT=.48;b.setVelocity(Math.cos(b.dashA)*620,Math.sin(b.dashA)*620);this.tele.clear();SFX.dash();this.cameras.main.shake(120,.006);this.fxTrail.startFollow(b);this.fxTrail.emitting=true}
     }else{b.stateT-=dt;if(b.stateT<=0){b.state='chase';b.stateT=2.6;this.fxTrail.emitting=false}}
-    const shot=(a,spd)=>{const eb=this.fireB(this.ebullets,'ebullet',b.x,b.y,a,spd);if(!eb)return;eb.body.setCircle(6,1.5,1.5);eb.setBlendMode('ADD');eb.life=4.5;eb.dmg=Math.round(14*this.S.bossBuff.dmg)};
+    const shot=(a,spd)=>{const eb=this.fireB(this.ebullets,'ebullet',b.x,b.y,a,spd);if(!eb)return;eb.body.setCircle(6,eb.width/2-6,eb.height/2-6);eb.setBlendMode(this.dayMap?'NORMAL':'ADD');eb.life=4.5;eb.dmg=Math.round(14*this.S.bossBuff.dmg)};
     if(def.ring){b.ringT-=dt;if(b.ringT<=0&&b.state==='chase'){b.ringT=3.2;SFX.ring();const n=18,off=rnd(0,TAU);for(let i=0;i<n;i++)shot(off+i*TAU/n,190)}}
     if(def.spread){b.spreadT-=dt;if(b.spreadT<=0&&b.state==='chase'){b.spreadT=def.ring?2.4:2.6;const a0=Math.atan2(p.y-b.y,p.x-b.x),k=def.ring?7:5;for(let i=0;i<k;i++)shot(a0+(i-(k-1)/2)*.2,230)}}
     b.label.setPosition(b.x,b.y+def.r*b.baseScale+10);
@@ -3023,7 +3095,7 @@ function showResult(S,won){
   recordPlay();
   $('hud').hidden=true;$('vig').className='';$('inds').replaceChildren();
   const nt=CHOICE.mode==='night';
-  setText('rtag',(won?partOf(CHOICE.part).clear:partOf(CHOICE.part).fail)+(nt?' · 어려움':''));setText('rtitle',won?(nt?'야근 망령을 모두 퇴근시켰다.':'시즌의 밤을 넘겼다.'):(nt?'야근 망령에게 붙잡혔다.':partOf(CHOICE.part).dead));
+  setText('rtag',(won?partOf(CHOICE.part).clear:partOf(CHOICE.part).fail)+(nt?' · 어려움':''));setText('rtitle',won?(nt?'10분을 버텼다. 야근 망령을 모두 퇴근시켰다.':'시즌의 밤을 넘겼다.'):(nt?'야근 망령에게 붙잡혔다.':partOf(CHOICE.part).dead));
   $('rkill').nextElementSibling.textContent=nt?'퇴근시킨 망령':'처치한 전표';
   setText('rtime',fmt(S.t));setText('rboss',S.bossKills);setText('rkill',S.kills);setText('rq',`${S.correct} / ${S.asked}`);
   const bd=$('rbuild');bd.replaceChildren();[...S.wOrder,...S.pOrder].forEach(k=>bd.appendChild(slotEl(S,k)));
@@ -3031,7 +3103,7 @@ function showResult(S,won){
   if(!S.wrong.length){setText('rvhead',S.asked?'오답 없음':'풀어본 문제 없음');rv.appendChild(el('p','muted',S.asked?'모든 상자 문제를 맞혔다.':'다음 판에는 전리품 상자를 열어보자.'))}
   else{setText('rvhead',`오답 복습 ${S.wrong.length}문항`);
     for(const w of S.wrong){const d=el('div','rv');d.append(el('b','',w.q.q),el('div','','내 답: '+w.picked),el('div','a','정답: '+w.q.choices[w.q.answer]),...(w.q.exp?[el('div','e',w.q.exp)]:[]));rv.appendChild(d)}}
-  $('result').hidden=false;rankSetup(S,won);(won?$('rkName'):$('retry')).focus();
+  $('result').hidden=false;rankSetup(S,won);($('rankEntry').hidden?$('retry'):$('rkName')).focus();
 }
 
 // =====================================================================
@@ -3118,13 +3190,13 @@ const TUT = (()=>{
   },
   { // 2. 적 종류
     title:'몰려오는 미결 전표들',
-    cap:'적에 닿으면 체력이 깎여요. 반려 서류철은 전리품 상자를 떨어뜨려요.',
+    cap:'적에 닿으면 체력이 깎여요. 반려 서류철은 튼튼한 대신 증빙을 3배 줘요.',
     dur:6,
     init(){const S=newS();S.h={x:80,y:150};S.fireT=0;
       S.mobs.push({x:400,y:66,sp:46,hp:2,seed:1,label:'미결 전표'},{x:470,y:150,sp:105,hp:1,seed:2,kind:'receipt',label:'영수증 · 빠름'},{x:420,y:226,sp:38,hp:7,seed:3,kind:'elite',r:26,label:'반려 서류철 · 튼튼'});return S},
     upd(S,dt){const h=S.h;for(const m of S.mobs)chase(m,h,dt);S.fireT-=dt;
       const tg=nearest(S,h,330);if(tg&&S.fireT<=0&&S.t>.6){S.fireT=.26;fire(S,h,tg,460)}
-      updCommon(S,dt,m=>{if(m.kind==='elite'){S.drop={x:m.x,y:m.y,t:0};say(S,'전리품 상자!',m.x,m.y-34,'#e4b84a')}});
+      updCommon(S,dt,m=>{if(m.kind==='elite')say(S,'증빙 x3',m.x,m.y-34,'#e4b84a')});
       if(S.drop)S.drop.t+=dt},
     draw(S){floor();if(S.drop){const k=clamp(S.drop.t*3,0,1);spr(tex('beam'),S.drop.x,S.drop.y-60,{a:.8*k});spr(tex('chestG'),S.drop.x,S.drop.y-8*(1-k),{a:k})}
       drawMobs(S,S.t);hero(S.h,S.t);drawBuls(S);drawFx(S)}
@@ -3149,7 +3221,7 @@ const TUT = (()=>{
   },
   { // 4. 전리품 상자
     title:'전리품은 문제를 맞혀야 획득',
-    cap:'상자를 열면 회계 문제! 맞히면 새 도구·진화, 틀리면 반려예요.',
+    cap:'상자는 일정 시간마다 근처에 떨어져요. 열면 회계 문제! 맞히면 새 도구·진화, 틀리면 반려.',
     dur:7,
     init(){const S=newS();S.h={x:110,y:170,mv:true};S.cx=0;S.chest={x:690,y:150};S.wrong=(chestRun++)%2===1;return S},
     upd(S,dt){const h=S.h,c=S.chest;if(!S.open){const a=Math.atan2(c.y-h.y,c.x-h.x);h.x+=Math.cos(a)*150*dt;h.y+=Math.sin(a)*150*dt;h.mv=true;
@@ -3293,7 +3365,7 @@ function renderSelect(){
   document.querySelectorAll('.sel-gender button[data-g]').forEach(x=>x.setAttribute('aria-checked',String(x.dataset.g===SEL.g)));
   document.querySelectorAll('.sel-mode button').forEach(x=>x.setAttribute('aria-checked',String(x.dataset.mode===SEL.mode)));
   const pt=partOf(SEL.part),open=isUnlocked(SEL.part);
-  setText('selNote',!open?unlockHint(SEL.part):SEL.mode==='night'?'어려움: 불 꺼진 사무실에서 벽을 통과하는 망령 3종이 더 세고 빠르게 몰려와요. 랭킹은 따로 집계돼요.':`${pt.full} · ${pt.role}`);
+  setText('selNote',!open?unlockHint(SEL.part):SEL.mode==='night'?'어려움: 불 꺼진 사무실에서 최대 10분 버티기! 2·4·6·8분에 보스가 나오고, 2분 안에 못 잡으면 격노해요. 오래 버틸수록(같으면 많이 처치할수록) 랭킹이 높아요.':`${pt.full} · ${pt.role}`);
   $('selGo').disabled=!open;
   danceStart();
 }
@@ -3315,6 +3387,8 @@ let RANK_RUN=null, RANK_TAB='audit', RANK_MODE='normal';
 // 랭킹 보드 id: 보통은 본부 id, 어려움은 본부 id + '_night'
 const rankBoard=(part,mode)=>part+(mode==='night'?'_night':'');
 const fmtRank=t=>{const m=Math.floor(t/60),s=t-m*60;return `${m}:${s<10?'0':''}${s.toFixed(1)}`};
+// 어려움(버티기) 기록: 생존 시간 + 처치 수. RANK_SURV_MIN초 이상 버텨야 등록 가능
+const RANK_SURV_MIN=30, fmtSurv=(t,k)=>`${fmt(t)} · ${k}마리`;
 const partFull=id=>{const n=/_night$/.test(id),b=n?id.slice(0,-6):id;return((PARTS.find(p=>p.id===b)||{}).full||b)+(n?' 어려움':'')};
 const getNick=()=>{try{return localStorage.getItem(NICK_KEY)||''}catch(e){return ''}};
 const setNick=v=>{try{localStorage.setItem(NICK_KEY,v)}catch(e){}};
@@ -3334,13 +3408,15 @@ async function rankFetch(part,limit){
 }
 function rankRender(ol,rows,me){
   ol.replaceChildren();
-  rows.forEach(r=>{const li=el('li',r.name===me?'me':'');li.append(el('span','rk',r.rank),el('span','nm',r.name),el('span','tm',fmtRank(r.t)));ol.appendChild(li)});
+  rows.forEach(r=>{const li=el('li',r.name===me?'me':'');li.append(el('span','rk',r.rank),el('span','nm',r.name),el('span','tm',r.k!=null?fmtSurv(r.t,r.k):fmtRank(r.t)));ol.appendChild(li)});
 }
 function rankMsg(txt,err){const m=$('rkMsg');m.textContent=txt;m.classList.toggle('err',!!err)}
 function rankSetup(S,won){
-  const box=$('rankEntry');box.hidden=!won;RANK_RUN=null;if(!won)return;
-  RANK_RUN={part:rankBoard(CHOICE.part,CHOICE.mode),t:S.t,done:false};
-  $('rkPart').textContent=partFull(RANK_RUN.part);$('rkTime').textContent=fmtRank(S.t);
+  // 보통: 클리어해야 등록(빠를수록 위) · 어려움: 30초 이상 버티면 죽어도 등록(오래 버틸수록, 같으면 많이 처치할수록 위)
+  const nt=CHOICE.mode==='night',ok=nt?S.t>=RANK_SURV_MIN:won;
+  const box=$('rankEntry');box.hidden=!ok;RANK_RUN=null;if(!ok)return;
+  RANK_RUN={part:rankBoard(CHOICE.part,CHOICE.mode),t:nt?Math.floor(S.t*10)/10:S.t,k:nt?S.kills:undefined,done:false};
+  $('rkLabel').textContent=nt?'생존':'클리어';$('rkPart').textContent=partFull(RANK_RUN.part);$('rkTime').textContent=nt?fmtSurv(RANK_RUN.t,S.kills):fmtRank(S.t);
   $('rkName').value=getNick();$('rkSubmit').disabled=false;rankMsg('');$('rkList').replaceChildren();
 }
 async function rankSubmit(){
@@ -3348,10 +3424,10 @@ async function rankSubmit(){
   const name=$('rkName').value.trim();if(!name){rankMsg('닉네임을 입력해 주세요.',true);$('rkName').focus();return}
   const btn=$('rkSubmit');btn.disabled=true;rankMsg('등록 중…');
   try{
-    const {r,d}=await rankReq(RANK_API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({part:run.part,name,t:run.t})});
+    const {r,d}=await rankReq(RANK_API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({part:run.part,name,t:run.t,k:run.k})});
     if(!r.ok||typeof d.rank!=='number')throw new Error(d.error||'server');
     run.done=true;RANK_BUST[run.part]=Date.now();setNick(d.name);$('rkName').value=d.name;
-    rankMsg(d.improved?`${partFull(run.part)} ${d.rank}위로 등록했어요! (전체 ${d.total}명)`:`이전 최고 기록 ${fmtRank(d.best)}이 더 빨라서 그 기록으로 ${d.rank}위예요.`);
+    rankMsg(d.improved?`${partFull(run.part)} ${d.rank}위로 등록했어요! (전체 ${d.total}명)`:(run.k!=null?`이전 최고 기록 ${fmtSurv(d.best,d.bestK)}이 더 좋아서 그 기록으로 ${d.rank}위예요.`:`이전 최고 기록 ${fmtRank(d.best)}이 더 빨라서 그 기록으로 ${d.rank}위예요.`));
     if(Array.isArray(d.top))rankRender($('rkList'),d.top,d.name);
     else try{const top=await rankFetch(run.part,10);rankRender($('rkList'),top.top,d.name)}catch(e){}
   }catch(e){btn.disabled=false;rankMsg(RANK_ERR[e.message]||'등록하지 못했어요. 다시 시도해 주세요.',true)}
@@ -3361,9 +3437,11 @@ function rankTab(part){
   const md=$('rankMode');md.replaceChildren();
   [['normal','보통'],['night','어려움']].forEach(([m,t])=>{const b=el('button','',t);b.type='button';b.setAttribute('role','tab');b.setAttribute('aria-selected',String(m===RANK_MODE));b.onclick=()=>{RANK_MODE=m;rankTab(RANK_TAB)};md.appendChild(b)});
   PARTS.forEach(p=>{const b=el('button','',p.name);b.type='button';b.setAttribute('role','tab');b.setAttribute('aria-selected',String(p.id===part));b.onclick=()=>rankTab(p.id);tabs.appendChild(b)});
-  const board=rankBoard(part,RANK_MODE);
+  const board=rankBoard(part,RANK_MODE),nt=RANK_MODE==='night';
+  $('rankModal').querySelector('h2').textContent=nt?'본부별 최장 생존 기록':'본부별 최단 클리어 기록';
+  $('rankDesc').textContent=nt?'어려움은 오래 버틸수록, 같은 시간이면 많이 처치할수록 높은 순위예요. 30초 이상 버티면 결과 화면에서 등록할 수 있어요.':'게임을 클리어하면 결과 화면에서 닉네임으로 등록할 수 있어요. 같은 닉네임은 가장 빠른 기록 하나만 남아요.';
   const ol=$('rankList'),em=$('rankEmpty');ol.replaceChildren();em.hidden=false;em.textContent='불러오는 중…';
-  rankFetch(board,30).then(d=>{if(RANK_TAB!==part||rankBoard(part,RANK_MODE)!==board)return;rankRender(ol,d.top,getNick());em.hidden=d.top.length>0;em.textContent='아직 등록된 기록이 없어요. 첫 클리어의 주인공이 되어보세요.'})
+  rankFetch(board,30).then(d=>{if(RANK_TAB!==part||rankBoard(part,RANK_MODE)!==board)return;rankRender(ol,d.top,getNick());em.hidden=d.top.length>0;em.textContent=nt?'아직 등록된 기록이 없어요. 첫 기록의 주인공이 되어보세요.':'아직 등록된 기록이 없어요. 첫 클리어의 주인공이 되어보세요.'})
     .catch(e=>{if(RANK_TAB!==part||rankBoard(part,RANK_MODE)!==board)return;em.hidden=false;em.textContent=RANK_ERR[e.message]==null?'랭킹을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.':RANK_ERR[e.message]});
 }
 $('rkSubmit').onclick=rankSubmit;
