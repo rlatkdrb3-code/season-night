@@ -2817,7 +2817,7 @@ const TUT = (()=>{
         const ch=['재무제표의 신뢰성을 높인다','회사 대신 세금을 계산한다','다음 해 주가를 예측한다'],sel=S.wrong?1:0;
         ch.forEach((s,i)=>{const y=py+72+i*36,on=pick&&i===sel,good=on&&!S.wrong,bad=on&&S.wrong;rrect(px+16,y,pw-32,30,8,good?'#d9f2df':bad?'#f8d9d3':'#fff',good?'#2f7a4f':bad?'#d9442f':'rgba(0,0,0,.15)',on?3:1.5);
           text(`${i+1}  ${s}`,px+28,y+16,{size:15,col:'#1b1a24',align:'left',stroke:false})});
-        if(!pick)text('보기를 골라 답하세요 · 숫자키 1·2·3',px+pw/2,py+ph-18,{size:13,col:'#6b6656',stroke:false});
+        if(!pick)text('보기를 골라 답하세요 · 숫자키 또는 방향키+Enter',px+pw/2,py+ph-18,{size:13,col:'#6b6656',stroke:false});
         else if(ok)text('정답! 전리품 획득',px+pw/2,py+ph-18,{size:17,col:'#2f7a4f',stroke:false});
         else{text('오답 · 전리품을 못 받아요',px+pw/2,py+ph-18,{size:15,col:'#d9442f',stroke:false});
           if(k>2.1){const b=clamp((k-2.1)*6,0,1);x.save();x.translate(px+pw-70,py+40);x.rotate(-.18);x.globalAlpha=a*b;x.scale(1.6-.6*b,1.6-.6*b);rrect(-44,-20,88,40,6,null,'#d9442f',4);text('반려',0,1,{size:24,col:'#d9442f',stroke:false});x.restore()}}
@@ -3051,6 +3051,13 @@ addEventListener('keydown',e=>{
     if(e.key==='Enter'&&(document.activeElement===document.body||document.activeElement===$('selGo')||document.activeElement.classList.contains('sel-card'))){e.preventDefault();confirmSelect();return}
     if(e.key==='Escape'){$('selBack').click();return}
   }
+  // 레벨업 카드·퀴즈 보기: 방향키로 선택을 옮기고 Enter로 고름 (한 손 플레이). 이동하던 방향키를 누른 채 창이 떠도 넘어가지 않게 반복 입력은 무시
+  const arrow=e.key==='ArrowLeft'||e.key==='ArrowRight'||e.key==='ArrowUp'||e.key==='ArrowDown';
+  const navBox=!$('levelup').hidden?$('lvcards'):(!$('chest').hidden&&$('verdict').hidden)?$('choices'):null;
+  if(arrow&&navBox){e.preventDefault();if(e.repeat)return;
+    const items=[...navBox.children].filter(b=>!b.disabled);if(!items.length)return;
+    const d=e.key==='ArrowRight'||e.key==='ArrowDown'?1:-1,i=items.indexOf(document.activeElement);
+    items[i<0?0:(i+d+items.length)%items.length].focus();return}
   if(!$('levelup').hidden&&n>=1&&n<=3){const c=$('lvcards').children[n-1];if(c)c.click()}
   else if(!$('chest').hidden){if(n>=1&&$('verdict').hidden){const c=$('choices').children[n-1];if(c)c.click()}}
 });
