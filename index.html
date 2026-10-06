@@ -86,12 +86,12 @@ img{image-rendering:pixelated}
 .buff img{width:20px;height:20px}
 .buff b{font-family:var(--pixel);font-size:9px;color:#ff8a52}
 @keyframes ready{50%{box-shadow:0 0 10px rgba(159,216,168,.8)}}
-#boss{position:absolute;left:50%;top:calc(env(safe-area-inset-top,0px) + 74px);transform:translateX(-50%);width:min(440px,calc(100% - 32px));display:grid;gap:4px}
+#boss{--b1:#c9b6ff;--b2:var(--violet);--b3:#5b3fb0;position:absolute;left:50%;top:calc(env(safe-area-inset-top,0px) + 74px);transform:translateX(-50%);width:min(440px,calc(100% - 32px));display:grid;gap:4px}
 #boss[hidden]{display:none}
 .bname{display:flex;justify-content:space-between;align-items:center;gap:8px}
-#bossname{font-family:var(--display);font-size:18px;color:#c9b6ff;text-shadow:1px 1px 0 #000}
+#bossname{font-family:var(--display);font-size:18px;color:var(--b1);text-shadow:1px 1px 0 #000}
 .bbar{height:12px;background:rgba(0,0,0,.6);border:2px solid #000;border-radius:2px;overflow:hidden}
-.bbar>i{display:block;height:100%;background:linear-gradient(#c9b6ff,var(--violet) 60%,#5b3fb0);transition:width .12s linear}
+.bbar>i{display:block;height:100%;background:linear-gradient(var(--b1),var(--b2) 60%,var(--b3));transition:width .12s linear}
 
 #toast{position:absolute;left:50%;top:36%;transform:translate(-50%,-50%);font-family:var(--display);font-size:clamp(26px,6vw,46px);letter-spacing:.04em;color:var(--fg);text-shadow:0 3px 0 #000,0 0 24px rgba(0,0,0,.7);opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;text-align:center;width:90%;text-wrap:balance}
 #toast.show{opacity:1;transform:translate(-50%,-50%) scale(1.04)}
@@ -661,32 +661,33 @@ const CFG = {
   stageLen:45, totalStages:4, bossAt:20, maxEnemies:130, firstChest:8, chestEvery:19, eliteChest:.45, chestLife:30, chestWarn:5, // chestLife: 일반 상자가 자동으로 사라지기까지(초, 게임 시간). 마지막 chestWarn초는 깜빡임
   bosses:{
     // 배열이면 등장할 때 그중 하나를 같은 확률로 고름 (2스테이지: 미수금의 그림자 / 부정 적발 50%)
-    2:[{key:'boss1', name:'미수금의 그림자', hp:900, dmg:24, speed:72, r:38, ring:false, spread:true, frames:['boss1a','boss1b']},
-       {key:'fraud', name:'부정 적발',     hp:850, dmg:22, speed:84, r:34, cx:51, cy:60, frames:['fraudA','fraudB'], shot:12}],
-    3:{key:'boss2', name:'분식의 군주',     hp:2400, dmg:30, speed:78, r:46, ring:true, spread:true, frames:['boss2']},
+    2:[{key:'boss1', name:'미수금의 그림자', hp:900, dmg:24, speed:72, r:38, ring:false, spread:true, frames:['boss1a','boss1b'], bar:['#c9b6ff','#8f6cf0','#5b3fb0']},
+       {key:'fraud', name:'부정 적발',     hp:850, dmg:22, speed:84, r:34, cx:51, cy:60, frames:['fraudA','fraudB'], shot:12, bar:['#a6ecc6','#45c08a','#2b8f66']}],
+    3:{key:'boss2', name:'분식의 군주',     hp:2400, dmg:30, speed:78, r:46, ring:true, spread:true, frames:['boss2'], bar:['#ffa08c','#d9442f','#8f2a1c']},
     // 최종 보스
-    4:{key:'audit', name:'금감원 감리',     hp:4200, dmg:36, speed:60, r:42, frames:['audA','audB'], shot:14, slam:55}
+    4:{key:'audit', name:'금감원 감리',     hp:4200, dmg:36, speed:60, r:42, frames:['audA','audB'], shot:14, slam:55, bar:['#a8c4ff','#4f7fe0','#3559b8']}
   }
 };
-// 본부별 보스 외형: 해당 본부로 플레이할 때 이름·그림만 바꿈 (공격 패턴·체력·크기는 원래 보스 그대로)
+// 본부별 보스 외형: 해당 본부로 플레이할 때 이름·그림·상단 HP 바 색만 바꿈 (공격 패턴·체력·크기는 원래 보스 그대로)
+// bar: 상단 보스 HP 바 색 [밝은색(이름·윗부분), 본색, 어두운색(아랫부분)] — 보스 몸 색에 맞춤
 const PART_BOSSES = {
   tax:{
-    boss1:{name:'누락소득의 망령',  frames:['omitA','omitB']},
-    fraud:{name:'탈세적발',        frames:['evadeA','evadeB']},
-    boss2:{name:'조세회피의 군주',  frames:['haven']},
-    audit:{name:'세무조사의 심판',  frames:['judgeA','judgeB']}
+    boss1:{name:'누락소득의 망령',  frames:['omitA','omitB'],   bar:['#d4f5da','#9fd8a8','#1d7a6e']},
+    fraud:{name:'탈세적발',        frames:['evadeA','evadeB'], bar:['#f3d79e','#c99a52','#9a7038']},
+    boss2:{name:'조세회피의 군주',  frames:['haven'],           bar:['#8fe8d8','#2fb3a0','#1d7a6e']},
+    audit:{name:'세무조사의 심판',  frames:['judgeA','judgeB'], bar:['#ffffff','#c9ccd6','#5a6070']}
   },
   deal:{
-    boss1:{name:'미매각의 그림자',  frames:['unsoldA','unsoldB']},
-    fraud:{name:'추가실사의 악령',  frames:['ddA','ddB']},
-    boss2:{name:'딜브레이크의 군주', frames:['dealbreak']},
-    audit:{name:'클로징의 심판',    frames:['closingA','closingB']}
+    boss1:{name:'미매각의 그림자',  frames:['unsoldA','unsoldB'], bar:['#eef0f5','#b4bccc','#7a8396']},
+    fraud:{name:'추가실사의 악령',  frames:['ddA','ddB'],         bar:['#ff9a85','#e0482f','#8f2a1c']},
+    boss2:{name:'딜브레이크의 군주', frames:['dealbreak'],     bar:['#fff1c2','#e4b84a','#9a7038']},
+    audit:{name:'클로징의 심판',    frames:['closingA','closingB'], bar:['#b4c2f0','#5a6fc0','#2c3a66']}
   },
   digital:{
-    boss1:{name:'수작업의 망령',    frames:['manualA','manualB']},
-    fraud:{name:'엑셀지옥의 그림자', frames:['excelA','excelB']},
-    boss2:{name:'레거시의 군주',    frames:['legacy']},
-    audit:{name:'디지털 전환의 심판', frames:['transA','transB']}
+    boss1:{name:'수작업의 망령',    frames:['manualA','manualB'], bar:['#ffffff','#e6ecf8','#7aa2ff']},
+    fraud:{name:'엑셀지옥의 그림자', frames:['excelA','excelB'], bar:['#d8f04a','#45c08a','#2f7a4f']},
+    boss2:{name:'레거시의 군주',    frames:['legacy'],        bar:['#f3ead8','#d8cca6','#a8996c']},
+    audit:{name:'디지털 전환의 심판', frames:['transA','transB'], bar:['#c9dcff','#7aa2ff','#3d6ad6']}
   }
 };
 const ITEMS = {
@@ -2059,8 +2060,9 @@ class Battle extends Phaser.Scene{
     b.setScale(0);this.tweens.add({targets:b,scale:b.baseScale,duration:700,ease:'Back.easeOut'});
     this.physics.add.overlap(this.player,b,()=>{if(!(b.stunT>0))this.hurt(b.dmg)});
     this.physics.add.overlap(b,this.bullets,(bo,bu)=>this.onInk(bu,bo));
-    b.label=this.add.text(b.x,b.y,def.name,{fontFamily:'"Do Hyeon",sans-serif',fontSize:'15px',color:'#c9b6ff',stroke:'#0b1020',strokeThickness:4}).setOrigin(.5,0).setDepth(9);
-    this.boss=b;$('boss').hidden=false;setText('bossname',def.name);
+    const bar=def.bar||['#c9b6ff','#8f6cf0','#5b3fb0'];
+    b.label=this.add.text(b.x,b.y,def.name,{fontFamily:'"Do Hyeon",sans-serif',fontSize:'15px',color:bar[0],stroke:'#0b1020',strokeThickness:4}).setOrigin(.5,0).setDepth(9);
+    this.boss=b;const bx=$('boss').style;bar.forEach((c,i)=>bx.setProperty('--b'+(i+1),c));$('boss').hidden=false;setText('bossname',def.name);
     toast('WARNING · '+def.name,true,1800);SFX.warn();this.cameras.main.shake(500,.006);this.fxViolet.explode(40,b.x,b.y);
   }
 
