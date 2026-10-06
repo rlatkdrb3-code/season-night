@@ -218,6 +218,10 @@ kbd{font-family:var(--body);border:1px solid rgba(28,26,23,.3);border-radius:3px
 .tut-dots{display:flex;gap:6px;align-items:center}
 .tut-dots button{width:9px;height:9px;padding:0;border:0;border-radius:5px;background:rgba(0,0,0,.18);cursor:pointer;transition:width .2s}
 .tut-dots button[aria-current="true"]{width:22px;background:var(--pwc)}
+.tut-foot{display:flex;align-items:center;gap:14px}
+.tut-foot .primary{flex:1}
+.tut-skip{display:flex;align-items:center;gap:6px;flex:none;font-size:14px;color:var(--ink-2);cursor:pointer;user-select:none}
+.tut-skip input{appearance:auto;-webkit-appearance:checkbox;width:18px;height:18px;margin:0;padding:0;border:0;background:none;accent-color:var(--pwc);color-scheme:light;cursor:pointer}
 .codex{display:grid;gap:6px;margin:14px 0 18px}
 .codex h3{font-family:var(--display);font-weight:700;font-size:15px;margin:0 0 2px}
 .recipe{display:grid;grid-template-columns:auto auto auto auto 1fr;align-items:center;gap:6px;font-size:13px;padding:7px 12px;background:var(--paper-2);border-radius:12px}
@@ -372,7 +376,6 @@ kbd{font-family:var(--body);border:1px solid rgba(28,26,23,.3);border-radius:3px
       <p class="title-press" aria-hidden="true">PRESS ENTER</p>
       <div class="title-links">
         <button class="title-ghost" id="openCodex" type="button">도구 도감</button>
-        <button class="title-ghost" id="openHelp" type="button">게임 설명</button>
         <button class="title-ghost" id="openRank" type="button">랭킹</button>
       </div>
     </div>
@@ -433,12 +436,12 @@ kbd{font-family:var(--body);border:1px solid rgba(28,26,23,.3);border-radius:3px
 
   <div class="overlay" id="helpModal" hidden>
     <div class="sheet">
-      <p class="eyebrow">게임 설명 · <span id="tutNo">1 / 8</span></p>
+      <p class="eyebrow">게임 방법 · <span id="tutNo">1 / 8</span></p>
       <h2 id="tutTitle">움직이기만 하면 공격은 자동</h2>
       <div class="tut-stage"><canvas id="tutCanvas" width="480" height="270" role="img"></canvas></div>
       <p class="tut-cap" id="tutCap"></p>
       <div class="tut-nav"><button class="tut-arrow" id="tutPrev" type="button" aria-label="이전 설명">‹</button><div class="tut-dots" id="tutDots"></div><button class="tut-arrow" id="tutNext" type="button" aria-label="다음 설명">›</button></div>
-      <button class="primary" type="button" data-close>닫기</button>
+      <div class="tut-foot"><label class="tut-skip"><input type="checkbox" id="tutHide"> 다시 보지 않기</label><button class="primary" id="tutGo" type="button">출근하기</button></div>
     </div>
   </div>
 
@@ -2687,7 +2690,7 @@ function showResult(S,won){
     cx.appendChild(r)});
   // 모달 열고 닫기
   const open=id=>{$(id).hidden=false;$(id).querySelector('[data-close]').focus()};
-  $('openCodex').onclick=()=>open('codexModal');$('openHelp').onclick=()=>{open('helpModal');TUT.open()};
+  $('openCodex').onclick=()=>open('codexModal');
   document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>{b.closest('.overlay').hidden=true;$('start').focus()});
 })();
 // =====================================================================
@@ -2886,7 +2889,14 @@ const TUT = (()=>{
     if(S.t>=st.dur){loops++;if(!manual&&loops>=2)go(i+1);else S=st.init()}
     raf=requestAnimationFrame(tick)}
   $('tutPrev').onclick=()=>{manual=true;go(i-1)};$('tutNext').onclick=()=>{manual=true;go(i+1)};
-  return {open(){manual=false;go(0);last=0;if(!raf&&!DANCE_OFF)raf=requestAnimationFrame(tick)},prev(){manual=true;go(i-1)},next(){manual=true;go(i+1)}};
+  // 출근(게임 시작) 직전에 띄우는 게임 방법 팝업. '다시 보지 않기'는 이 브라우저에 기억
+  const HIDE_KEY='seasonNight.hideHowTo';
+  const hidden=()=>{try{return localStorage.getItem(HIDE_KEY)==='1'}catch(e){return false}};
+  let after=null;
+  function open(then){after=then||null;$('tutHide').checked=false;$('helpModal').hidden=false;manual=false;go(0);last=0;if(!raf&&!DANCE_OFF)raf=requestAnimationFrame(tick);$('tutGo').focus()}
+  function done(){if($('tutHide').checked){try{localStorage.setItem(HIDE_KEY,'1')}catch(e){}}$('helpModal').hidden=true;const f=after;after=null;if(f)f()}
+  $('tutGo').onclick=done;
+  return {open,done,hidden,prev(){manual=true;go(i-1)},next(){manual=true;go(i+1)}};
 })();
 // =====================================================================
 // 캐릭터 선택 화면
@@ -2929,7 +2939,8 @@ function renderSelect(){
   danceStart();
 }
 function openSelect(){SFX.init();['title','result','codexModal','helpModal'].forEach(id=>$(id).hidden=true);SEL.part=CHOICE.part;SEL.g=CHOICE.g;renderSelect();$('select').hidden=false;$('selGo').focus()}
-function confirmSelect(){if(!isUnlocked(SEL.part))return;CHOICE.part=SEL.part;CHOICE.g=SEL.g;PROG.part=CHOICE.part;PROG.g=CHOICE.g;saveProg();startRun()}
+function confirmSelect(){if(!isUnlocked(SEL.part))return;CHOICE.part=SEL.part;CHOICE.g=SEL.g;PROG.part=CHOICE.part;PROG.g=CHOICE.g;saveProg();
+  if(TUT.hidden())startRun();else{$('select').hidden=true;TUT.open(startRun)}}
 document.querySelectorAll('.sel-gender button').forEach(x=>x.onclick=()=>{SEL.g=x.dataset.g;renderSelect()});
 $('selBack').onclick=()=>{$('select').hidden=true;$('title').hidden=false;$('start').focus()};
 $('selGo').onclick=confirmSelect;
@@ -3010,7 +3021,8 @@ addEventListener('keydown',e=>{
   // 전투 중 P / Esc: 일시정지 전환 (다른 창이 떠 있을 때는 제외)
   const B=window.BATTLE;
   if((e.key==='p'||e.key==='P'||e.key==='ㅔ'||e.key==='Escape')&&B&&!B.demo&&!B.S.over&&!B.modalOpen&&!$('hud').hidden){e.preventDefault();B.togglePause();return}
-  if(e.key==='Escape'){['codexModal','helpModal','rankModal'].forEach(id=>$(id).hidden=true)}
+  if(!$('helpModal').hidden&&(e.key==='Escape'||(e.key==='Enter'&&document.activeElement!==$('tutHide')))){e.preventDefault();TUT.done();return}
+  if(e.key==='Escape'){['codexModal','rankModal'].forEach(id=>$(id).hidden=true)}
   if(!$('helpModal').hidden&&(e.key==='ArrowLeft'||e.key==='ArrowRight')){e.preventDefault();e.key==='ArrowLeft'?TUT.prev():TUT.next();return}
   if(e.key==='Enter'&&!$('title').hidden&&$('codexModal').hidden&&$('helpModal').hidden&&$('rankModal').hidden&&document.activeElement===document.body){e.preventDefault();openSelect();return}
   if(!$('select').hidden){
