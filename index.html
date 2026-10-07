@@ -8,6 +8,9 @@
 <meta property="og:title" content="시즌의 밤">
 <meta property="og:description" content="D-3조 회계 생존 학습게임 · 정답이 곧 무기가 된다">
 <meta name="theme-color" content="#FD5108">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&family=Press+Start+2P&display=swap">
@@ -72,6 +75,9 @@ img{image-rendering:pixelated}
 .chip.red{background:rgba(217,68,47,.85);color:#fff}
 .chip[hidden]{display:none}
 #mute{pointer-events:auto;font-family:var(--display);font-size:13px;background:rgba(255,255,255,.1);color:var(--fg);padding:4px 8px}
+#fsHud{pointer-events:auto;font-family:var(--display);font-size:13px;background:rgba(255,255,255,.1);color:var(--fg);padding:4px 8px}
+.fs-title{position:absolute;top:calc(env(safe-area-inset-top,0px) + 14px);right:14px;font-size:13px;padding:6px 12px}
+[data-fs-btn][hidden]{display:none}
 #slots{display:grid;gap:4px;padding:8px 14px 0;width:max-content}
 .slotrow{display:flex;gap:4px}
 .slot{position:relative;width:34px;height:34px;border-radius:3px;background:rgba(11,16,32,.75);border:2px solid rgba(233,228,214,.25);display:grid;place-items:center}
@@ -372,6 +378,7 @@ kbd{font-family:var(--body);border:1px solid rgba(28,26,23,.3);border-radius:3px
       <div class="meta">
         <span>처치 <b id="kills">0</b></span>
         <button id="mute" type="button">소리 켬</button>
+        <button id="fsHud" type="button" data-fs-btn hidden>전체 화면</button>
       </div>
     </div>
     <div id="slots"><div class="slotrow" id="wslots"></div><div class="slotrow" id="pslots"></div></div>
@@ -396,6 +403,7 @@ kbd{font-family:var(--body);border:1px solid rgba(28,26,23,.3);border-radius:3px
       </div>
     </div>
     <div class="title-credit"><span>D-3조</span><img id="pwclogo" alt="PwC"></div>
+    <button class="title-ghost fs-title" id="fsTitle" type="button" data-fs-btn hidden>전체 화면</button>
   </div>
 
   <div class="overlay" id="select" hidden>
@@ -3470,7 +3478,7 @@ function recordPlay(){
 }
 
 let game;
-function startRun(){SFX.init();['title','select','result','levelup','chest','codexModal','helpModal','pauseModal','rankModal'].forEach(id=>$(id).hidden=true);game.scene.getScene('Battle').scene.restart({demo:false})}
+function startRun(){SFX.init();if(FS.touch)FS.enter();['title','select','result','levelup','chest','codexModal','helpModal','pauseModal','rankModal'].forEach(id=>$(id).hidden=true);game.scene.getScene('Battle').scene.restart({demo:false})}
 if(window.Phaser){
   game=new Phaser.Game({type:Phaser.AUTO,parent:'game',backgroundColor:'#0b1020',scale:{mode:Phaser.Scale.RESIZE,width:'100%',height:'100%'},
     physics:{default:'arcade',arcade:{debug:false}},audio:{noAudio:true},banner:false,scene:[Battle]});
@@ -3483,6 +3491,23 @@ $('pauseResume').onclick=()=>window.BATTLE.togglePause();
 $('pauseRestart').onclick=startRun;
 $('pauseQuit').onclick=()=>{$('pauseModal').hidden=true;$('hud').hidden=true;game.scene.getScene('Battle').scene.restart({demo:true});$('title').hidden=false;$('start').focus()};
 $('mute').onclick=()=>{SFX.muted=!SFX.muted;$('mute').textContent=SFX.muted?'소리 끔':'소리 켬'};
+// ----- 전체 화면: 브라우저 주소창·하단 바를 숨김 -----
+// 브라우저 보안상 페이지가 열리자마자는 불가능하고, 사용자가 처음 화면을 누르거나 키를 누를 때 들어감
+// (모바일은 판을 시작할 때마다 다시 시도. 아이폰 Safari는 지원하지 않아 버튼도 숨김)
+const FS={
+  can:!!(document.documentElement.requestFullscreen||document.documentElement.webkitRequestFullscreen),
+  on:()=>!!(document.fullscreenElement||document.webkitFullscreenElement),
+  touch:!!(window.matchMedia&&matchMedia('(pointer: coarse)').matches),
+  enter(){if(!FS.can||FS.on())return;const d=document.documentElement;
+    try{const r=d.requestFullscreen?d.requestFullscreen({navigationUI:'hide'}):d.webkitRequestFullscreen();if(r&&r.catch)r.catch(()=>{})}catch(e){}},
+  sync(){document.querySelectorAll('[data-fs-btn]').forEach(b=>b.hidden=!FS.can||FS.on())}
+};
+document.querySelectorAll('[data-fs-btn]').forEach(b=>b.onclick=e=>{e.stopPropagation();FS.enter()});
+['fullscreenchange','webkitfullscreenchange'].forEach(ev=>document.addEventListener(ev,FS.sync));FS.sync();
+// 첫 터치·클릭·키 입력 때 한 번 자동으로 전체 화면
+const fsFirst=e=>{if(e.type==='keydown'&&(e.key==='Escape'||e.isComposing))return;
+  ['click','touchend','keydown'].forEach(t=>removeEventListener(t,fsFirst,true));FS.enter()};
+['click','touchend','keydown'].forEach(t=>addEventListener(t,fsFirst,true));
 addEventListener('keydown',e=>{
   const n=parseInt(e.key,10);
   // 전투 중 P / Esc: 일시정지 전환 (다른 창이 떠 있을 때는 제외)
