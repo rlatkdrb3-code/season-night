@@ -2079,7 +2079,7 @@ class Battle extends Phaser.Scene{
 
     $('hud').hidden=this.demo;$('vig').className='';$('boss').hidden=true;
     if(this.demo){for(let i=0;i<30;i++)this.spawnMob(true);this.player.setVisible(false);this.shadow.setVisible(false)}
-    else{setText('stagetag',stageText(1));if(this.night){this.nightMask=this.add.image(0,0,'nightmask').setDepth(15);this.flickT=3;this.flick=0}else this.nightMask=null;renderSlots(this.S);toast('STAGE 1');this.time.delayedCall(1500,()=>{if(!this.S.over)toast(this.night?'아모레퍼시픽 본사 · 밤 11:47\n10분 버티면 퇴근! 2분마다 보스가 찾아와요':'용산 거리 · 외근 중',false,this.night?3200:1800)});$('hud').classList.toggle('day',!this.night);$('portrait').src=portraitURL(CHOICE.part,CHOICE.g);$('portrait').style.borderColor=partOf(CHOICE.part).color}
+    else{setText('stagetag',stageText(1));if(this.night){this.nightMask=this.add.image(0,0,'nightmask').setDepth(15);this.flickT=3;this.flick=0}else this.nightMask=null;renderSlots(this.S);toast('STAGE 1');this.time.delayedCall(1500,()=>{if(!this.S.over)toast(this.night?'아모레퍼시픽 본사 · 새벽 3:00\n10분 버티면 퇴근! 2분마다 보스가 찾아와요':'용산 거리 · 외근 중',false,this.night?3200:1800)});$('hud').classList.toggle('day',!this.night);$('portrait').src=portraitURL(CHOICE.part,CHOICE.g);$('portrait').style.borderColor=partOf(CHOICE.part).color}
   }
   viewMax(){const c=this.cameras.main;return Math.max(c.worldView.width,c.worldView.height,this.scale.width/c.zoom,this.scale.height/c.zoom)}
   applyZoom(){const w=this.scale.width,h=this.scale.height;this.cameras.main.setZoom(Phaser.Math.Clamp(Math.min(w,h)/720,.62,1))}
