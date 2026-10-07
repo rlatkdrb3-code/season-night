@@ -99,7 +99,7 @@ img{image-rendering:pixelated}
 #toast{position:absolute;left:50%;top:36%;transform:translate(-50%,-50%);font-family:var(--display);font-size:clamp(26px,6vw,46px);letter-spacing:.04em;color:var(--fg);text-shadow:0 3px 0 #000,0 0 24px rgba(0,0,0,.7);opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;text-align:center;width:90%;text-wrap:balance}
 #toast.show{opacity:1;transform:translate(-50%,-50%) scale(1.04)}
 #toast.warn{color:#ff8a76}
-#toast small{display:block;margin-top:12px;font-size:.48em;letter-spacing:.02em;color:#ffd86b}
+#toast small{display:block;margin-top:12px;font-size:max(15px,.48em);letter-spacing:.02em;color:#ffd86b}
 #stick{position:absolute;width:104px;height:104px;margin:-52px 0 0 -52px;border-radius:50%;border:2px solid rgba(233,228,214,.25);pointer-events:none}
 #stick[hidden]{display:none}
 #stick>i{position:absolute;left:50%;top:50%;width:44px;height:44px;margin:-22px;border-radius:50%;background:var(--pwc-glow)}
@@ -2656,8 +2656,8 @@ r.img=this.add.image(r.x,r.y,key).setOrigin(0).setDepth(2.6)}
       fx=`${SUPPLY_CFG.buffDur}초간 ${k==='spd'?'이동':'공격'} 속도 +60%`;
       this.float(p.x,p.y-48,k==='spd'?'이동 속도 +60%':'공격 속도 +60%','#2fb3a0',15,'"Do Hyeon",sans-serif');this.ring(p.x,p.y,0x2fb3a0,110,false)}
     else if(kind==='haagen'){this.haagen();fx=`화면 안 모든 적에게 큰 피해 + ${SUPPLY_CFG.stun}초 경직`}
-    // 큰 글씨: 효과 / 작은 글씨: 보급품 이름 · 상황 문구
-    toast(`${fx}\n${info.name} · ${info.flavor}`,false,2600);
+    // 큰 글씨: 상황 문구 / 작은 글씨: 보급품 이름 · 실제 효과
+    toast(`${info.flavor}\n${info.name} · ${fx}`,false,2600);
   }
   // 하겐다즈: 화면 안 모든 적에게 큰 피해 + 경직
   haagen(){
