@@ -236,6 +236,7 @@ kbd{font-family:var(--body);border:1px solid rgba(28,26,23,.3);border-radius:3px
 .tut-dots{display:flex;gap:6px;align-items:center}
 .tut-dots button{width:9px;height:9px;padding:0;border:0;border-radius:5px;background:rgba(0,0,0,.18);cursor:pointer;transition:width .2s}
 .tut-dots button[aria-current="true"]{width:22px;background:var(--pwc)}
+#helpModal .sheet{overflow:hidden} /* 좌우로 밀 때 그림·문구가 창 밖으로 보이지 않게 */
 .tut-close{position:absolute;top:14px;right:14px;width:36px;height:36px;padding:0;border:0;border-radius:50%;background:rgba(0,0,0,.06);color:var(--ink-2);font:400 26px/1 sans-serif;cursor:pointer;display:grid;place-items:center}
 .tut-close:hover{background:var(--pwc-soft);color:var(--pwc-ink)}
 .tut-foot{display:flex;align-items:center;gap:14px}
@@ -3352,6 +3353,20 @@ const TUT = (()=>{
     if(S.t>=st.dur){loops++;if(!manual&&loops>=2)go(i+1);else S=st.init()}
     raf=requestAnimationFrame(tick)}
   $('tutPrev').onclick=()=>{manual=true;go(i-1)};$('tutNext').onclick=()=>{manual=true;go(i+1)};
+  // 모바일: 설명 창을 좌우로 밀어서 넘기기 (사진 넘기듯). 손가락을 따라 제목·그림·설명이 움직이고, 50px 넘게 밀면 다음/이전 장면
+  const sheet=$('helpModal').querySelector('.sheet'),slide=[$('tutTitle'),cv.parentElement,$('tutCap')];
+  const setSlide=(dx,op,tr)=>slide.forEach(el=>{el.style.transition=tr||'none';el.style.transform=dx?`translateX(${dx}px)`:'';el.style.opacity=op==null?'':String(op)});
+  // 터치 이벤트로 처리: 가로로 밀 때는 브라우저의 뒤로 가기 제스처를 막아야 해서(pointer 이벤트는 중간에 끊김) touchmove에서 preventDefault
+  let sw=null;
+  sheet.addEventListener('touchstart',e=>{if(e.touches.length!==1||e.target.closest('button,label,input')){sw=null;return}const t=e.touches[0];sw={x:t.clientX,y:t.clientY,dx:0,lock:null}},{passive:true});
+  sheet.addEventListener('touchmove',e=>{if(!sw)return;const t=e.touches[0],dx=t.clientX-sw.x,dy=t.clientY-sw.y;
+    if(sw.lock==null&&Math.hypot(dx,dy)>8)sw.lock=Math.abs(dx)>Math.abs(dy)?'x':'y';
+    if(sw.lock==='x'){e.preventDefault();sw.dx=dx;setSlide(dx*.6,1-Math.min(.5,Math.abs(dx)/400))}},{passive:false});
+  const swipeEnd=()=>{if(!sw)return;const dir=sw.lock==='x'&&Math.abs(sw.dx)>50?(sw.dx<0?1:-1):0;sw=null;
+    if(!dir){setSlide(0,null,'transform .2s ease-out,opacity .2s');return}
+    manual=true;go(i+dir);setSlide(dir*60,.4); // 새 장면이 미는 방향 반대쪽에서 들어옴
+    requestAnimationFrame(()=>requestAnimationFrame(()=>setSlide(0,null,'transform .22s ease-out,opacity .22s')))};
+  sheet.addEventListener('touchend',swipeEnd);sheet.addEventListener('touchcancel',swipeEnd);
   // 출근(게임 시작) 직전에 띄우는 게임 방법 팝업. '다시 보지 않기'는 이 브라우저에 기억
   const HIDE_KEY='seasonNight.hideHowTo';
   const hidden=()=>{try{return localStorage.getItem(HIDE_KEY)==='1'}catch(e){return false}};
