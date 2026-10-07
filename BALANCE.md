@@ -220,7 +220,7 @@ window.SUITE=async function(modes,lvs,secs,move=true){window.RES=[];for(const mo
 
 ### 시뮬레이션 스크립트
 
-로컬 서버로 게임을 띄운 뒤 콘솔에 붙여넣고 `await RUNX({pro:TIERS.pro},8)` → `SUMM()`. 측정 중에는 탭이 0 크기가 되지 않게 띄워 두세요.
+로컬 서버로 게임을 띄운 뒤 콘솔에 붙여넣고 `await RUNX({day:Object.assign({mode:'normal'},TIERS.pro), night:Object.assign({mode:'night'},TIERS.pro)},4)` → `SUMM()`. `mode:'night'`이면 어려움(10분 버티기) 결과로 생존 시간·처치 수를 보여 줍니다. 측정 중에는 탭이 0 크기가 되지 않게 띄워 두세요.
 
 ```js
 // 전체 플레이 시뮬레이션 (실력별 봇). 브라우저 콘솔용, 게임 코드에는 넣지 않음.
@@ -262,26 +262,26 @@ window.mkSteer=function(sc,S,o){
 };
 // 한 판: 퀴즈는 acc 확률로 정답, 레벨업은 무기 강화 우선(pickNoise만큼 무작위), 받는 피해는 taken배(회피 실력 대용)
 window.SIM=async function(part,opt={}){
-  const o=Object.assign({acc:.8,maxT:1200,react:3,seek:1,gemR:900,noise:0,pickNoise:.4,taken:1},opt);
+  const o=Object.assign({mode:'normal',acc:.8,maxT:1200,react:3,seek:1,gemR:900,noise:0,pickNoise:.4,taken:1},opt);
   const oh=Battle.prototype.hurt;Battle.prototype.hurt=function(d){return oh.call(this,Math.max(1,Math.round(d*o.taken)))};
-  CHOICE.part=part;startRun();
+  CHOICE.part=part;CHOICE.mode=o.mode;startRun();
   const loop=game.loop;let t=performance.now();for(let i=0;i<5;i++){t+=16.7;game.headlessStep(t,16.7)}
-  const sc=game.scene.getScene('Battle'),S=sc.S,log={part,boss:{}};
+  const sc=game.scene.getScene('Battle'),S=sc.S,log={part,mode:o.mode,boss:{}};
   sc.hitstop=()=>{}; // 실제 시계(setTimeout) 기반 연출이라 가속 실행에서는 끔
   const oSB=sc.spawnBoss;sc.spawnBoss=function(d){if(!log.boss[S.stage])log.boss[S.stage]=[+S.t.toFixed(1)];return oSB.call(this,d)};
-  const oBD=sc.bossDie;sc.bossDie=function(b){const L=log.boss[S.stage];if(L&&L.length<2)L.push(+S.t.toFixed(1));if(S.stage>=CFG.totalStages&&!log.clear)log.clear=+S.t.toFixed(1);return oBD.call(this,b)};
+  const oBD=sc.bossDie;sc.bossDie=function(b){const L=log.boss[S.stage];if(L&&L.length<2)L.push(+S.t.toFixed(1));if(!sc.surv&&S.stage>=CFG.totalStages&&!log.clear)log.clear=+S.t.toFixed(1);return oBD.call(this,b)};
   const score=c=>{if(c.kind==='heal')return S.hp<S.maxhp*.4?9:.3;if(c.kind==='up'){const it=ITEMS[c.key];return it.type==='w'?(it.starter?3:2.6):(['book','coffee'].includes(c.key)?2.2:1.6)}return c.kind==='bonus'?1:.8};
   sc.openModal=(kind,data)=>{
     if(kind==='level'){const ch=levelChoices(S);applyReward(sc,ch.sort((a,b)=>score(b)-score(a)+(Math.random()-.5)*o.pickNoise)[0]);return}
-    const gold=data.gold,rw=chestReward(S,gold);nextQuestion(S);S.asked++;
+    const gold=data.gold,stack=data.stack||1,rw=chestReward(S,gold);nextQuestion(S);S.asked++;
     const sup=Math.random()<SUPPLY_CFG.chestBonus?pickSupply(S,[rw.kind]):null;
-    if(Math.random()<o.acc){S.correct++;applyReward(sc,rw);if(gold)S.hp=S.maxhp;if(sup)sc.useSupply(sup)}
+    if(Math.random()<o.acc){S.correct++;applyReward(sc,rw);if(gold)S.hp=S.maxhp;for(let k=1;k<stack;k++)applyReward(sc,chestReward(S,false));if(sup)sc.useSupply(sup)}
   };
   const steer=mkSteer(sc,S,o);
   loop.sleep();let f=0;
   try{while(!S.over&&S.t<o.maxT){for(let i=0;i<240&&!S.over;i++){if(f++%o.react===0)steer();t+=1000/60;game.headlessStep(t,1000/60)}await yieldNow()}}
   finally{sc.joy=null;loop.wake();Battle.prototype.hurt=oh}
-  return Object.assign(log,{won:!!log.clear,died:S.hp<=0?+S.t.toFixed(1):null,stage:S.stage,lv:S.lv,correct:S.correct,asked:S.asked});
+  return Object.assign(log,{won:sc.surv?(S.hp>0&&S.t>=CFG.surv.len-0.5):!!log.clear,t:+S.t.toFixed(1),kills:S.kills,died:S.hp<=0?+S.t.toFixed(1):null,stage:S.stage,lv:S.lv,correct:S.correct,asked:S.asked});
 };
 // 실력 4단계: 퀴즈 정답률은 모두 80%로 같고, 조작 실력만 다름
 // taken=받는 피해 배수(회피), react=판단 주기(프레임), seek=수집 적극성, gemR=보석 탐색 거리, pickNoise=레벨업 선택 무작위성, engage=적과 유지하는 거리 배수
@@ -290,7 +290,50 @@ window.TIERS={
   mid:   {acc:.8,taken:.7, react:5, seek:.8, gemR:700,pickNoise:1, dodge:1.5,engage:1.3,noise:.3},
   low:   {acc:.8,taken:.9, react:8, seek:.6, gemR:500,pickNoise:2, dodge:1.2,engage:1.6,noise:.5},
   novice:{acc:.8,taken:1.1,react:12,seek:.45,gemR:350,pickNoise:5, dodge:1,  engage:2,  noise:.8}};
-window.RUNX=async function(configs,n){window.OUT={};window.XRUN=true;for(const [name,opt] of Object.entries(configs)){const r=[];for(let k=0;k<n;k++)for(const p of ['audit','tax','deal','digital'])r.push(await SIM(p,opt));OUT[name]=r}window.XRUN=false};
-window.SUMM=()=>Object.fromEntries(Object.entries(OUT).map(([k,r])=>{const w=r.filter(x=>x.won),c=w.map(x=>x.clear).sort((a,b)=>a-b);const by={};for(const x of r)(by[x.part]=by[x.part]||[]).push(x.won?Math.round(x.clear):'X'+Math.round(x.died));
-  return[k,{win:w.length+'/'+r.length,avg:c.length?Math.round(c.reduce((a,b)=>a+b,0)/c.length):null,med:c.length?Math.round(c[c.length>>1]):null,by}]}));
+// 결과는 한 판마다 localStorage에 저장 (페이지가 새로고침돼도 남음)
+window.RUNX=async function(configs,n,tag='run'){window.OUT=JSON.parse(localStorage.getItem('OUT_'+tag)||'{}');window.XRUN=true;
+  for(let k=0;k<n;k++)for(const [name,opt] of Object.entries(configs))for(const p of ['audit','tax','deal','digital']){const r=await SIM(p,opt);(OUT[name]=OUT[name]||[]).push(r);localStorage.setItem('OUT_'+tag,JSON.stringify(OUT))}
+  window.XRUN=false};
+window.SUMM=()=>Object.fromEntries(Object.entries(OUT).map(([k,r])=>{const by={};const night=r[0]&&r[0].mode==='night';
+  for(const x of r)(by[x.part]=by[x.part]||[]).push(night?(x.won?'W':'')+Math.round(x.t)+'s/'+x.kills:(x.won?Math.round(x.clear):'X'+Math.round(x.died)));
+  const w=r.filter(x=>x.won),avg=a=>a.length?Math.round(a.reduce((s,v)=>s+v,0)/a.length):null;
+  return[k,night?{survive10:w.length+'/'+r.length,avgT:avg(r.map(x=>x.t)),avgKills:avg(r.map(x=>x.kills)),by}:{win:w.length+'/'+r.length,avgClear:avg(w.map(x=>x.clear)),by}]}));
 ```
+
+## 9. 보통(낮) / 어려움(밤) 모드 밸런스 (2026-10-07)
+
+낮과 밤 테마가 생기면서 모드가 두 개가 됐습니다. 8절과 같은 전체 플레이 봇으로 두 모드를 함께 맞췄습니다.
+
+| 모드 | 랭킹 기준 | 목표 |
+|---|---|---|
+| 보통(낮) | 전 스테이지 클리어 시간 | 고수 4분대, 본부 간 편차 작게 |
+| 어려움(밤) | 생존 시간 → 처치 수 | 10분 생존은 고수만(중수는 대부분 5~8분 사망), 10분 생존자끼리의 처치 수 편차 작게 |
+
+### 바꾼 것
+
+- **택스 기본 무기 교체: 만년필 → 법인세 신고서 (택스 전용)**
+  - 만년필을 그대로 쓰면 택스만 기본 무기가 진화하고, 다른 본부도 상자에서 같은 무기를 얻어 특색이 흐려짐. 측정에서도 택스가 낮 3분 4초로 혼자 빨랐음
+  - 공격 패턴은 만년필과 같음(가까운 적·보스 우선 연사). 피해 약 15% 낮춤(12·15·17·20·24), 진화 없음
+  - 특색 **환급**: 처치하면 3~6% 확률로 HP +2 (`REFUND_HP`)
+- **어려움 난이도**: 2분 이후 1분마다 망령 피해 배수 `CFG.surv.rampDmg` 1.10 → **1.16** (중수 생존율 65% → 25%)
+- **어려움 전용 기본 무기 피해 보정** `NIGHT_MUL` (보통 모드에는 영향 없음): 망령 떼에는 연쇄 번개가 유리하고 튕기는 동전이 불리해 처치 수 편차가 컸음
+
+| 무기 | 디지털 번개 | 딜 동전 | 감사 조회서 클리어 | 택스 신고서 |
+|---|---|---|---|---|
+| 밤 배수 | ×0.9 | ×1.15 | ×1.05 | ×1.1 |
+
+### 결과 (고수·중수 봇)
+
+**보통(낮)**: 고수 평균 4분 45초 (감사 4분 37초 · 택스 4분 34초 · 딜 4분 35초 · 디지털 5분 13초)
+
+**어려움(밤)**, 본부·실력별 4판
+
+| | 감사 | 택스 | 딜 | 디지털 | 전체 |
+|---|---|---|---|---|---|
+| 고수 10분 생존 | 3/4 | 4/4 | 3/4 | 4/4 | 88% |
+| 중수 10분 생존 | 1/4 | 1/4 | 2/4 | 0/4 | 25% |
+| 고수 처치 수(생존한 판) | 3,900 | 3,058 | 3,243 | 3,170 | 편차 -9%~+17% |
+
+- 조정 전 처치 수 편차 -28%~+23% → 조정 후 -9%~+17% (마지막으로 감사 ×1.15 → ×1.05, 디지털 ×0.85 → ×0.9로 미세 조정)
+- 밤은 한 판이 길고 무작위성이 커서 판 수(4판)에 비해 오차가 ±10~15% 있음. 실제 기록이 쌓이면 `NIGHT_MUL`·`rampDmg`로 다시 맞추면 됨
+
