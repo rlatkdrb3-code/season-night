@@ -2360,7 +2360,7 @@ r.img=this.add.image(r.x,r.y,key).setOrigin(0).setDepth(2.6)}
       const t=tg[i%tg.length].e,rep=Math.floor(i/tg.length);
       const a=Math.atan2(t.y-p.y,t.x-p.x)+(rep?(rep%2?1:-1)*Math.ceil(rep/2)*.14:0);
       const b=this.fireB(this.bullets,tex,p.body.center.x,p.body.center.y,a,evo?680:600);if(!b)continue;
-      b.body.setCircle(6,6,-1.5);b.life=1.1;b.dmg=Math.round(s.dmg*S.might*(this.night&&k==='filing'?NIGHT_MUL.filing:1));b.pierce=s.pierce||0;b.hits=null;b.evo=evo;b.refund=s.refund||0;
+      b.body.setCircle(6,6,-1.5);b.life=1.1;b.dmg=Math.round(s.dmg*S.might*(this.night&&k==='filing'?NIGHT_MUL.filing:1));b.pierce=s.pierce||0;b.hits=null;b.evo=evo;b.refund=s.refund||0;b.bossOnly=!!(t.isBoss||t.isDecoy); // 보스를 노린 탄은 몹을 통과
     }
     SFX.shoot();return true;
   }
@@ -2482,10 +2482,11 @@ r.img=this.add.image(r.x,r.y,key).setOrigin(0).setDepth(2.6)}
     const S=this.S,p=this.player,s=wstat(S,'comp'),tg=this.bossFirst(this.nearest(360,true));if(!tg.length)return false;
     for(let i=0;i<s.n;i++){const t=tg[Math.min(i,tg.length-1)].e,a=Math.atan2(t.y-p.y,t.x-p.x)+(i?(i%2?1:-1)*.25:0);
       const b=this.fireB(this.bullets,'coin',p.body.center.x,p.body.center.y,a,560);if(!b)continue;
-      b.body.setCircle(11,2.5,2.5);b.life=.75;b.dmg=Math.round(s.dmg*S.might*(this.night?NIGHT_MUL.comp:1));b.pierce=0;b.hits=new Set();b.evo=false;b.coin=true;b.bounce=s.bounce;b.rate=s.rate;b.n=0;b.base=1}
+      b.body.setCircle(11,2.5,2.5);b.life=.75;b.dmg=Math.round(s.dmg*S.might*(this.night?NIGHT_MUL.comp:1));b.pierce=0;b.hits=new Set();b.evo=false;b.coin=true;b.bounce=s.bounce;b.rate=s.rate;b.n=0;b.base=1;b.bossOnly=!!(t.isBoss||t.isDecoy)}
     this.fxGold.explode(5,p.x,p.y-4);SFX.coin();return true;
   }
   coinHit(b,e){
+    if(b.bossOnly&&!e.isBoss&&!e.isDecoy)return;b.bossOnly=false;
     if(b.hits.has(e))return;b.hits.add(e);b.n++;
     const n=b.n,x=b.x,y=b.y;
     this.dmg(e,e.isBoss?Math.round(b.dmg*BOSS_MUL.comp):b.dmg,Math.atan2(b.body.velocity.y,b.body.velocity.x),260,n>=4?'#fff1c2':'#ffd86b',11+Math.min(n,6)*1.5);
@@ -2516,6 +2517,7 @@ r.img=this.add.image(r.x,r.y,key).setOrigin(0).setDepth(2.6)}
   onInk(b,e){
     if(!b.active||!e.active)return;
     if(b.coin){this.coinHit(b,e);return}
+    if(b.bossOnly&&!e.isBoss&&!e.isDecoy)return; // 사거리 안의 보스를 노린 탄은 중간 몹을 통과
     if(b.pierce>0){b.hits=b.hits||new Set();if(b.hits.has(e))return;b.hits.add(e);b.pierce--}else this.killB(this.bullets,b);
     this.dmg(e,b.dmg,b.rotation,200,b.evo?'#ffd86b':'#f3ead8');this.fxSpark.explode(4,b.x,b.y);
     // 법인세 신고서: 처치하면 refund 확률로 환급(HP 회복)
