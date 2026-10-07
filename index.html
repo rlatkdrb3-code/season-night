@@ -216,6 +216,9 @@ kbd{font-family:var(--body);border:1px solid rgba(28,26,23,.3);border-radius:3px
 .ci.evo small{color:var(--pwc-ink)}
 .ci::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);width:max-content;max-width:200px;padding:7px 10px;border-radius:8px;background:#221f1f;color:#fff;font-size:12px;line-height:1.4;font-weight:500;text-align:left;opacity:0;pointer-events:none;transition:opacity .12s;z-index:5}
 .ci:hover::after,.ci:focus::after{opacity:1}
+/* 설명 박스가 화면 밖으로 잘리지 않게: 왼쪽 칸은 오른쪽으로, 오른쪽(진화) 칸은 왼쪽으로 펼침 */
+.recipe2>.ci:first-child::after{left:0;transform:none}
+.recipe2>.ci:last-child::after{left:auto;right:0;transform:none}
 /* 게임 설명 */
 /* 게임 설명: 장면별 미니 애니메이션 */
 .tut-stage{position:relative;margin:12px 0 10px;border-radius:14px;overflow:hidden;background:#0b1020;aspect-ratio:16/9;box-shadow:inset 0 0 0 1px rgba(0,0,0,.25)}
