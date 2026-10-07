@@ -394,7 +394,7 @@ kbd{font-family:var(--body);border:1px solid rgba(28,26,23,.3);border-radius:3px
     <div class="title-a">
       <img id="heroimg" alt="PwC 캡모자를 쓴 신입 회계사 도트 캐릭터">
       <h1 class="title-name">시즌의 <em>밤</em></h1>
-      <p class="title-time"><b>PM 11:47</b><span>감사 시즌</span></p>
+      <p class="title-time"><b>AM 3:00</b><span>감사 시즌</span></p>
       <button class="title-start" id="start" type="button">감사 시작</button>
       <p class="title-press" aria-hidden="true">PRESS ENTER</p>
       <div class="title-links">
@@ -711,7 +711,7 @@ const CFG = {
   // enrage: 보스가 나온 뒤 이 시간(초) 안에 못 잡으면 격노. 이후 rageStep초마다 한 단계씩 더 강해짐
   // 격노 단계당: 이동 속도 +rageSpd, 피해 +rageDmg, 공격 빈도 +rageTempo, 잡몹 등장 +rageSwarm (보스전 잡몹 상한도 풀림), 단계가 오를 때마다 망령 행렬 한 번
   // rampHp·rampDmg·rampBoss: 2분 이후 1분마다 잡몹 체력·잡몹 피해·(나올 때의) 보스 체력에 곱해지는 배수 → 오래 버틸수록 계속 강해져서 10분 생존은 잘하는 사람만
-  surv:{len:600, stageEvery:120, rampHp:1.3, rampDmg:1.1, rampBoss:1.25, bosses:[[120,'boss1'],[240,'fraud'],[360,'boss2'],[480,'audit']], enrage:120, rageStep:15, rageSpd:.4, rageDmg:.5, rageTempo:.6, rageSwarm:.8},
+  surv:{len:600, stageEvery:120, rampHp:1.3, rampDmg:1.16, rampBoss:1.25, bosses:[[120,'boss1'],[240,'fraud'],[360,'boss2'],[480,'audit']], enrage:120, rageStep:15, rageSpd:.4, rageDmg:.5, rageTempo:.6, rageSwarm:.8},
   swarm:[2.5,2,1.5,1.25], mobDmg:6, mobHp:[5,12,22,36], waveMul:1.5, xpScale:1.4, gemMax:220,
   bosses:{
     // 배열이면 등장할 때 그중 하나를 같은 확률로 고름 (2스테이지: 미수금의 그림자 / 부정 적발 50%)
@@ -766,6 +766,9 @@ const ITEMS = {
           lv:['조회처 1곳에 조회서 발송 → 회신이 오면 일직선으로 관통하며 클리어','조회처 회신 +1 (2곳)','회신 일치: 클리어 폭·사거리 증가','조회처 회신 +1 (3곳), 회신 대기 단축','모든 조회서 클리어: 피해·클리어 폭 증가, 발송 주기 단축']},
   hole:  {type:'w', name:'세무조정 폭탄', max:5, starter:true,
           lv:['폭탄을 던져 주변 적을 끌어모은 뒤 폭발로 세무조정 완료 · 많이 모을수록 조정액이 커져 크게 폭발 · 보스에게 피해 1.3배','익금산입: 조정 범위·폭발 피해 증가, 투척 주기 단축','손금불산입: 도화선 시간·폭발 피해 증가, 투척 주기 단축','세무조정계산서 작성: 조정 범위 증가, 투척 주기 단축','소득금액조정합계표 완성: 범위·폭발 피해 증가, 투척 주기 단축']},
+  // 택스 기본 무기: 만년필과 같은 연사 패턴, 처치 시 가끔 환급(HP 회복). 진화 없음(다른 본부 기본 무기와 동일)
+  filing:{type:'w', name:'법인세 신고서', max:5, starter:true,
+          lv:['가장 가까운 적에게 법인세 신고서 제출 · 처치 시 가끔 환급(HP 회복)','검토 강화: 피해 증가','부가세 신고서 추가: +1장, 피해 소폭 증가','경정청구: 피해·환급 확률 증가','원천세까지 일괄 신고: +1장, 제출 주기 단축']},
   comp:  {type:'w', name:'복리 동전', max:5, starter:true,
           lv:['동전이 적 사이를 튕겨 다니며 맞힐 때마다 커지고 강해짐 (복리) · 보스에게 피해 1.6배','튕김 +1','동전 +1 (2개)','튕김 +1, 복리율 증가','피해·복리율 증가, 연사 증가']},
   book:  {type:'p', name:'회계기준서', max:5, desc:'공격력 +10%'},
@@ -812,9 +815,14 @@ const W_STATS = {
   zap:  {cd:[1.15,1.1,1.05,1,.9], dmg:[10,12,15,17,20], jumps:[5,5,7,7,9], range:[320,320,330,340,350], hop:[150,155,160,165,175]},
   laser:{cd:[1.5,1.45,1.4,1.3,1.2], n:[1,2,2,3,3], dmg:[15,15,15,15,17], w:[12,12,15,15,18], len:[560,560,600,620,660], aim:[.45,.42,.4,.38,.34]},
   hole: {cd:[2.6,2.4,2.2,2.0,1.8], rad:[70,78,86,95,105], dur:[1.0,1.0,1.1,1.1,1.2], tick:[1,1,1,1,1], boom:[8,10,14,16,20], pull:[230,240,250,260,280]},
+  // 법인세 신고서: 만년필보다 피해 약 15% 낮음, refund = 처치 시 환급(HP +refundHp) 확률
+  filing:{cd:[.8,.78,.74,.7,.62], n:[1,1,2,2,3], dmg:[12,15,17,20,24], refund:[.03,.03,.03,.05,.06]},
   comp: {cd:[2.0,1.9,1.8,1.7,1.6], n:[1,1,2,2,2], dmg:[6,7,7,7,8], bounce:[4,5,5,6,6], rate:[1.15,1.15,1.15,1.18,1.2]}
 };
 // 보스 상대 피해 배수: 택스·딜 기본 무기는 범위형이라 보스 한 마리에 약해서 보정 (밸런스 측정 기준, 2026-10)
+// 어려움(밤)에서만 기본 무기 피해 보정: 망령 떼에는 연쇄 번개가 유리하고 튕기는 동전이 불리해 처치 수(밤 랭킹) 편차를 줄임
+const NIGHT_MUL = {zap:.9, comp:1.15, laser:1.05, filing:1.1};
+const REFUND_HP = 2; // 법인세 신고서 환급 1회 회복량
 const BOSS_MUL = {hole:1.3, comp:1.6};
 const WEAPONS = Object.keys(ITEMS).filter(k=>ITEMS[k].type==='w'&&!ITEMS[k].starter); // 진화가 있는 일반 무기
 const STARTERS = Object.keys(ITEMS).filter(k=>ITEMS[k].starter);
@@ -876,8 +884,8 @@ const HERO_FRAMES = mkFrames(HERO_TOP,false), HERO_FRAMES_L = mkFrames(HERO_TOP_
 // =====================================================================
 // clear·fail: 모든 스테이지를 클리어했을 때 / 실패했을 때 나오는 문구 (본부별)
 const PARTS = [
-  {id:'audit',   color:'#FD5108', starter:'laser',  name:'감사',   full:'감사본부',   clear:'감사 마감', fail:'감사 실패', dead:'미결 전표에 묻혔다.',   role:'재무제표를 검증하는 감사인', cats:['감사본부']},
-  {id:'tax',     color:'#f3f0e8', starter:'pen',  name:'택스',   full:'택스본부',   clear:'절세성공', fail:'절세 실패', dead:'세무조정에 파묻혔다.',   role:'세무조정과 신고를 맡는 세무 전문가', cats:['택스본부']},
+  {id:'audit',   color:'#FD5108', starter:'laser',  name:'감사',   full:'감사본부',   clear:'감사보고서 발행', fail:'감사 실패', dead:'미결 전표에 묻혔다.',   role:'재무제표를 검증하는 감사인', cats:['감사본부']},
+  {id:'tax',     color:'#f3f0e8', starter:'filing',  name:'택스',   full:'택스본부',   clear:'법인세 신고 완료', fail:'절세 실패', dead:'세무조정에 파묻혔다.',   role:'세무조정과 신고를 맡는 세무 전문가', cats:['택스본부']},
   {id:'deal',    color:'#e4b84a', starter:'comp',  name:'딜',     full:'딜본부',     clear:'딜 클로징', fail:'딜 무산', dead:'DD자료에 깔렸다.',     role:'M&A와 가치평가를 돕는 딜 전문가', cats:['딜본부']},
   {id:'digital', color:'#3d6ad6', starter:'zap',  name:'디지털', full:'디지털',     clear:'업무혁신 완료', fail:'혁신 실패', dead:'레거시에 먹혔다.',     role:'데이터와 IT로 일하는 디지털 전문가', cats:['디지털']}
 ];
@@ -1229,6 +1237,7 @@ const CHEST = [
 "KKKKKKKKKKKKKK"];
 const GOLD_OVER = {O:'#e4b84a',o:'#fff1c2',L:'#d9442f',Y:'#ffb3a6'};
 const INK = [".KKKK...","KUUUULYW",".KKKK..."];
+const FILING = ["KKKKK.","KWWWKK","KWFFWK","KWWWWK","KWFFWK","KWWTWK","KKKKKK"]; // 법인세 신고서 탄 (주황 줄 + 빨간 도장)
 const KEY = ["KKKKK","KWWWK","KWEWK","KWWWK","KKKKK"];
 const ICONS = {
   pen:["..........KK",".........KUK","........KUUK",".......KUUK.","......KUUK..",".....KLLK...","....KUUK....","...KUUK.....","..KYYK......","..KYK.......",".KK.........","K..........."],
@@ -1249,6 +1258,7 @@ const ICONS = {
 };
 ICONS.zap  = ["......KKKK..",".....KuuuK..","....KuuuK...","...KuuuK....","..KuuuKKKK..",".KUUUUUUUK..","..KKKKUUK...","....KUUK....","...KUUK.....","..KUUK......","..KUK.......","..KK........"];
 ICONS.laser= [".KKK....KKK.", ".KTT....TTK.", ".KT......TK.", "............", "....KKKK....", "....KYYK....", "....KYYK....", "....KKKK....", "............", ".KT......TK.", ".KTT....TTK.", ".KKK....KKK."];
+ICONS.filing = ["..KKKKKKK...","..KWWWWWKK..","..KWFFFWWWK.","..KWWWWWWWK.","..KWFFFFFWK.","..KWWWWWWWK.","..KWFFFFFWK.","..KWWWWWWWK.","..KWFFFWWWK.","..KWWWWWWWK.","..KWWWWTTWK.","..KKKKKKKKK."]; // 법인세 신고서
 ICONS.hole = ["........Y.Y.", ".........L..", "........K.Y.", ".......K....", "...KKKKK....", "..KXXXXXK...", ".KXWXXXXXK..", ".KXWXXXXXK..", ".KFFFFFFFK..", ".KXXXXXXXK..", "..KXXXXXK...", "...KKKKK...."]; // 세무조정 폭탄 (PwC 오렌지 띠)
 ICONS.comp = ["............", "...KKKKKK...", "..KYYLLLLK..", ".KYLLjjLLLK.", ".KLLjjjjLLK.", ".KLjjjjjjLK.", ".KLLLjjLLLK.", ".KLLLjjLLLK.", ".KLLLjjLLjK.", "..KLLLLLjK..", "...KKKKKK...", "............"];
 // 야근의 노래(마이크 + 음표), 아메리카노 비(구름 + 커피 빗방울)
@@ -1657,7 +1667,7 @@ function makeTextures(sc){
   add('fslip',["KKKKKKK","KWWWWTK","KWAAWWK","KWWWTTK","KKKKKKK"],3); // 위조 전표
   add('dslip',["KKKKKK","KWWWTK","KWAAWK","KWWWWK","KWAAWK","KKKKKK"],3); // 지적 서류
   add('chest',CHEST,3);add('chestG',CHEST,3,GOLD_OVER);add('vac',VAC,4);
-  add('coin',['..KKKKK..','.KYYYLLK.','KYYLLLLjK','KYLLYLLjK','KLLYYYLjK','KLLLYLjjK','KLLLLjjjK','.KLjjjjK.','..KKKKK..'],3);add('ink',INK,3);add('inkE',INK,3,{U:'#e4b84a',L:'#d9442f'});
+  add('coin',['..KKKKK..','.KYYYLLK.','KYYLLLLjK','KYLLYLLjK','KLLYYYLjK','KLLLYLjjK','KLLLLjjjK','.KLjjjjK.','..KKKKK..'],3);add('ink',INK,3);add('filing',FILING,3);add('inkE',INK,3,{U:'#e4b84a',L:'#d9442f'});
   add('key',KEY,3);add('keyE',KEY,3,{W:'#9fd8a8',E:'#2a2f45'});
   add('note',NOTE,3);
   add('stampfx',ICONS.stamp,5);add('stampE',ICONS.stamp,6,EVO_OVER.stamp);
@@ -1782,7 +1792,7 @@ function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random
 
 function newState(){
   return {t:0,stage:1,stageT:0,hp:100,maxhp:100,speed:170,spdBonus:0,waveT:28,iframe:0,regen:0,might:1,cdm:1,magnet:110,bonus:0,hpBonus:0,armor:0,buff:null,
-    lv:1,xp:0,xpNext:Math.round(5*CFG.xpScale),items:{[partOf(CHOICE.part).starter]:{lv:1,evo:false}},wOrder:[partOf(CHOICE.part).starter],pOrder:[],wt:{pen:.3,stamp:1,hl:.8,song:.4,spill:.4,zap:.4,laser:.5,hole:.6,comp:.4},calcA:0,
+    lv:1,xp:0,xpNext:Math.round(5*CFG.xpScale),items:{[partOf(CHOICE.part).starter]:{lv:1,evo:false}},wOrder:[partOf(CHOICE.part).starter],pOrder:[],wt:{pen:.3,filing:.3,stamp:1,hl:.8,song:.4,spill:.4,zap:.4,laser:.5,hole:.6,comp:.4},calcA:0,
     face:{x:1,y:0},kills:0,bossKills:0,bossBuff:{hp:1,dmg:1},asked:0,correct:0,wrong:[],
     qOrder:shuffle(questionPool()),qIdx:0,spawnT:1,chestT:CFG.firstChest,bossSpawnedFor:0,
     pickStep:0,pickT:0,over:false,postFx:[]};
@@ -2342,21 +2352,22 @@ r.img=this.add.image(r.x,r.y,key).setOrigin(0).setDepth(2.6)}
   // ----- 무기 -----
   fireB(group,tex,x,y,a,spd){if(this.dayMap&&group===this.ebullets)tex+='D';const b=group.get(x,y,tex);if(!b)return null;b.px=x;b.py=y;b.setActive(true).setVisible(true).setDepth(6).setScale(1).clearTint();b.coin=false;b.hits=null;b.spin=0;b.body.enable=true;b.body.reset(x,y);b.setVelocity(Math.cos(a)*spd,Math.sin(a)*spd);b.rotation=a;return b}
   killB(group,b){b.body.enable=false;group.killAndHide(b)}
-  firePen(){
-    const S=this.S,p=this.player,s=wstat(S,'pen'),evo=S.items.pen.evo;
+  // 만년필 · 법인세 신고서(택스 기본 무기, k='filing') 공용: 가장 가까운 적(보스 우선)에게 연사
+  firePen(k='pen'){
+    const S=this.S,p=this.player,s=wstat(S,k),evo=!!S.items[k].evo,tex=k==='filing'?'filing':evo?'inkE':'ink';
     const tg=this.bossFirst(this.nearest(470,true));if(!tg.length)return false;
     for(let i=0;i<s.n;i++){
       const t=tg[i%tg.length].e,rep=Math.floor(i/tg.length);
       const a=Math.atan2(t.y-p.y,t.x-p.x)+(rep?(rep%2?1:-1)*Math.ceil(rep/2)*.14:0);
-      const b=this.fireB(this.bullets,evo?'inkE':'ink',p.body.center.x,p.body.center.y,a,evo?680:600);if(!b)continue;
-      b.body.setCircle(6,6,-1.5);b.life=1.1;b.dmg=Math.round(s.dmg*S.might);b.pierce=s.pierce||0;b.hits=null;b.evo=evo;
+      const b=this.fireB(this.bullets,tex,p.body.center.x,p.body.center.y,a,evo?680:600);if(!b)continue;
+      b.body.setCircle(6,6,-1.5);b.life=1.1;b.dmg=Math.round(s.dmg*S.might*(this.night&&k==='filing'?NIGHT_MUL.filing:1));b.pierce=s.pierce||0;b.hits=null;b.evo=evo;b.refund=s.refund||0;
     }
     SFX.shoot();return true;
   }
   // 디지털: 가장 가까운 적에게 번개 → 주변 적으로 연쇄
   fireZap(){
     const S=this.S,p=this.player,s=wstat(S,'zap'),tg=this.bossFirst(this.nearest(s.range,true));if(!tg.length)return false;
-    const hit=new Set(),pts=[{x:p.x,y:p.y-8}];let cur=tg[0].e;const dmg=Math.round(s.dmg*S.might);
+    const hit=new Set(),pts=[{x:p.x,y:p.y-8}];let cur=tg[0].e;const dmg=Math.round(s.dmg*S.might*(this.night?NIGHT_MUL.zap:1));
     for(let j=0;j<s.jumps&&cur;j++){
       hit.add(cur);pts.push({x:cur.x,y:cur.y});
       const from=cur;this.dmg(cur,dmg,Math.atan2(cur.y-p.y,cur.x-p.x),90,'#9fe8ff');this.fxZap.explode(5,from.x,from.y);
@@ -2395,7 +2406,7 @@ r.img=this.add.image(r.x,r.y,key).setOrigin(0).setDepth(2.6)}
   }
   beam(x,y,ang,s){
     // 레이저는 지형물에 닿으면 거기서 끊김
-    const ux=Math.cos(ang),uy=Math.sin(ang),len=this.rayLen(x,y,ux,uy,s.len),dmg=Math.round(s.dmg*this.S.might),ex=x+ux*len,ey=y+uy*len;
+    const ux=Math.cos(ang),uy=Math.sin(ang),len=this.rayLen(x,y,ux,uy,s.len),dmg=Math.round(s.dmg*this.S.might*(this.night?NIGHT_MUL.laser:1)),ex=x+ux*len,ey=y+uy*len;
     for(const e of this.targets()){const dx=e.x-x,dy=e.y-y,t=dx*ux+dy*uy;if(t<0||t>len)continue;const off=Math.abs(dx*uy-dy*ux);if(off<s.w*.5+e.hitR*(e.baseScale||1))this.dmg(e,dmg,ang,150,'#ffb066')}
     const g=this.add.graphics().setDepth(8).setBlendMode('ADD'),o={w:1};
     const draw=()=>{g.clear();g.lineStyle(s.w*1.9*o.w,0xfd5108,.35);g.lineBetween(x,y,ex,ey);g.lineStyle(s.w*o.w,0xff7a2e,.85);g.lineBetween(x,y,ex,ey);g.lineStyle(Math.max(1,s.w*.35*o.w),0xfff1c2,1);g.lineBetween(x,y,ex,ey)};
@@ -2471,7 +2482,7 @@ r.img=this.add.image(r.x,r.y,key).setOrigin(0).setDepth(2.6)}
     const S=this.S,p=this.player,s=wstat(S,'comp'),tg=this.bossFirst(this.nearest(360,true));if(!tg.length)return false;
     for(let i=0;i<s.n;i++){const t=tg[Math.min(i,tg.length-1)].e,a=Math.atan2(t.y-p.y,t.x-p.x)+(i?(i%2?1:-1)*.25:0);
       const b=this.fireB(this.bullets,'coin',p.body.center.x,p.body.center.y,a,560);if(!b)continue;
-      b.body.setCircle(11,2.5,2.5);b.life=.75;b.dmg=Math.round(s.dmg*S.might);b.pierce=0;b.hits=new Set();b.evo=false;b.coin=true;b.bounce=s.bounce;b.rate=s.rate;b.n=0;b.base=1}
+      b.body.setCircle(11,2.5,2.5);b.life=.75;b.dmg=Math.round(s.dmg*S.might*(this.night?NIGHT_MUL.comp:1));b.pierce=0;b.hits=new Set();b.evo=false;b.coin=true;b.bounce=s.bounce;b.rate=s.rate;b.n=0;b.base=1}
     this.fxGold.explode(5,p.x,p.y-4);SFX.coin();return true;
   }
   coinHit(b,e){
@@ -2507,6 +2518,8 @@ r.img=this.add.image(r.x,r.y,key).setOrigin(0).setDepth(2.6)}
     if(b.coin){this.coinHit(b,e);return}
     if(b.pierce>0){b.hits=b.hits||new Set();if(b.hits.has(e))return;b.hits.add(e);b.pierce--}else this.killB(this.bullets,b);
     this.dmg(e,b.dmg,b.rotation,200,b.evo?'#ffd86b':'#f3ead8');this.fxSpark.explode(4,b.x,b.y);
+    // 법인세 신고서: 처치하면 refund 확률로 환급(HP 회복)
+    if(b.refund&&!e.active&&Math.random()<b.refund){const S=this.S,p=this.player;S.hp=Math.min(S.maxhp,S.hp+REFUND_HP);this.float(p.x,p.y-44,'환급 +'+REFUND_HP,'#9fd8a8',13,'"Do Hyeon",sans-serif')}
   }
   syncCalc(){
     this.calcKeys.forEach(k=>k.destroy());this.calcKeys=[];
@@ -2784,7 +2797,7 @@ r.img=this.add.image(r.x,r.y,key).setOrigin(0).setDepth(2.6)}
     S.chestT-=dt;if(S.chestT<=0){S.chestT=CFG.chestEvery;const a=rnd(0,TAU),d=rnd(240,360);this.spawnChest(p.x+Math.cos(a)*d,p.y+Math.sin(a)*d)}
     // 무기
     const cd=(k,f)=>{if(!S.items[k])return;S.wt[k]-=dt;if(S.wt[k]<=0)S.wt[k]=f()?wstat(S,k).cd*S.cdm:.12};
-    cd('pen',()=>this.firePen());cd('stamp',()=>this.fireStamp());cd('hl',()=>this.fireHL());cd('song',()=>this.fireSong());cd('spill',()=>this.fireSpill());
+    cd('pen',()=>this.firePen());cd('filing',()=>this.firePen('filing'));cd('stamp',()=>this.fireStamp());cd('hl',()=>this.fireHL());cd('song',()=>this.fireSong());cd('spill',()=>this.fireSpill());
     cd('zap',()=>this.fireZap());cd('laser',()=>this.fireLaser());cd('hole',()=>this.fireHole());cd('comp',()=>this.fireComp());
     this.updLaser(dt);this.updHoles(dt);this.updSongs(dt);this.updRain(dt);
     this.updCalc(dt);
