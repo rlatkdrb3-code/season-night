@@ -227,6 +227,8 @@ kbd{font-family:var(--body);border:1px solid rgba(28,26,23,.3);border-radius:3px
 .tut-dots{display:flex;gap:6px;align-items:center}
 .tut-dots button{width:9px;height:9px;padding:0;border:0;border-radius:5px;background:rgba(0,0,0,.18);cursor:pointer;transition:width .2s}
 .tut-dots button[aria-current="true"]{width:22px;background:var(--pwc)}
+.tut-close{position:absolute;top:14px;right:14px;width:36px;height:36px;padding:0;border:0;border-radius:50%;background:rgba(0,0,0,.06);color:var(--ink-2);font:400 26px/1 sans-serif;cursor:pointer;display:grid;place-items:center}
+.tut-close:hover{background:var(--pwc-soft);color:var(--pwc-ink)}
 .tut-foot{display:flex;align-items:center;gap:14px}
 .tut-foot .primary{flex:1}
 .tut-skip{display:flex;align-items:center;gap:6px;flex:none;font-size:14px;color:var(--ink-2);cursor:pointer;user-select:none}
@@ -451,6 +453,7 @@ kbd{font-family:var(--body);border:1px solid rgba(28,26,23,.3);border-radius:3px
 
   <div class="overlay" id="helpModal" hidden>
     <div class="sheet">
+      <button class="tut-close" id="tutClose" type="button" aria-label="닫고 캐릭터 선택으로 돌아가기" title="닫기 (Esc)">×</button>
       <p class="eyebrow">게임 방법 · <span id="tutNo">1 / 8</span></p>
       <h2 id="tutTitle">움직이기만 하면 공격은 자동</h2>
       <div class="tut-stage"><canvas id="tutCanvas" width="480" height="270" role="img"></canvas></div>
@@ -2640,17 +2643,21 @@ r.img=this.add.image(r.x,r.y,key).setOrigin(0).setDepth(2.6)}
     this.supplies.push(im);
   }
   useSupply(kind){
-    const S=this.S,p=this.player,info=SUPPLY[kind];
-    SFX.supply();toast(info.flavor);this.fxGold.explode(20,p.x,p.y-10);
+    const S=this.S,p=this.player,info=SUPPLY[kind];let fx=''; // fx: 실제로 적용된 효과 (화면 가운데 큰 글씨로 안내)
+    SFX.supply();this.fxGold.explode(20,p.x,p.y-10);
     if(kind==='swith'){const h=Math.round(S.maxhp*.6),got=Math.min(h,S.maxhp-Math.ceil(S.hp));S.hp=Math.min(S.maxhp,S.hp+h);
+      fx=`HP ${Math.max(0,got)} 회복 (최대 HP의 60%)`;
       this.float(p.x,p.y-48,'+'+Math.max(0,got)+' HP','#9fd8a8',16,'"Do Hyeon",sans-serif');this.ring(p.x,p.y,0x9fd8a8,90,false)}
     else if(kind==='vita'){
-      if(S.armor<.4&&Math.random()<.5){S.armor=Math.min(.4,+(S.armor+.1).toFixed(2));this.float(p.x,p.y-48,'받는 피해 -'+Math.round(S.armor*100)+'%','#7aa2ff',15,'"Do Hyeon",sans-serif')}
-      else{S.hpBonus+=20;recalc(S);this.float(p.x,p.y-48,'최대 HP +20','#ff8a76',15,'"Do Hyeon",sans-serif')}
+      if(S.armor<.4&&Math.random()<.5){S.armor=Math.min(.4,+(S.armor+.1).toFixed(2));fx=`받는 피해 10% 감소 (영구 · 지금 -${Math.round(S.armor*100)}%)`;this.float(p.x,p.y-48,'받는 피해 -'+Math.round(S.armor*100)+'%','#7aa2ff',15,'"Do Hyeon",sans-serif')}
+      else{S.hpBonus+=20;recalc(S);fx='최대 HP +20 (영구)';this.float(p.x,p.y-48,'최대 HP +20','#ff8a76',15,'"Do Hyeon",sans-serif')}
       this.ring(p.x,p.y,0xffb600,90,false)}
     else if(kind==='snack'){const k=Math.random()<.5?'spd':'atk';S.buff={kind:k,t:SUPPLY_CFG.buffDur};recalc(S);
+      fx=`${SUPPLY_CFG.buffDur}초간 ${k==='spd'?'이동':'공격'} 속도 +60%`;
       this.float(p.x,p.y-48,k==='spd'?'이동 속도 +60%':'공격 속도 +60%','#2fb3a0',15,'"Do Hyeon",sans-serif');this.ring(p.x,p.y,0x2fb3a0,110,false)}
-    else if(kind==='haagen')this.haagen();
+    else if(kind==='haagen'){this.haagen();fx=`화면 안 모든 적에게 큰 피해 + ${SUPPLY_CFG.stun}초 경직`}
+    // 큰 글씨: 효과 / 작은 글씨: 보급품 이름 · 상황 문구
+    toast(`${fx}\n${info.name} · ${info.flavor}`,false,2600);
   }
   // 하겐다즈: 화면 안 모든 적에게 큰 피해 + 경직
   haagen(){
@@ -3325,8 +3332,10 @@ const TUT = (()=>{
   let after=null;
   function open(then){after=then||null;$('tutHide').checked=false;$('helpModal').hidden=false;manual=false;go(0);last=0;if(!raf&&!DANCE_OFF)raf=requestAnimationFrame(tick);$('tutGo').focus()}
   function done(){if($('tutHide').checked){try{localStorage.setItem(HIDE_KEY,'1')}catch(e){}}$('helpModal').hidden=true;const f=after;after=null;if(f)f()}
-  $('tutGo').onclick=done;
-  return {open,done,hidden,prev(){manual=true;go(i-1)},next(){manual=true;go(i+1)}};
+  // X·Esc: 출근하지 않고 닫은 뒤 캐릭터 선택 화면으로 돌아감 ('다시 보지 않기'를 체크했다면 그것도 기억)
+  function close(){if($('tutHide').checked){try{localStorage.setItem(HIDE_KEY,'1')}catch(e){}}$('helpModal').hidden=true;after=null;$('select').hidden=false;renderSelect();$('selGo').focus()}
+  $('tutGo').onclick=done;$('tutClose').onclick=close;
+  return {open,done,close,hidden,prev(){manual=true;go(i-1)},next(){manual=true;go(i+1)}};
 })();
 // =====================================================================
 // 캐릭터 선택 화면
@@ -3476,7 +3485,8 @@ addEventListener('keydown',e=>{
   // 전투 중 P / Esc: 일시정지 전환 (다른 창이 떠 있을 때는 제외)
   const B=window.BATTLE;
   if((e.key==='p'||e.key==='P'||e.key==='ㅔ'||e.key==='Escape')&&B&&!B.demo&&!B.S.over&&!B.modalOpen&&!$('hud').hidden){e.preventDefault();B.togglePause();return}
-  if(!$('helpModal').hidden&&(e.key==='Escape'||(e.key==='Enter'&&document.activeElement!==$('tutHide')))){e.preventDefault();TUT.done();return}
+  if(!$('helpModal').hidden&&e.key==='Escape'){e.preventDefault();TUT.close();return}
+  if(!$('helpModal').hidden&&e.key==='Enter'&&document.activeElement!==$('tutHide')&&document.activeElement!==$('tutClose')){e.preventDefault();TUT.done();return}
   if(e.key==='Escape'){['codexModal','rankModal'].forEach(id=>$(id).hidden=true)}
   if(!$('helpModal').hidden&&(e.key==='ArrowLeft'||e.key==='ArrowRight')){e.preventDefault();e.key==='ArrowLeft'?TUT.prev():TUT.next();return}
   if(e.key==='Enter'&&!$('title').hidden&&$('codexModal').hidden&&$('helpModal').hidden&&$('rankModal').hidden&&document.activeElement===document.body){e.preventDefault();openSelect();return}
